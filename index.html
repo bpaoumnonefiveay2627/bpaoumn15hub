@@ -1284,6 +1284,13 @@
                     localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
                     renderAnnouncements(); 
                 }
+
+                if (data.completions) {
+                    userCompletions = { ...userCompletions, ...data.completions };
+                    localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
+                    renderTasks();
+                    if (isOfficerVerified) renderMasterMatrix();
+                }
             } catch(e) { 
                 console.log("Sync error:", e); 
             }
