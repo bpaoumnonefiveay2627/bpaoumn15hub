@@ -301,9 +301,6 @@
                         <h3 class="font-bold text-lg text-white">Full Semester Course & Meeting Links Hub</h3>
                         <p class="text-xs text-slate-400">1st Semester AY 2026-2027 | Officers can edit exact dates, modes (Synchronous vs Asynchronous Modular), and links</p>
                     </div>
-                    <button id="addScheduleBtn" onclick="openScheduleModal()" class="hidden bg-brand-600 hover:bg-brand-500 text-white text-xs px-3.5 py-1.5 rounded-lg font-medium">
-                        <i class="fa-solid fa-pen-to-square mr-1"></i> Edit Schedule / Mode (Officer)
-                    </button>
                 </div>
                 <div class="grid grid-cols-1 gap-4" id="classScheduleList"></div>
             </div>
@@ -1070,34 +1067,82 @@
         }
 
         function renderSchedule() {
-            // Calculate Upcoming Weekend Dates (Saturday & Sunday)
+            const container = document.getElementById("classScheduleList");
+            const weekendContainer = document.getElementById("weekendScheduleHighlightList");
+            const nextWeekendDatesEl = document.getElementById("nextWeekendDates");
+            
+            if (!container || !weekendContainer) return;
+            container.innerHTML = "";
+            weekendContainer.innerHTML = "";
+
+            const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified;
+
+            // Sort schedule list chronologically
+            const sortedSchedule = [...scheduleList].sort((a, b) => {
+                const dateCompare = (a.date || "").localeCompare(b.date || "");
+                if (dateCompare !== 0) return dateCompare;
+                return parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time);
+            });
+
+            // 1. RENDER FULL SCHEDULE HUB CARDS
+            sortedSchedule.forEach(item => {
+                const isModular = item.type.includes("Modular");
+                
+                const officerEditBtn = isOfficer ? `
+                    <button onclick="openScheduleModalWithItem('${item.code}', '${item.date || ''}')" class="text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl font-medium flex items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-pen"></i> Edit Session
+                    </button>
+                ` : '';
+
+                const linkButton = item.link 
+                    ? `<a href="${item.link}" target="_blank" class="text-xs bg-brand-600 text-white px-3.5 py-1.5 rounded-xl font-medium hover:bg-brand-500 flex items-center gap-1.5"><i class="fa-solid fa-link"></i> ${isModular ? 'Open Module' : 'Join Class'}</a>` 
+                    : `<span class="text-xs text-slate-400 bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl">No Link Set</span>`;
+
+                const card = document.createElement("div");
+                card.className = "bg-slate-900/50 p-4 rounded-xl border border-slate-700/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 hover:border-slate-600 transition-all";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-bold text-brand-400">${item.code}</span>
+                            <span class="text-slate-600">•</span>
+                            <span class="font-semibold text-white text-sm">${item.title}</span>
+                            <span class="text-[10px] ${item.cycle === 'Cycle 1' ? 'bg-pink-900/40 text-pink-300 border-pink-500/40' : 'bg-emerald-900/40 text-emerald-300 border-emerald-500/40'} border px-1.5 py-0.5 rounded font-bold">${item.cycle}</span>
+                            <span class="text-[10px] ${isModular ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-brand-500/20 text-brand-300 border-brand-500/30'} border px-2 py-0.5 rounded font-bold">${item.type}</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">
+                            <i class="fa-solid fa-user-tie mr-1 text-slate-500"></i> ${item.prof} | 
+                            <i class="fa-regular fa-calendar mr-1 text-slate-500"></i> Date: <strong class="text-white">${item.date || 'TBD'}</strong> | 
+                            <i class="fa-regular fa-clock mr-1 text-slate-500"></i> ${item.time}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 self-end md:self-center">
+                        ${officerEditBtn}
+                        ${linkButton}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            // 2. RENDER UPCOMING WEEKEND HIGHLIGHTS (Calculated for current upcoming Saturday/Sunday)
             const today = new Date();
             const nextSat = new Date(today);
             nextSat.setDate(today.getDate() + ((6 - today.getDay() + 7) % 7 || 7));
             const nextSun = new Date(nextSat);
             nextSun.setDate(nextSat.getDate() + 1);
 
-            const formatDateStr = (d) => {
-                const year = d.getFullYear();
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                return `${year}-${month}-${day}`;
-            };
-
+            const formatDateStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             const satStr = formatDateStr(nextSat);
             const sunStr = formatDateStr(nextSun);
 
-            const formatDisplayDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            nextWeekendDatesEl.textContent = `${formatDisplayDate(nextSat)} & ${formatDisplayDate(nextSun)}`;
+            const formatDisplayDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            if (nextWeekendDatesEl) nextWeekendDatesEl.textContent = `${formatDisplayDate(nextSat)} & ${formatDisplayDate(nextSun)}`;
 
-            // Filter schedule strictly matching the upcoming weekend dates
             const weekendClasses = sortedSchedule.filter(item => item.date === satStr || item.date === sunStr);
 
             if (weekendClasses.length === 0) {
-                weekendContainer.innerHTML = `<p class="text-xs text-slate-400 italic col-span-2">No classes scheduled for this upcoming weekend.</p>`;
+                weekendContainer.innerHTML = `<p class="text-xs text-slate-400 italic col-span-2">No classes scheduled for this upcoming weekend (${formatDisplayDate(nextSat)} & ${formatDisplayDate(nextSun)}).</p>`;
             } else {
                 weekendClasses.forEach(item => {
-                    const isModular = item.type.includes("Modular");
                     const wCard = document.createElement("div");
                     wCard.className = "bg-slate-900/80 border border-slate-700/50 p-3.5 rounded-xl space-y-1.5";
                     wCard.innerHTML = `
@@ -1111,6 +1156,7 @@
                     weekendContainer.appendChild(wCard);
                 });
             }
+        }
             
             sortedSchedule.forEach((item, index) => {
                 const isModular = item.type.includes("Modular");
