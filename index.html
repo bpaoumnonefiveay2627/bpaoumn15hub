@@ -55,9 +55,9 @@
                     </div>
                 </div>
                 <div class="hidden lg:flex items-center gap-2 bg-slate-900/60 border border-slate-700/60 px-3 py-1.5 rounded-xl text-xs text-slate-300">
-    <i class="fa-regular fa-clock text-brand-400"></i>
-    <span id="liveRealtimeClock">Loading clock...</span>
-</div>
+                    <i class="fa-regular fa-clock text-brand-400"></i>
+                    <span id="liveRealtimeClock">Loading clock...</span>
+                </div>
                 <!-- Desktop Navigation Tabs -->
                 <nav class="hidden md:flex items-center space-x-1">
                     <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-brand-500 bg-slate-700/50">
@@ -629,6 +629,12 @@
         let groupCompletions = JSON.parse(localStorage.getItem("bpa_group_completions") || "{}");
         let currentCalendarDate = new Date();
 
+        // HELPER TO FORMAT DATES CLEANLY (REMOVES T16:00:00.000Z)
+        function formatDateOnly(dateStr) {
+            if (!dateStr) return "";
+            return String(dateStr).split("T")[0];
+        }
+
         function updateRealtimeClock() {
             const clockEl = document.getElementById("liveRealtimeClock");
             if (!clockEl) return;
@@ -643,8 +649,8 @@
                 minute: '2-digit',
                 second: '2-digit',
                 hour12: true
-                };
-            clockEl.textContent = now.toLocaleDateString('en-US', options);
+            };
+            clockEl.textContent = now.toLocaleString('en-US', options);
         }
 
         setInterval(updateRealtimeClock, 1000);
@@ -847,7 +853,7 @@
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 
                 const dayTasks = tasksData.filter(t => {
-                    if (t.dueDate !== dateStr) return false;
+                    if (formatDateOnly(t.dueDate) !== dateStr) return false;
                     if (t.type === "Individual") return true;
                     if (activeStudent === "Guest") return false;
                     const myGroup = t.groups ? t.groups.find(g => g.leader === activeStudent || (g.members && g.members.includes(activeStudent))) : null;
@@ -918,7 +924,7 @@
                 target.link = link;
 
                 if (type.includes("Modular") && link !== "") {
-                    const existingTask = tasksData.find(t => t.subject === code && t.dueDate === date);
+                    const existingTask = tasksData.find(t => t.subject === code && formatDateOnly(t.dueDate) === date);
                     if (!existingTask) {
                         const newId = tasksData.length > 0 ? Math.max(...tasksData.map(t => t.id)) + 1 : 1;
                         tasksData.push({
@@ -976,6 +982,7 @@
                 let isCompleted = false;
                 let permissionNotice = "";
                 let groupDetailsHTML = "";
+                const cleanDueDate = formatDateOnly(task.dueDate);
 
                 if (task.type === "Individual") {
                     isCompleted = userCompletions[activeStudent + "_" + task.id] || false;
@@ -1020,7 +1027,7 @@
                     <div>
                         <div class="flex justify-between items-start">
                             <span class="bg-brand-500/10 text-brand-400 border border-brand-500/20 text-xs font-semibold px-2.5 py-1 rounded">${task.subject}</span>
-                            <span class="text-xs text-amber-300 font-medium bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded"><i class="fa-regular fa-clock mr-1"></i> Due: ${task.dueDate}</span>
+                            <span class="text-xs text-amber-300 font-medium bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded"><i class="fa-regular fa-clock mr-1"></i> Due: ${cleanDueDate}</span>
                         </div>
                         <h4 class="font-bold text-white mt-2 flex items-center gap-2">${task.title} ${typeBadge}</h4>
                         <p class="text-xs text-slate-400 mt-1">${task.desc || ''}</p>
@@ -1044,7 +1051,7 @@
                         <div class="font-semibold text-white flex items-center gap-2">${task.title} ${typeBadge}</div>
                         <div class="mt-1">${linkButton}</div>
                     </td>
-                    <td class="py-3 px-4 text-amber-300 font-medium">${task.dueDate}</td>
+                    <td class="py-3 px-4 text-amber-300 font-medium">${cleanDueDate}</td>
                     <td class="py-3 px-4 text-right">${permissionNotice}</td>
                 `;
                 personalTable.appendChild(row);
@@ -1540,7 +1547,7 @@
             document.getElementById("newTaskSubject").value = task.subject;
             document.getElementById("newTaskTitle").value = task.title;
             document.getElementById("newTaskType").value = task.type;
-            document.getElementById("newTaskDate").value = task.dueDate;
+            document.getElementById("newTaskDate").value = formatDateOnly(task.dueDate);
             document.getElementById("newTaskLink").value = task.link || "";
 
             const gf = document.getElementById("groupFields");
