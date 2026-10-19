@@ -708,6 +708,9 @@
             const addCalBtn = document.getElementById("addCalendarEventBtn");
             const subtitleEl = document.getElementById("welcomeSubtitle");
             
+            // Re-read officer verification state from local storage on load
+            isOfficerVerified = localStorage.getItem("bpa_officer_verified") === "true";
+            
             const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent);
             const firstName = getFirstName(activeStudent);
 
@@ -722,22 +725,24 @@
             }
 
             if (isOfficer && isOfficerVerified) {
-                masterTabBtn.classList.remove("hidden"); masterTabBtn.classList.add("flex");
-                mobileMasterBtn.classList.remove("hidden");
-                addBtn.classList.remove("hidden");
-                addSchedBtn.classList.remove("hidden");
-                postAnnBtn.classList.remove("hidden");
+                if (masterTabBtn) { masterTabBtn.classList.remove("hidden"); masterTabBtn.classList.add("flex"); }
+                if (mobileMasterBtn) mobileMasterBtn.classList.remove("hidden");
+                if (addBtn) addBtn.classList.remove("hidden");
+                if (addSchedBtn) addSchedBtn.classList.remove("hidden");
+                if (postAnnBtn) postAnnBtn.classList.remove("hidden");
                 if (addCalBtn) addCalBtn.classList.remove("hidden");
+                
                 document.getElementById("welcomeBadge").textContent = "Officer Verified View";
                 document.getElementById("welcomeTitle").textContent = `Welcome back, ${firstName} (Officer)`;
                 renderMasterMatrix();
             } else {
-                masterTabBtn.classList.add("hidden"); masterTabBtn.classList.remove("flex");
-                mobileMasterBtn.classList.add("hidden");
-                addBtn.classList.add("hidden");
-                addSchedBtn.classList.add("hidden");
-                postAnnBtn.classList.add("hidden");
+                if (masterTabBtn) { masterTabBtn.classList.add("hidden"); masterTabBtn.classList.remove("flex"); }
+                if (mobileMasterBtn) mobileMasterBtn.classList.add("hidden");
+                if (addBtn) addBtn.classList.add("hidden");
+                if (addSchedBtn) addSchedBtn.classList.add("hidden");
+                if (postAnnBtn) postAnnBtn.classList.add("hidden");
                 if (addCalBtn) addCalBtn.classList.add("hidden");
+                
                 document.getElementById("welcomeBadge").textContent = "Student View";
                 document.getElementById("welcomeTitle").textContent = activeStudent === "Guest" ? "Welcome to BPAOUMN 1-5 Hub!" : `Hello, ${firstName}!`;
             }
