@@ -1156,9 +1156,21 @@
             try {
                 const res = await fetch(GOOGLE_SCRIPT_URL);
                 const data = await res.json();
-                if (data.chat) { classChatMessages = data.chat; renderChat(); }
-                if (data.announcements && data.announcements.length > 0) { blockAnnouncements = data.announcements; renderAnnouncements(); }
-            } catch(e) { console.log(e); }
+                
+                if (data.chat) { 
+                    classChatMessages = data.chat; 
+                    renderChat(); 
+                }
+                
+                // OVERWRITE LOCAL ANNOUNCEMENTS WITH LIVE SERVER LIST
+                if (data.announcements !== undefined) { 
+                    blockAnnouncements = data.announcements; 
+                    localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
+                    renderAnnouncements(); 
+                }
+            } catch(e) { 
+                console.log("Sync error:", e); 
+            }
         }
 
         async function handleImageUpload(event) {
@@ -1259,15 +1271,36 @@
             renderAnnouncements();
         }
 
-        function deleteAnnouncement(index) {
-            if (confirm("Are you sure you want to delete this bulletin?")) {
+        async function deleteAnnouncement(index) {
+            if (confirm("Are you sure you want to delete this bulletin for all students?")) {
+                const deletedItem = blockAnnouncements[index];
                 blockAnnouncements.splice(index, 1);
+                
+                // Update Local Storage immediately
                 localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
                 renderAnnouncements();
-                alert("Bulletin deleted.");
+
+                // Sync Deletion to Google Sheets / Live Backend
+                if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                    try {
+                        await fetch(GOOGLE_SCRIPT_URL, {
+                            method: "POST", mode: "no-cors",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ 
+                                action: "deleteAnnouncement", 
+                                title: deletedItem.title, 
+                                updatedAnnouncements: blockAnnouncements 
+                            })
+                        });
+                        alert("Bulletin deleted globally for all students!");
+                    } catch(e) { 
+                        console.log("Error syncing deletion to server:", e); 
+                    }
+                } else {
+                    alert("Bulletin deleted locally.");
+                }
             }
         }
-
         async function toggleTaskCompletion(taskId) {
             if (activeStudent === "Guest") { alert("Please select your name from the profile dropdown first!"); return; }
             const key = activeStudent + "_" + taskId;
