@@ -12,17 +12,27 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            50: '#f0f7ff', 100: '#e0effe', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e',
-                        },
-                        accent: {
-                            500: '#14b8a6', 600: '#0d9488',
+                        sunset: {
+                            dark: '#540B0E',
+                            red: '#902636',
+                            amber: '#D99B26',
+                            cream: '#FAD5A5',
+                            teal: '#314E52',
                         }
                     }
                 }
             }
         }
     </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #540B0E; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #314E52; }
+        ::-webkit-scrollbar-thumb { background: #902636; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #D99B26; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
@@ -40,81 +50,63 @@
 <body class="h-full flex flex-col antialiased selection:bg-brand-500 selection:text-white">
 
     <!-- Top Navigation Header -->
-    <header class="bg-slate-800/85 backdrop-blur border-b border-slate-700/60 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Logo & Block Name -->
-                <div class="flex items-center gap-2.5 min-w-0 flex-shrink">
-                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-500 flex-shrink-0 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 font-bold text-base sm:text-lg">
+    <header class="bg-[#540B0E]/95 backdrop-blur border-b border-[#902636]/40 sticky top-0 z-50 shadow-xl">
+        <!-- Layer 1: Branding, Centered-Right Clock, & Profile Selector -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+            <div class="flex items-center justify-between gap-4">
+                <!-- Logo & Block Title -->
+                <div class="flex items-center gap-3 min-w-0 flex-shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#902636] to-[#D99B26] flex-shrink-0 flex items-center justify-center text-[#FAD5A5] shadow-md font-bold text-lg border border-[#FAD5A5]/20">
                         <i class="fa-solid fa-graduation-cap"></i>
                     </div>
                     <div class="min-w-0">
-                        <h1 class="font-bold text-base sm:text-lg text-white leading-tight truncate">BPAOUMN 1-5</h1>
-                        <p class="text-[11px] sm:text-xs text-slate-400 truncate hidden sm:block">PUP OUS Workflow & Communication Hub</p>
-                        <p class="text-[10px] text-slate-400 truncate sm:hidden">PUP OUS Hub</p>
+                        <h1 class="font-bold text-base sm:text-lg text-white leading-tight truncate tracking-wide">BPAOUMN 1-5</h1>
+                        <p class="text-[11px] text-[#FAD5A5]/70 truncate">PUP OUS Workflow & Report Hub</p>
                     </div>
                 </div>
 
-                <!-- Clock Display -->
-                <div class="hidden lg:flex items-center gap-2 bg-slate-900/60 border border-slate-700/60 px-3 py-1.5 rounded-xl text-xs text-slate-300">
-                    <i class="fa-regular fa-clock text-brand-400"></i>
+                <!-- Ideal Clock Position (Visible on Tablets & Desktops) -->
+                <div class="hidden md:flex items-center gap-2 bg-[#314E52]/80 border border-[#D99B26]/30 px-4 py-1.5 rounded-xl text-xs text-[#FAD5A5] font-medium shadow-inner">
+                    <i class="fa-regular fa-clock text-[#D99B26]"></i>
                     <span id="liveRealtimeClock">Loading clock...</span>
                 </div>
 
-                <!-- Desktop Navigation Tabs -->
-                <nav class="hidden md:flex items-center space-x-1">
-                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-brand-500 bg-slate-700/50">
-                        <i class="fa-solid fa-chart-pie"></i> Dashboard
-                    </button>
-                    <button onclick="switchTab('announcements')" id="nav-announcements" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/30">
-                        <i class="fa-solid fa-bullhorn"></i> Announcements
-                    </button>
-                    <button onclick="switchTab('tasks')" id="nav-tasks" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/30">
-                        <i class="fa-solid fa-list-check"></i> Tasks
-                    </button>
-                    <button onclick="switchTab('chat')" id="nav-chat" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/30">
-                        <i class="fa-solid fa-comments"></i> Class Chat
-                    </button>
-                    <button onclick="switchTab('schedule')" id="nav-schedule" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/30">
-                        <i class="fa-solid fa-calendar-days"></i> Schedule & Calendar
-                    </button>
-                    <button onclick="switchTab('master')" id="nav-master" class="tab-btn hidden px-3 py-2 rounded-lg text-sm font-medium transition-all items-center gap-2 text-amber-400 hover:text-amber-300 hover:bg-amber-950/30 border border-amber-500/30">
-                        <i class="fa-solid fa-user-shield"></i> Matrix
-                    </button>
-                </nav>
-
                 <!-- Profile Selector -->
-                <div class="flex items-center gap-2 flex-shrink-0 max-w-[55%] sm:max-w-none">
-                    <div class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 sm:px-3.5 sm:py-2 flex items-center gap-1.5 shadow-inner w-full">
-                        <i class="fa-solid fa-user-graduate text-accent-500 text-xs flex-shrink-0"></i>
-                        <select id="studentProfileSelect" onchange="handleProfileChange(this.value)" class="bg-slate-900 text-white font-medium text-xs sm:text-sm focus:outline-none cursor-pointer w-full truncate">
-                            <option value="Guest" class="bg-slate-900 text-slate-300">-- Select Your Name --</option>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <div class="bg-[#314E52] border border-[#902636]/50 rounded-xl px-3 py-1.5 sm:px-3.5 sm:py-2 flex items-center gap-2 shadow-inner">
+                        <i class="fa-solid fa-user-graduate text-[#D99B26] text-xs flex-shrink-0"></i>
+                        <select id="studentProfileSelect" onchange="handleProfileChange(this.value)" class="bg-[#314E52] text-white font-medium text-xs sm:text-sm focus:outline-none cursor-pointer w-36 sm:w-52 truncate">
+                            <option value="Guest" class="bg-[#314E52] text-slate-300">-- Select Your Name --</option>
                         </select>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Mobile Navigation Sub-bar -->
-        <div class="md:hidden flex border-t border-slate-700/50 overflow-x-auto px-2 py-1.5 space-x-1">
-            <button onclick="switchTab('dashboard')" id="nav-mobile-dashboard" class="mobile-tab-btn whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-brand-500 bg-slate-700/50">
-                <i class="fa-solid fa-chart-pie mr-1"></i> Dashboard
-            </button>
-            <button onclick="switchTab('announcements')" id="nav-mobile-announcements" class="mobile-tab-btn whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300">
-                <i class="fa-solid fa-bullhorn mr-1"></i> Bulletins
-            </button>
-            <button onclick="switchTab('tasks')" id="nav-mobile-tasks" class="mobile-tab-btn whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300">
-                <i class="fa-solid fa-list-check mr-1"></i> Tasks
-            </button>
-            <button onclick="switchTab('chat')" id="nav-mobile-chat" class="mobile-tab-btn whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300">
-                <i class="fa-solid fa-comments mr-1"></i> Chat
-            </button>
-            <button onclick="switchTab('schedule')" id="nav-mobile-schedule" class="mobile-tab-btn whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300">
-                <i class="fa-solid fa-calendar-days mr-1"></i> Calendar
-            </button>
-            <button onclick="switchTab('master')" id="nav-mobile-master" class="mobile-tab-btn hidden whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-amber-400 border border-amber-500/30">
-                <i class="fa-solid fa-user-shield mr-1"></i> Matrix
-            </button>
+        <!-- Layer 2: Dedicated Navigation Tabs Bar (Scrollable on Mobile, Spacious on Desktop) -->
+        <div class="bg-[#314E52]/90 border-t border-[#902636]/30 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto">
+                <nav class="flex items-center gap-2 overflow-x-auto py-2.5 no-scrollbar">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-[#FAD5A5] bg-[#902636]/50 shadow-sm border border-[#D99B26]/30">
+                        <i class="fa-solid fa-chart-pie"></i> Dashboard
+                    </button>
+                    <button onclick="switchTab('announcements')" id="nav-announcements" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-[#540B0E]/40">
+                        <i class="fa-solid fa-bullhorn"></i> Bulletins
+                    </button>
+                    <button onclick="switchTab('tasks')" id="nav-tasks" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-[#540B0E]/40">
+                        <i class="fa-solid fa-list-check"></i> Tasks & Activities
+                    </button>
+                    <button onclick="switchTab('chat')" id="nav-chat" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-[#540B0E]/40">
+                        <i class="fa-solid fa-comments"></i> Class Chat
+                    </button>
+                    <button onclick="switchTab('schedule')" id="nav-schedule" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-[#540B0E]/40">
+                        <i class="fa-solid fa-calendar-days"></i> Schedule & Calendar
+                    </button>
+                    <button onclick="switchTab('master')" id="nav-master" class="tab-btn hidden whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all items-center gap-2 text-[#D99B26] hover:text-amber-200 hover:bg-[#D99B26]/10 border border-[#D99B26]/40">
+                        <i class="fa-solid fa-user-shield"></i> Officer Matrix
+                    </button>
+                </nav>
+            </div>
         </div>
     </header>
 
