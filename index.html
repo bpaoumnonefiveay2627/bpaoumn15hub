@@ -1274,6 +1274,14 @@
                 const res = await fetch(GOOGLE_SCRIPT_URL);
                 const data = await res.json();
                 
+                // Load live tasks from Google Sheets if available
+                if (data.tasks && data.tasks.length > 0) {
+                    tasksData = data.tasks;
+                    localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
+                    renderTasks();
+                    renderCalendar();
+                }
+
                 if (data.chat) { 
                     classChatMessages = data.chat; 
                     renderChat(); 
@@ -1540,7 +1548,7 @@
         function openScheduleModal() { document.getElementById("scheduleModal").classList.remove("hidden"); document.getElementById("scheduleModal").classList.add("flex"); }
         function closeScheduleModal() { document.getElementById("scheduleModal").classList.remove("flex"); document.getElementById("scheduleModal").classList.add("hidden"); }
 
-        function handleSaveTask(event) {
+        async function handleSaveTask(event) {
             event.preventDefault();
             const editId = document.getElementById("editTaskId").value;
             const type = document.getElementById("newTaskType").value;
@@ -1563,27 +1571,32 @@
                 if (hasError) return;
             }
 
+            const subjectVal = document.getElementById("newTaskSubject").value;
+            const titleVal = document.getElementById("newTaskTitle").value;
+            const dueDateVal = document.getElementById("newTaskDate").value;
+            const linkVal = document.getElementById("newTaskLink").value;
+
             if (editId !== "") {
                 const task = tasksData.find(t => t.id == editId);
                 if (task) {
-                    task.subject = document.getElementById("newTaskSubject").value;
-                    task.title = document.getElementById("newTaskTitle").value;
+                    task.subject = subjectVal;
+                    task.title = titleVal;
                     task.type = type;
                     task.groups = groupsData;
-                    task.dueDate = document.getElementById("newTaskDate").value;
-                    task.link = document.getElementById("newTaskLink").value;
+                    task.dueDate = dueDateVal;
+                    task.link = linkVal;
                     alert("Requirement updated successfully!");
                 }
             } else {
                 const newId = tasksData.length > 0 ? Math.max(...tasksData.map(t => t.id)) + 1 : 1;
                 tasksData.push({
                     id: newId,
-                    subject: document.getElementById("newTaskSubject").value,
-                    title: document.getElementById("newTaskTitle").value,
+                    subject: subjectVal,
+                    title: titleVal,
                     type: type,
                     groups: groupsData,
-                    dueDate: document.getElementById("newTaskDate").value,
-                    link: document.getElementById("newTaskLink").value
+                    dueDate: dueDateVal,
+                    link: linkVal
                 });
                 alert("Requirement added successfully!");
             }
@@ -1593,6 +1606,28 @@
             renderTasks();
             renderCalendar();
             if (isOfficerVerified) renderMasterMatrix();
+
+            // Send to Google Sheets backend so it persists across GitHub updates
+            if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            action: "addTask",
+                            subject: subjectVal,
+                            title: titleVal,
+                            type: type,
+                            dueDate: dueDateVal,
+                            moduleLink: linkVal,
+                            subLink: ""
+                        })
+                    });
+                } catch (err) {
+                    console.error("Failed to sync task to Google Sheets:", err);
+                }
+            }
         }
 
         function deleteTask(id) {
