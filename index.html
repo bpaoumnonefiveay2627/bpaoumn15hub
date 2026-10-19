@@ -668,11 +668,13 @@
                     activeStudent = name;
                     localStorage.setItem("bpa_active_student", name);
                     isOfficerVerified = true;
+                    localStorage.setItem("bpa_officer_verified", "true");
                     alert("Officer authentication successful!");
                 } else if (pin === expectedCode) {
                     activeStudent = name;
                     localStorage.setItem("bpa_active_student", name);
                     isOfficerVerified = false;
+                    localStorage.removeItem("bpa_officer_verified");
                     alert("Logged in as student.");
                 } else {
                     alert("Incorrect code or PIN.");
