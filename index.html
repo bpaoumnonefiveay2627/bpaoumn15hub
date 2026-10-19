@@ -667,27 +667,35 @@
             const schedSelect = document.getElementById("schedSubject");
 
             if (selectEl) {
+                // Keep default option
                 selectEl.innerHTML = '<option value="Guest" class="bg-slate-900 text-slate-300">-- Select Your Name --</option>';
-                studentsData.forEach(name => {
-                    const opt = document.createElement("option");
-                    opt.value = name; 
-                    opt.textContent = name;
-                    opt.className = "bg-slate-900 text-white";
-                    if (name === activeStudent) opt.selected = true;
-                    selectEl.appendChild(opt);
-                });
+                
+                // Populate all students from studentsFullRoster
+                if (typeof studentsFullRoster !== 'undefined' && studentsFullRoster.length > 0) {
+                    studentsFullRoster.forEach(s => {
+                        const fullName = `${s.lastName}, ${s.firstName} ${s.mi}`.trim();
+                        const opt = document.createElement("option");
+                        opt.value = fullName; 
+                        opt.textContent = fullName;
+                        opt.className = "bg-slate-900 text-white";
+                        if (fullName === activeStudent) opt.selected = true;
+                        selectEl.appendChild(opt);
+                    });
+                }
             }
 
             if (schedSelect) {
                 schedSelect.innerHTML = "";
-                scheduleList.forEach(s => {
-                    const sOpt = document.createElement("option");
-                    sOpt.value = s.code; 
-                    sOpt.textContent = s.code + " - " + s.title;
-                    sOpt.className = "bg-slate-900 text-white";
-                    schedSelect.appendChild(sOpt);
-                });
-                if (scheduleList.length > 0) populateScheduleEditForm(scheduleList[0].code);
+                if (typeof scheduleList !== 'undefined' && scheduleList.length > 0) {
+                    scheduleList.forEach(s => {
+                        const sOpt = document.createElement("option");
+                        sOpt.value = s.code; 
+                        sOpt.textContent = s.code + " - " + s.title;
+                        sOpt.className = "bg-slate-900 text-white";
+                        schedSelect.appendChild(sOpt);
+                    });
+                    if (scheduleList[0]) populateScheduleEditForm(scheduleList[0].code);
+                }
             }
 
             checkOfficerStatus();
