@@ -567,14 +567,51 @@
         const AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => s.role === "Officer").map(s => `${s.lastName}, ${s.firstName} ${s.mi}`.trim());
 
         let scheduleList = JSON.parse(localStorage.getItem("bpa_schedule_list") || JSON.stringify([
+            // --- CYCLE 1 SYNCHRONOUS DATES ---
+            // August 29-30, 2026
+            { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-08-29", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
+            { code: "GEED 002", title: "Readings in Philippine History", prof: "Assoc. Prof. Mc Donald Domingo M. Pascual", date: "2026-08-29", time: "Sat & Sun 4:30 PM - 6:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
+            { code: "GEED 008", title: "ETHICS", prof: "Assoc. Prof. Elizabeth L. Pambuena", date: "2026-08-29", time: "Sat & Sun 6:00 PM - 7:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
+            { code: "GEED 001", title: "UTS (Understanding the Self)", prof: "Assoc. Prof. Lorraine Charmayne S. Manansala", date: "2026-08-29", time: "Sat & Sun 7:30 PM - 9:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
+
+            // September 12-13, 2026
+            { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-09-12", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
+            { code: "GEED 002", title: "Readings in Philippine History", prof: "Assoc. Prof. Mc Donald Domingo M. Pascual", date: "2026-09-12", time: "Sat & Sun 4:30 PM - 6:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
+            { code: "GEED 008", title: "ETHICS", prof: "Assoc. Prof. Elizabeth L. Pambuena", date: "2026-09-12", time: "Sat & Sun 6:00 PM - 7:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
+            { code: "GEED 001", title: "UTS (Understanding the Self)", prof: "Assoc. Prof. Lorraine Charmayne S. Manansala", date: "2026-09-12", time: "Sat & Sun 7:30 PM - 9:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
+
+            // October 3-4 & October 24-25, 2026
             { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-10-24", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 002", title: "Reading in Philippine History", prof: "Assoc. Prof. Mc Donald Domingo M. Pascual", date: "2026-10-24", time: "Sat & Sun 4:30 PM - 6:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
+            { code: "GEED 002", title: "Readings in Philippine History", prof: "Assoc. Prof. Mc Donald Domingo M. Pascual", date: "2026-10-24", time: "Sat & Sun 4:30 PM - 6:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
             { code: "GEED 008", title: "ETHICS", prof: "Assoc. Prof. Elizabeth L. Pambuena", date: "2026-10-24", time: "Sat & Sun 6:00 PM - 7:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
             { code: "GEED 001", title: "UTS (Understanding the Self)", prof: "Assoc. Prof. Lorraine Charmayne S. Manansala", date: "2026-10-24", time: "Sat & Sun 7:30 PM - 9:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            { code: "CWTS 001", title: "Civic Welfare Training Service 1", prof: "Mr. Kristoffer Dennis C. Villegas", date: "2026-10-25", time: "Sat & Sun 7:30 AM - 9:00 AM", cycle: "Cycle 2", type: "Asynchronous (Modular)", link: "" },
-            { code: "GEED 019", title: "The Entrepreneurial Mind", prof: "Ms. Airice Marie M. Alfonso", date: "2026-10-25", time: "Sat & Sun 9:00 AM - 10:30 AM", cycle: "Cycle 2", type: "Asynchronous (Modular)", link: "" },
-            { code: "PUAD 101", title: "Introduction to Public Administration", prof: "Prof. Ana Marie G. Ngo", date: "2026-10-25", time: "Sat & Sun 10:30 AM - 12:00 PM", cycle: "Cycle 2", type: "Asynchronous (Modular)", link: "" },
-            { code: "PATHFIT 1", title: "Physical Activities Toward Health and Fitness 1", prof: "Assigned Faculty", date: "2026-10-25", time: "Sat 12:00 PM - 2:00 PM", cycle: "Cycle 2", type: "Asynchronous (Modular)", link: "" }
+
+            // November 14-15, 2026
+            { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-11-14", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
+            { code: "GEED 002", title: "Readings in Philippine History", prof: "Assoc. Prof. Mc Donald Domingo M. Pascual", date: "2026-11-14", time: "Sat & Sun 4:30 PM - 6:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
+            
+            // December 5-6, 2026
+            { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-12-05", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
+
+            // --- CYCLE 2 SYNCHRONOUS DATES ---
+            // September 5-6 & September 19-20, 2026
+            { code: "CWTS 001", title: "Civic Welfare Training Service 1", prof: "Mr. Kristoffer Dennis C. Villegas", date: "2026-09-05", time: "Sat & Sun 7:30 AM - 9:00 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
+            { code: "GEED 019", title: "The Entrepreneurial Mind", prof: "Ms. Airice Marie M. Alfonso", date: "2026-09-05", time: "Sat & Sun 9:00 AM - 10:30 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
+            { code: "PUAD 101", title: "Introduction to Public Administration", prof: "Prof. Ana Marie G. Ngo", date: "2026-09-05", time: "Sat & Sun 10:30 AM - 12:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
+            { code: "PATHFIT 1", title: "Physical Activity Towards Health and Fitness 1", prof: "Assigned Faculty", date: "2026-09-05", time: "Sat 12:00 PM - 2:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
+
+            // October 10-11, 2026
+            { code: "CWTS 001", title: "Civic Welfare Training Service 1", prof: "Mr. Kristoffer Dennis C. Villegas", date: "2026-10-10", time: "Sat & Sun 7:30 AM - 9:00 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
+            { code: "GEED 019", title: "The Entrepreneurial Mind", prof: "Ms. Airice Marie M. Alfonso", date: "2026-10-10", time: "Sat & Sun 9:00 AM - 10:30 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
+            { code: "PUAD 101", title: "Introduction to Public Administration", prof: "Prof. Ana Marie G. Ngo", date: "2026-10-10", time: "Sat & Sun 10:30 AM - 12:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
+            { code: "PATHFIT 1", title: "Physical Activity Towards Health and Fitness 1", prof: "Assigned Faculty", date: "2026-10-10", time: "Sat 12:00 PM - 2:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
+
+            // November 7-8 & November 21-22, 2026
+            { code: "CWTS 001", title: "Civic Welfare Training Service 1", prof: "Mr. Kristoffer Dennis C. Villegas", date: "2026-11-07", time: "Sat & Sun 7:30 AM - 9:00 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
+            { code: "PUAD 101", title: "Introduction to Public Administration", prof: "Prof. Ana Marie G. Ngo", date: "2026-11-07", time: "Sat & Sun 10:30 AM - 12:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
+
+            // December 12-13, 2026
+            { code: "CWTS 001", title: "Civic Welfare Training Service 1", prof: "Mr. Kristoffer Dennis C. Villegas", date: "2026-12-12", time: "Sat & Sun 7:30 AM - 9:00 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" }
         ]));
 
         let tasksData = JSON.parse(localStorage.getItem("bpa_tasks_data") || JSON.stringify([
@@ -809,8 +846,14 @@
                 let eventsHtml = `<div class="font-bold text-xs text-slate-300 mb-1">${day}</div><div class="space-y-1">`;
                 
                 dayClasses.forEach(c => {
+                    const isCycle1 = c.cycle === "Cycle 1";
                     const isMod = c.type.includes("Modular");
-                    eventsHtml += `<div class="text-[10px] ${isMod ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-brand-500/20 text-brand-300 border-brand-500/30'} border px-1.5 py-0.5 rounded truncate font-medium" title="${c.code}: ${c.title}">📚 ${c.code}</div>`;
+                    
+                    const cycleBg = isCycle1 
+                        ? (isMod ? 'bg-pink-900/40 text-pink-300 border-pink-500/40' : 'bg-red-500/20 text-red-300 border-red-500/40')
+                        : (isMod ? 'bg-emerald-900/40 text-emerald-300 border-emerald-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40');
+
+                    eventsHtml += `<div class="text-[10px] ${cycleBg} border px-1.5 py-0.5 rounded truncate font-medium" title="${c.code}: ${c.title} (${c.time})">📚 ${c.code} (${c.cycle})</div>`;
                 });
 
                 dayTasks.forEach(t => {
