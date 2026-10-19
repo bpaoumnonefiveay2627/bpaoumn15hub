@@ -52,64 +52,64 @@
     <!-- Top Navigation Header -->
     <header class="bg-[#540B0E]/95 backdrop-blur border-b border-[#902636]/40 sticky top-0 z-50 shadow-xl">
         <!-- Layer 1: Branding, Centered-Right Clock, & Profile Selector -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
-            <div class="flex items-center justify-between gap-4">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3">
+            <div class="flex items-center justify-between gap-2 sm:gap-4">
                 <!-- Logo & Block Title -->
-                <div class="flex items-center gap-3 min-w-0 flex-shrink-0">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#902636] to-[#D99B26] flex-shrink-0 flex items-center justify-center text-[#FAD5A5] shadow-md font-bold text-lg border border-[#FAD5A5]/20">
+                <div class="flex items-center gap-2.5 min-w-0 flex-shrink">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-[#902636] to-[#D99B26] flex-shrink-0 flex items-center justify-center text-[#FAD5A5] shadow-md font-bold text-base sm:text-lg border border-[#FAD5A5]/20">
                         <i class="fa-solid fa-graduation-cap"></i>
                     </div>
                     <div class="min-w-0">
-                        <h1 class="font-bold text-base sm:text-lg text-white leading-tight truncate tracking-wide">BPAOUMN 1-5</h1>
-                        <p class="text-[11px] text-[#FAD5A5]/70 truncate">PUP OUS Workflow & Report Hub</p>
+                        <h1 class="font-bold text-sm sm:text-lg text-white leading-tight truncate tracking-wide">BPAOUMN 1-5</h1>
+                        <p class="text-[10px] sm:text-[11px] text-[#FAD5A5]/70 truncate">PUP OUS Hub</p>
                     </div>
                 </div>
 
                 <!-- Ideal Clock Position (Visible on Tablets & Desktops) -->
-                <div class="hidden md:flex items-center gap-2 bg-[#314E52]/80 border border-[#D99B26]/30 px-4 py-1.5 rounded-xl text-xs text-[#FAD5A5] font-medium shadow-inner">
+                <div class="hidden md:flex items-center gap-2 bg-[#314E52]/80 border border-[#D99B26]/30 px-3.5 py-1.5 rounded-xl text-xs text-[#FAD5A5] font-medium shadow-inner">
                     <i class="fa-regular fa-clock text-[#D99B26]"></i>
                     <span id="liveRealtimeClock">Loading clock...</span>
                 </div>
 
-                <!-- Profile Selector -->
-                <div class="flex items-center gap-2 flex-shrink-0">
-                    <div class="bg-[#314E52] border border-[#902636]/50 rounded-xl px-3 py-1.5 sm:px-3.5 sm:py-2 flex items-center gap-2 shadow-inner">
+                <!-- Profile Selector (Optimized for Mobile Margin & Last Name Display) -->
+                <div class="flex items-center gap-2 flex-shrink-0 max-w-[48%] sm:max-w-none">
+                    <div class="bg-[#314E52] border border-[#902636]/50 rounded-xl px-2.5 py-1.5 sm:px-3.5 sm:py-2 flex items-center gap-1.5 shadow-inner w-full">
                         <i class="fa-solid fa-user-graduate text-[#D99B26] text-xs flex-shrink-0"></i>
-                        <select id="studentProfileSelect" onchange="handleProfileChange(this.value)" class="bg-[#314E52] text-white font-medium text-xs sm:text-sm focus:outline-none cursor-pointer w-36 sm:w-52 truncate">
-                            <option value="Guest" class="bg-[#314E52] text-slate-300">-- Select Your Name --</option>
+                        <select id="studentProfileSelect" onchange="handleProfileChange(this.value)" class="bg-[#314E52] text-white font-medium text-xs sm:text-sm focus:outline-none cursor-pointer w-28 sm:w-52 truncate">
+                            <option value="Guest" class="bg-[#314E52] text-slate-300">Select Name</option>
                         </select>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Layer 2: Dedicated Navigation Tabs Bar (Scrollable on Mobile, Spacious on Desktop) -->
-        <div class="bg-[#314E52]/90 border-t border-[#902636]/30 px-4 sm:px-6 lg:px-8">
+        <!-- Layer 2: Dedicated Navigation Tabs Bar (Centered on Desktop) -->
+        <div class="bg-[#314E52]/90 border-t border-[#902636]/30 px-2 sm:px-6 lg:px-8">
             <div class="max-w-7xl mx-auto">
-                <nav class="flex items-center gap-2 overflow-x-auto py-2.5 no-scrollbar">
-                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-[#FAD5A5] bg-[#902636]/50 shadow-sm border border-[#D99B26]/30">
+                <nav class="flex items-center justify-start md:justify-center gap-1.5 sm:gap-2 overflow-x-auto py-2.5 no-scrollbar">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-[#FAD5A5] bg-[#902636]/50 shadow-sm border border-[#D99B26]/30">
                         <i class="fa-solid fa-chart-pie"></i> Dashboard
                     </button>
-                    <button onclick="switchTab('announcements')" id="nav-announcements" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-[#540B0E]/40">
+                    <button onclick="switchTab('announcements')" id="nav-announcements" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-[#540B0E]/40">
                         <i class="fa-solid fa-bullhorn"></i> Bulletins
                     </button>
-                    <button onclick="switchTab('tasks')" id="nav-tasks" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-[#540B0E]/40">
-                        <i class="fa-solid fa-list-check"></i> Tasks & Activities
+                    <button onclick="switchTab('tasks')" id="nav-tasks" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-[#540B0E]/40">
+                        <i class="fa-solid fa-list-check"></i> Tasks
                     </button>
-                    <button onclick="switchTab('chat')" id="nav-chat" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-[#540B0E]/40">
-                        <i class="fa-solid fa-comments"></i> Class Chat
+                    <button onclick="switchTab('chat')" id="nav-chat" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-[#540B0E]/40">
+                        <i class="fa-solid fa-comments"></i> Chat
                     </button>
-                    <button onclick="switchTab('schedule')" id="nav-schedule" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-[#540B0E]/40">
-                        <i class="fa-solid fa-calendar-days"></i> Schedule & Calendar
+                    <button onclick="switchTab('schedule')" id="nav-schedule" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-[#540B0E]/40">
+                        <i class="fa-solid fa-calendar-days"></i> Calendar
                     </button>
-                    <button onclick="switchTab('master')" id="nav-master" class="tab-btn hidden whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all items-center gap-2 text-[#D99B26] hover:text-amber-200 hover:bg-[#D99B26]/10 border border-[#D99B26]/40">
-                        <i class="fa-solid fa-user-shield"></i> Officer Matrix
+                    <button onclick="switchTab('master')" id="nav-master" class="tab-btn hidden whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all items-center gap-2 text-[#D99B26] hover:text-amber-200 hover:bg-[#D99B26]/10 border border-[#D99B26]/40">
+                        <i class="fa-solid fa-user-shield"></i> Matrix
                     </button>
                 </nav>
             </div>
         </div>
     </header>
-
+    
     <!-- Main Content Body -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6">
 
@@ -671,16 +671,19 @@
         function initApp() {
             const selectEl = document.getElementById("studentProfileSelect");
             const schedSelect = document.getElementById("schedSubject");
+            const isMobile = window.innerWidth < 640;
 
             if (selectEl) {
-                selectEl.innerHTML = '<option value="Guest" class="bg-slate-900 text-slate-300">-- Select Your Name --</option>';
+                selectEl.innerHTML = '<option value="Guest" class="bg-[#314E52] text-slate-300">Select Name</option>';
                 if (typeof studentsFullRoster !== 'undefined' && studentsFullRoster.length > 0) {
                     studentsFullRoster.forEach(s => {
                         const fullName = `${s.lastName}, ${s.firstName} ${s.mi}`.trim();
+                        // Display only last name on mobile if selected, full name in dropdown
+                        const displayName = isMobile ? s.lastName : fullName;
                         const opt = document.createElement("option");
                         opt.value = fullName; 
-                        opt.textContent = fullName;
-                        opt.className = "bg-slate-900 text-white";
+                        opt.textContent = displayName;
+                        opt.className = "bg-[#314E52] text-white";
                         if (fullName === activeStudent) opt.selected = true;
                         selectEl.appendChild(opt);
                     });
@@ -810,14 +813,17 @@
 
         function switchTab(tabId) {
             document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
-            document.querySelectorAll(".tab-btn").forEach(el => { el.classList.remove("text-brand-500", "bg-slate-700/50"); el.classList.add("text-slate-300"); });
-            document.querySelectorAll(".mobile-tab-btn").forEach(el => { el.classList.remove("text-brand-500", "bg-slate-700/50"); el.classList.add("text-slate-300"); });
+            document.querySelectorAll(".tab-btn").forEach(el => { 
+                el.classList.remove("text-[#FAD5A5]", "bg-[#902636]/50", "border", "border-[#D99B26]/30", "shadow-sm"); 
+                el.classList.add("text-slate-300"); 
+            });
 
             document.getElementById(`tab-${tabId}`).classList.remove("hidden");
             const activeBtn = document.getElementById(`nav-${tabId}`);
-            if (activeBtn) { activeBtn.classList.remove("text-slate-300"); activeBtn.classList.add("text-brand-500", "bg-slate-700/50"); }
-            const activeMobileBtn = document.getElementById(`nav-mobile-${tabId}`);
-            if (activeMobileBtn) { activeMobileBtn.classList.remove("text-slate-300"); activeMobileBtn.classList.add("text-brand-500", "bg-slate-700/50"); }
+            if (activeBtn) { 
+                activeBtn.classList.remove("text-slate-300", "hover:text-white", "hover:bg-[#540B0E]/40"); 
+                activeBtn.classList.add("text-[#FAD5A5]", "bg-[#902636]/50", "border", "border-[#D99B26]/30", "shadow-sm"); 
+            }
         }
 
         function changeMonth(dir) {
