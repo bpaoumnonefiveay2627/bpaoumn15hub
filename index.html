@@ -54,10 +54,13 @@
                         <p class="text-[10px] text-slate-400 truncate sm:hidden">PUP OUS Hub</p>
                     </div>
                 </div>
+
+                <!-- Clock Display -->
                 <div class="hidden lg:flex items-center gap-2 bg-slate-900/60 border border-slate-700/60 px-3 py-1.5 rounded-xl text-xs text-slate-300">
                     <i class="fa-regular fa-clock text-brand-400"></i>
                     <span id="liveRealtimeClock">Loading clock...</span>
                 </div>
+
                 <!-- Desktop Navigation Tabs -->
                 <nav class="hidden md:flex items-center space-x-1">
                     <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-brand-500 bg-slate-700/50">
@@ -80,7 +83,7 @@
                     </button>
                 </nav>
 
-               <!-- Profile Selector -->
+                <!-- Profile Selector -->
                 <div class="flex items-center gap-2 flex-shrink-0 max-w-[55%] sm:max-w-none">
                     <div class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 sm:px-3.5 sm:py-2 flex items-center gap-1.5 shadow-inner w-full">
                         <i class="fa-solid fa-user-graduate text-accent-500 text-xs flex-shrink-0"></i>
@@ -91,6 +94,7 @@
                 </div>
             </div>
         </div>
+
         <!-- Mobile Navigation Sub-bar -->
         <div class="md:hidden flex border-t border-slate-700/50 overflow-x-auto px-2 py-1.5 space-x-1">
             <button onclick="switchTab('dashboard')" id="nav-mobile-dashboard" class="mobile-tab-btn whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-brand-500 bg-slate-700/50">
@@ -124,7 +128,7 @@
                     <div class="flex items-center gap-2">
                         <span id="welcomeBadge" class="bg-brand-500/20 text-brand-400 border border-brand-500/30 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Student View</span>
                         <span class="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>  Sheet Live Sync Active
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Sheet Live Sync Active
                         </span>
                     </div>
                     <h2 class="text-2xl font-bold text-white mt-2" id="welcomeTitle">Welcome to BPAOUMN 1-5 Hub!</h2>
@@ -629,7 +633,7 @@
         let groupCompletions = JSON.parse(localStorage.getItem("bpa_group_completions") || "{}");
         let currentCalendarDate = new Date();
 
-        // HELPER TO FORMAT DATES CLEANLY (REMOVES T16:00:00.000Z)
+        // HELPER TO CLEAN ISO DATE TIMESTAMPS
         function formatDateOnly(dateStr) {
             if (!dateStr) return "";
             return String(dateStr).split("T")[0];
