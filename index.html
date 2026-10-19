@@ -497,8 +497,9 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Rotation Cycle *</label>
-                        <input type="text" id="schedCycleInput" required placeholder="e.g. Cycle 1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white">
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Rotation Cycle (Fixed)</label>
+                        <input type="text" id="schedCycleDisplay" readonly class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-400 cursor-not-allowed" />
+                        <input type="hidden" id="schedCycleInput" />
                     </div>
                 </div>
                 <div>
@@ -840,17 +841,52 @@
             document.getElementById("calendarEventModal").classList.add("hidden");
         }
 
-        function handleSaveCalendarEvent(event) {
+        function handleSaveSchedule(event) {
             event.preventDefault();
-            const title = document.getElementById("calEventTitle").value;
-            const date = document.getElementById("calEventDate").value;
-            const tag = document.getElementById("calEventTag").value;
+            const code = document.getElementById("schedSubject").value;
+            const date = document.getElementById("schedDateInput").value;
+            const time = document.getElementById("schedTimeInput").value;
+            const type = document.getElementById("schedTypeInput").value;
+            const cycle = document.getElementById("schedCycleInput").value; // Reads fixed cycle
+            const link = document.getElementById("schedLinkInput").value.trim();
 
-            semesterEvents.push({ title, date, tag });
-            localStorage.setItem("bpa_semester_events", JSON.stringify(semesterEvents));
-            closeCalendarEventModal();
-            renderCalendar();
-            alert("Semester event plotted successfully!");
+            const target = scheduleList.find(s => s.code === code);
+            if (target) {
+                target.date = date;
+                target.time = time;
+                target.type = type;
+                // target.cycle remains fixed to its original curriculum assignment
+                target.link = link;
+
+                if (type.includes("Modular") && link !== "") {
+                    const existingTask = tasksData.find(t => t.subject === code && t.dueDate === date);
+                    if (!existingTask) {
+                        const newId = tasksData.length > 0 ? Math.max(...tasksData.map(t => t.id)) + 1 : 1;
+                        tasksData.push({
+                            id: newId,
+                            subject: code,
+                            title: `Module Output / Activity (${target.title})`,
+                            type: "Individual",
+                            dueDate: date,
+                            link: link,
+                            desc: `Auto-generated task from Modular session on ${date}.`
+                        });
+                        alert(`Schedule updated! Since a module link was provided, a task was automatically generated.`);
+                    } else {
+                        existingTask.link = link;
+                        alert(`Schedule and task link updated successfully!`);
+                    }
+                    localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
+                } else {
+                    alert(`Schedule adjusted successfully! (Cycle is locked to ${target.cycle}).`);
+                }
+
+                localStorage.setItem("bpa_schedule_list", JSON.stringify(scheduleList));
+                renderSchedule();
+                renderTasks();
+                renderCalendar();
+                closeScheduleModal();
+            }
         }
 
         function deleteCalendarEvent(date, title) {
@@ -1040,6 +1076,7 @@
                 document.getElementById("schedTimeInput").value = target.time;
                 document.getElementById("schedTypeInput").value = target.type;
                 document.getElementById("schedCycleInput").value = target.cycle;
+                document.getElementById("schedCycleDisplay").value = target.cycle; // Display locked cycle
                 document.getElementById("schedLinkInput").value = target.link || "";
             }
         }
