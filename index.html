@@ -590,7 +590,7 @@
 
         let classChatMessages = [];
         let activeStudent = localStorage.getItem("bpa_active_student") || "Guest";
-        let isOfficerVerified = false;
+        let isOfficerVerified = localStorage.getItem("bpa_officer_verified") === "true";
         let userCompletions = JSON.parse(localStorage.getItem("bpa_user_completions") || "{}");
         let groupCompletions = JSON.parse(localStorage.getItem("bpa_group_completions") || "{}");
         let currentCalendarDate = new Date();
