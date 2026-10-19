@@ -44,15 +44,14 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <!-- Logo & Block Name -->
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 font-bold text-lg">
+                <div class="flex items-center gap-2.5 min-w-0 flex-shrink">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-500 flex-shrink-0 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 font-bold text-base sm:text-lg">
                         <i class="fa-solid fa-graduation-cap"></i>
                     </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h1 class="font-bold text-lg text-white leading-tight">BPAOUMN 1-5</h1>
-                        </div>
-                        <p class="text-xs text-slate-400">PUP OUS Workflow & Communication Hub</p>
+                    <div class="min-w-0">
+                        <h1 class="font-bold text-base sm:text-lg text-white leading-tight truncate">BPAOUMN 1-5</h1>
+                        <p class="text-[11px] sm:text-xs text-slate-400 truncate hidden sm:block">PUP OUS Workflow & Communication Hub</p>
+                        <p class="text-[10px] text-slate-400 truncate sm:hidden">PUP OUS Hub</p>
                     </div>
                 </div>
 
@@ -78,11 +77,11 @@
                     </button>
                 </nav>
 
-                <!-- Profile Selector -->
-                <div class="flex items-center gap-3">
-                    <div class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 flex items-center gap-2 shadow-inner">
-                        <i class="fa-solid fa-user-graduate text-accent-500 text-xs"></i>
-                        <select id="studentProfileSelect" onchange="handleProfileChange(this.value)" class="bg-slate-900 text-white font-medium text-xs sm:text-sm focus:outline-none cursor-pointer">
+               <!-- Profile Selector -->
+                <div class="flex items-center gap-2 flex-shrink-0 max-w-[55%] sm:max-w-none">
+                    <div class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 sm:px-3.5 sm:py-2 flex items-center gap-1.5 shadow-inner w-full">
+                        <i class="fa-solid fa-user-graduate text-accent-500 text-xs flex-shrink-0"></i>
+                        <select id="studentProfileSelect" onchange="handleProfileChange(this.value)" class="bg-slate-900 text-white font-medium text-xs sm:text-sm focus:outline-none cursor-pointer w-full truncate">
                             <option value="Guest" class="bg-slate-900 text-slate-300">-- Select Your Name --</option>
                         </select>
                     </div>
