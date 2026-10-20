@@ -236,9 +236,9 @@
                             <tr class="bg-[#161622] text-[#FAD5A5]/70 text-xs uppercase tracking-wider border-b border-[#252538]">
                                 <th class="py-3 px-4">Status</th>
                                 <th class="py-3 px-4">Subject</th>
-                                <th class="py-3 px-4">Requirement & Resource Link</th>
+                                <th class="py-3 px-4">Requirement Links & Details</th>
                                 <th class="py-3 px-4">Due Date</th>
-                                <th class="py-3 px-4 text-right">Action / Permission</th>
+                                <th class="py-3 px-4 text-right">Action / Upload</th>
                             </tr>
                         </thead>
                         <tbody id="personalTaskTableBody" class="divide-y divide-[#902636]/20 text-slate-200"></tbody>
@@ -306,9 +306,8 @@
             <div id="tasksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
-        <!-- SCHEDULE & SEMESTER CALENDAR TAB (EMULATING REFERENCE PLACEHOLDER COLOR SCHEME) -->
+        <!-- SCHEDULE & SEMESTER CALENDAR TAB -->
         <section id="tab-schedule" class="tab-content hidden space-y-6">
-            <!-- Upcoming Weekend Schedule Highlight Box (Matches Image Reference Palette) -->
             <div class="bg-[#3b0609] border border-[#540b0e] p-6 rounded-2xl shadow-xl space-y-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2 text-white font-bold text-lg">
@@ -317,12 +316,9 @@
                     <span id="nextWeekendDates" class="text-xs bg-[#161622] text-[#FAD5A5] border border-[#252538] px-3.5 py-1 rounded-full font-semibold">Oct 24 & Oct 25</span>
                 </div>
                 <p class="text-xs text-[#FAD5A5]/70">Quick view of all synchronized classes for the upcoming weekend.</p>
-                
-                <!-- Inner Subjects Cards (Matches Navy/Dark Slate Placeholder Cards from Reference Image) -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1" id="weekendScheduleHighlightList"></div>
             </div>
 
-            <!-- Semester Calendar (Vice-Versa Inverted Placeholder Palette) -->
             <div class="bg-[#161622] border border-[#252538] rounded-2xl p-6 shadow-xl space-y-4">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-[#252538] pb-4 gap-3">
                     <div>
@@ -344,7 +340,6 @@
                 <div id="semesterCalendarGrid" class="grid grid-cols-7 gap-1.5"></div>
             </div>
 
-            <!-- Full Course List Container -->
             <div class="bg-[#3b0609] border border-[#902636]/40 rounded-2xl p-6 shadow-xl space-y-4">
                 <div class="flex justify-between items-center border-b border-[#902636]/30 pb-4">
                     <div>
@@ -403,7 +398,58 @@
         </div>
     </div>
 
-    <!-- MODALS WITH EMULATED PLACEHOLDER COLOR SCHEME -->
+    <!-- DIRECT FILE UPLOAD TO GOOGLE DRIVE MODAL -->
+    <div id="driveUploadModal" class="fixed inset-0 bg-[#540B0E]/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#3b0609] border border-[#902636]/60 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-[#902636]/40 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-cloud-arrow-up text-[#D99B26]"></i> Upload File to Requirement Drive Folder</h3>
+                <button onclick="closeDriveUploadModal()" class="text-[#FAD5A5]/70 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="driveUploadForm" onsubmit="handleDirectDriveUpload(event)" class="space-y-4 text-sm">
+                <input type="hidden" id="driveUploadTaskId" value="">
+                <input type="hidden" id="driveUploadFolderUrl" value="">
+                
+                <div>
+                    <p id="driveUploadTaskTitleDisplay" class="text-xs font-bold text-[#FAD5A5] mb-2"></p>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Select Document / Output File *</label>
+                    <input type="file" id="directDriveFile" required class="w-full bg-[#161622] border border-[#252538] rounded-xl p-2 text-xs text-[#FAD5A5] file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#902636] file:text-white hover:file:bg-[#751e2b]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Remarks / Note (Optional)</label>
+                    <input type="text" id="directDriveRemarks" placeholder="e.g., Final Version Submission" class="w-full bg-[#161622] border border-[#252538] rounded-xl p-3 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeDriveUploadModal()" class="px-4 py-2 bg-[#314E52] hover:bg-[#314E52]/80 rounded-xl text-xs font-medium text-[#FAD5A5]">Cancel</button>
+                    <button type="submit" id="driveUploadSubmitBtn" class="px-5 py-2 bg-[#902636] hover:bg-[#751e2b] rounded-xl text-xs font-medium text-white shadow-md flex items-center gap-1.5"><i class="fa-solid fa-upload"></i> Upload Directly</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- INSTRUCTIONS & RUBRICS VIEW MODAL -->
+    <div id="instructionsModal" class="fixed inset-0 bg-[#540B0E]/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#3b0609] border border-[#902636]/60 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-[#902636]/40 pb-3">
+                <h3 id="instructionsModalTitle" class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-file-circle-check text-[#D99B26]"></i> Activity Instructions & Rubrics</h3>
+                <button onclick="closeInstructionsModal()" class="text-[#FAD5A5]/70 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-4 text-sm">
+                <div>
+                    <h4 class="text-xs font-semibold text-[#D99B26] uppercase tracking-wider mb-1">Activity Instructions</h4>
+                    <div id="displayActivityInstructions" class="bg-[#161622] border border-[#252538] p-3.5 rounded-xl text-xs text-slate-200 whitespace-pre-wrap leading-relaxed">No instructions provided.</div>
+                </div>
+                <div>
+                    <h4 class="text-xs font-semibold text-[#D99B26] uppercase tracking-wider mb-1">Grading Rubrics / Criteria</h4>
+                    <div id="displayActivityRubrics" class="bg-[#161622] border border-[#252538] p-3.5 rounded-xl text-xs text-slate-200 whitespace-pre-wrap leading-relaxed">No rubric links or criteria specified.</div>
+                </div>
+                <div class="flex justify-end pt-2">
+                    <button type="button" onclick="closeInstructionsModal()" class="px-5 py-2 bg-[#314E52] hover:bg-[#314E52]/80 rounded-xl text-xs font-medium text-[#FAD5A5]">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GENERAL UPLOAD MODAL -->
     <div id="uploadModal" class="fixed inset-0 bg-[#540B0E]/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#3b0609] border border-[#902636]/60 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-[#902636]/40 pb-3">
@@ -427,6 +473,7 @@
         </div>
     </div>
 
+    <!-- ANNOUNCEMENT MODAL -->
     <div id="announcementModal" class="fixed inset-0 bg-[#540B0E]/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#3b0609] border border-[#902636]/60 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-[#902636]/40 pb-3">
@@ -459,6 +506,7 @@
         </div>
     </div>
 
+    <!-- EXPANDED TASK & REQUIREMENT MODAL (UPDATED WITH SEPARATE LINKS, INSTRUCTIONS & DRIVE DIRECT UPLOADS) -->
     <div id="taskModal" class="fixed inset-0 bg-[#540B0E]/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#3b0609] border border-[#902636]/60 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-[#902636]/40 pb-3">
@@ -502,10 +550,36 @@
                     <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Due Date *</label>
                     <input type="date" id="newTaskDate" required class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-sm text-white">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Module / Submission Link</label>
-                    <input type="url" id="newTaskLink" placeholder="https://..." class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-sm text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
+
+                <!-- SEPARATE LINKS: MODULE VS SUBMISSION VS DRIVE FOLDER -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1"><i class="fa-solid fa-book-open text-[#D99B26] mr-1"></i> Module Link</label>
+                        <input type="url" id="newTaskModuleLink" placeholder="https://..." class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1"><i class="fa-solid fa-paper-plane text-[#D99B26] mr-1"></i> Submission Portal Link</label>
+                        <input type="url" id="newTaskSubLink" placeholder="https://..." class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
+                    </div>
                 </div>
+
+                <!-- GOOGLE DRIVE FOLDER LINK FOR DIRECT UPLOAD -->
+                <div>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1"><i class="fa-brands fa-google-drive text-[#D99B26] mr-1"></i> Google Drive Folder Link (For Direct Student Uploads)</label>
+                    <input type="url" id="newTaskDriveLink" placeholder="https://drive.google.com/drive/folders/..." class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
+                </div>
+
+                <!-- ACTIVITY INSTRUCTIONS & RUBRICS CRITERIA -->
+                <div>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1"><i class="fa-solid fa-list-ol text-[#D99B26] mr-1"></i> Activity Instructions</label>
+                    <textarea id="newTaskInstructions" rows="3" placeholder="Step-by-step instructions for the requirement..." class="w-full bg-[#161622] border border-[#252538] rounded-xl p-3 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1"><i class="fa-solid fa-square-check text-[#D99B26] mr-1"></i> Rubrics / Grading Criteria</label>
+                    <textarea id="newTaskRubrics" rows="2" placeholder="Paste rubric breakdown or link to rubric file..." class="w-full bg-[#161622] border border-[#252538] rounded-xl p-3 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]"></textarea>
+                </div>
+
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="closeTaskModal()" class="px-4 py-2 bg-[#314E52] hover:bg-[#314E52]/80 rounded-xl text-sm font-medium text-[#FAD5A5]">Cancel</button>
                     <button type="submit" class="px-5 py-2 bg-[#902636] hover:bg-[#751e2b] rounded-xl text-sm font-medium text-white shadow-md">Save Requirement</button>
@@ -516,7 +590,7 @@
 
     <!-- Application Script Logic -->
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwaK6dvd4-8UvxCRyoo1a-gA2i4i-LjzOsXjtIXrlXdXq4OmNtU2gBWik-lHLYSyUqg/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxXfJhmQrlN7L4pCCyJhQooMFP1_fn_19qhl9mjV0lkXNett6pCmn40B1twxX2ZIxQt/exec";
         const OFFICER_PIN = "152026";
 
         const studentsFullRoster = [
@@ -576,8 +650,8 @@
         ]));
 
         let tasksData = JSON.parse(localStorage.getItem("bpa_tasks_data") || JSON.stringify([
-            { id: 1, subject: "PUAD 101", title: "1. Research Title", type: "Grouping", groups: [ { leader: "Acuzar, Gedalen P.", members: ["Castillo, Ma. Dawn Rozeal A.", "Hamsain, Santanina M."] } ], dueDate: "2026-09-20", link: "", desc: "Research Title Approval" },
-            { id: 2, subject: "PUAD 101", title: "2. Concept Paper", type: "Grouping", groups: [ { leader: "Casano, Michael Cedrick", members: ["Pejo, Jhanna Jade N.", "Quilala, Julie Ann J."] } ], dueDate: "2026-10-16", link: "", desc: "Final Concept Paper output." }
+            { id: 1, subject: "PUAD 101", title: "1. Research Title", type: "Grouping", groups: [ { leader: "Acuzar, Gedalen P.", members: ["Castillo, Ma. Dawn Rozeal A.", "Hamsain, Santanina M."] } ], dueDate: "2026-09-20", moduleLink: "", submissionLink: "", driveLink: "", instructions: "Propose 3 titles aligned with Public Admin topics.", rubrics: "Criteria: Relevance (40%), Feasibility (30%), Originality (30%)." },
+            { id: 2, subject: "PUAD 101", title: "2. Concept Paper", type: "Grouping", groups: [ { leader: "Casano, Michael Cedrick", members: ["Pejo, Jhanna Jade N.", "Quilala, Julie Ann J."] } ], dueDate: "2026-10-16", moduleLink: "", submissionLink: "", driveLink: "", instructions: "10-point research concept paper.", rubrics: "Standard PUP OUS Research Rubric." }
         ]));
 
         let blockAnnouncements = JSON.parse(localStorage.getItem("bpa_announcements") || JSON.stringify([]));
@@ -816,7 +890,6 @@
             renderCalendar();
         }
 
-        // Render Calendar using Inverted Vice-Versa Palette
         function renderCalendar() {
             const grid = document.getElementById("semesterCalendarGrid");
             const titleEl = document.getElementById("calendarMonthTitle");
@@ -861,7 +934,7 @@
                 });
 
                 dayTasks.forEach(t => {
-                    eventsHtml += `<div class="text-[10px] bg-[#902636]/60 text-white border border-[#902636] px-1.5 py-0.5 rounded truncate font-medium" title="Due: ${t.subject} ${t.title}">📌 ${t.subject}</div>`;
+                    eventsHtml += `<div class="text-[10px] bg-[#902636]/60 text-white border border-[#902636] px-1.5 py-0.5 rounded truncate font-medium cursor-pointer" onclick="openInstructionsModal(${t.id})" title="Click to view instructions: ${t.subject} ${t.title}">📌 ${t.subject}</div>`;
                 });
 
                 dayEvents.forEach((e) => {
@@ -956,7 +1029,12 @@
 
                 if (isCompleted) completedCount++; else pendingCount++;
 
-                const linkButton = task.link ? `<a href="${task.link}" target="_blank" class="inline-flex items-center gap-1.5 text-xs bg-[#902636]/20 text-[#FAD5A5] border border-[#902636]/40 px-2.5 py-1 rounded-lg font-medium hover:bg-[#902636]/40"><i class="fa-solid fa-arrow-up-right-from-square"></i> Link</a>` : `<span class="text-xs text-[#FAD5A5]/50 italic">No link</span>`;
+                // LINK BUTTONS (Separated Module, Submission, Drive Direct Upload)
+                const moduleBtn = task.moduleLink ? `<a href="${task.moduleLink}" target="_blank" class="inline-flex items-center gap-1.5 text-xs bg-[#314E52] text-[#FAD5A5] border border-[#D99B26]/30 px-2.5 py-1 rounded-lg font-medium hover:bg-[#314E52]/80"><i class="fa-solid fa-book-open text-[#D99B26]"></i> Module</a>` : '';
+                const subBtn = task.submissionLink ? `<a href="${task.submissionLink}" target="_blank" class="inline-flex items-center gap-1.5 text-xs bg-[#902636]/20 text-[#FAD5A5] border border-[#902636]/40 px-2.5 py-1 rounded-lg font-medium hover:bg-[#902636]/40"><i class="fa-solid fa-paper-plane text-[#D99B26]"></i> Submit Portal</a>` : '';
+                const driveUploadBtn = task.driveLink ? `<button onclick="openDriveUploadModal(${task.id}, '${escapeHtml(task.driveLink)}')" class="inline-flex items-center gap-1.5 text-xs bg-[#D99B26]/20 text-[#FAD5A5] border border-[#D99B26]/40 px-2.5 py-1 rounded-lg font-medium hover:bg-[#D99B26]/30"><i class="fa-brands fa-google-drive text-[#D99B26]"></i> Upload to Drive</button>` : '';
+                const viewInstructionsBtn = `<button onclick="openInstructionsModal(${task.id})" class="inline-flex items-center gap-1.5 text-xs bg-[#161622] text-[#FAD5A5] border border-[#252538] px-2.5 py-1 rounded-lg font-medium hover:bg-[#252538]"><i class="fa-solid fa-circle-info text-[#D99B26]"></i> Instructions & Rubrics</button>`;
+
                 const typeBadge = `<span class="text-[10px] px-2 py-0.5 rounded font-bold ${task.type === 'Grouping' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-[#161622] text-[#FAD5A5] border border-[#252538]'}">${task.type}</span>`;
                 
                 const officerEditControls = isOfficer ? `
@@ -974,9 +1052,13 @@
                             <span class="text-xs text-[#D99B26] font-medium bg-[#161622] border border-[#252538] px-2 py-0.5 rounded"><i class="fa-regular fa-clock mr-1"></i> ${cleanDueDate}</span>
                         </div>
                         <h4 class="font-bold text-white mt-2 flex items-center gap-2">${task.title} ${typeBadge}</h4>
-                        <p class="text-xs text-[#FAD5A5]/80 mt-1">${task.desc || ''}</p>
                         ${groupDetailsHTML}
-                        <div class="mt-3">${linkButton}</div>
+                        <div class="mt-3 flex items-center gap-2 flex-wrap">
+                            ${moduleBtn}
+                            ${subBtn}
+                            ${driveUploadBtn}
+                            ${viewInstructionsBtn}
+                        </div>
                         ${officerEditControls}
                     </div>
                     <div class="flex justify-between items-center pt-3 border-t border-[#902636]/30">
@@ -992,8 +1074,8 @@
                     <td class="py-3 px-4"><span class="text-xs font-semibold px-2.5 py-1 rounded ${isCompleted ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-[#D99B26]/20 text-[#D99B26] border border-[#D99B26]/30'}">${isCompleted ? 'Done' : 'Pending'}</span></td>
                     <td class="py-3 px-4 font-medium text-white">${task.subject}</td>
                     <td class="py-3 px-4">
-                        <div class="font-semibold text-white flex items-center gap-2">${task.title} ${typeBadge}</div>
-                        <div class="mt-1">${linkButton}</div>
+                        <div class="font-semibold text-white flex items-center gap-2 mb-1">${task.title} ${typeBadge}</div>
+                        <div class="flex items-center gap-1.5 flex-wrap">${moduleBtn} ${subBtn} ${driveUploadBtn} ${viewInstructionsBtn}</div>
                     </td>
                     <td class="py-3 px-4 text-[#D99B26] font-medium">${cleanDueDate}</td>
                     <td class="py-3 px-4 text-right">${permissionNotice}</td>
@@ -1006,7 +1088,6 @@
             document.getElementById("statCompletedTasks").textContent = completedCount;
         }
 
-        // Render Weekend Highlights using Navy Inner Card Placeholders from Reference Image
         function renderSchedule() {
             const container = document.getElementById("classScheduleList");
             const weekendContainer = document.getElementById("weekendScheduleHighlightList");
@@ -1047,8 +1128,6 @@
             if (nextWeekendDatesEl) nextWeekendDatesEl.textContent = `${formatDisplayDate(nextSat)} & ${formatDisplayDate(nextSun)}`;
 
             const weekendClasses = scheduleList.filter(item => item.date === formatDateStr(nextSat) || item.date === formatDateStr(nextSun));
-            
-            // If empty, populate with standard cycle 1 default subjects matching image
             const displayWeekendClasses = weekendClasses.length > 0 ? weekendClasses : scheduleList.slice(0, 4);
 
             displayWeekendClasses.forEach(item => {
@@ -1131,6 +1210,84 @@
             });
             html += `</tbody>`;
             table.innerHTML = html;
+        }
+
+        // OPEN / CLOSE INSTRUCTIONS MODAL
+        function openInstructionsModal(taskId) {
+            const task = tasksData.find(t => t.id === taskId);
+            if (!task) return;
+            document.getElementById("instructionsModalTitle").textContent = `${task.subject}: ${task.title}`;
+            document.getElementById("displayActivityInstructions").textContent = task.instructions || "No instructions provided.";
+            document.getElementById("displayActivityRubrics").textContent = task.rubrics || "No rubric links or criteria specified.";
+            
+            document.getElementById("instructionsModal").classList.remove("hidden");
+            document.getElementById("instructionsModal").classList.add("flex");
+        }
+        function closeInstructionsModal() {
+            document.getElementById("instructionsModal").classList.remove("flex");
+            document.getElementById("instructionsModal").classList.add("hidden");
+        }
+
+        // OPEN / CLOSE DRIVE UPLOAD MODAL
+        function openDriveUploadModal(taskId, driveFolderUrl) {
+            if (activeStudent === "Guest") { alert("Select your profile first!"); return; }
+            const task = tasksData.find(t => t.id === taskId);
+            document.getElementById("driveUploadTaskId").value = taskId;
+            document.getElementById("driveUploadFolderUrl").value = driveFolderUrl || "";
+            document.getElementById("driveUploadTaskTitleDisplay").textContent = `Uploading file for: ${task ? task.subject + ' - ' + task.title : 'Requirement'}`;
+            
+            document.getElementById("driveUploadModal").classList.remove("hidden");
+            document.getElementById("driveUploadModal").classList.add("flex");
+        }
+        function closeDriveUploadModal() {
+            document.getElementById("driveUploadModal").classList.remove("flex");
+            document.getElementById("driveUploadModal").classList.add("hidden");
+        }
+
+        // HANDLE DIRECT GOOGLE DRIVE FILE UPLOAD
+        async function handleDirectDriveUpload(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById("directDriveFile");
+            const file = fileInput.files[0];
+            const taskId = document.getElementById("driveUploadTaskId").value;
+            const folderUrl = document.getElementById("driveUploadFolderUrl").value;
+            const remarks = document.getElementById("directDriveRemarks").value;
+            
+            if (!file) return;
+
+            const submitBtn = document.getElementById("driveUploadSubmitBtn");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Uploading to Drive...";
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                if (GOOGLE_SCRIPT_URL) {
+                    try {
+                        await fetch(GOOGLE_SCRIPT_URL, {
+                            method: "POST", mode: "no-cors",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                action: "uploadToDriveFolder",
+                                studentName: activeStudent,
+                                taskId: taskId,
+                                folderUrl: folderUrl,
+                                fileName: file.name,
+                                mimeType: file.type,
+                                fileData: e.target.result,
+                                remarks: remarks
+                            })
+                        });
+                        alert("File submitted & uploaded directly to Google Drive successfully!");
+                        closeDriveUploadModal();
+                    } catch(err) {
+                        alert("Drive upload error. Check Google Apps Script configuration.");
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = `<i class="fa-solid fa-upload"></i> Upload Directly`;
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
         }
 
         async function handleImageUpload(event) {
@@ -1228,11 +1385,25 @@
                     if (leader) groupsData.push({ leader, members });
                 });
             }
-            tasksData.push({ id: tasksData.length + 1, subject: document.getElementById("newTaskSubject").value, title: document.getElementById("newTaskTitle").value, type, groups: groupsData, dueDate: document.getElementById("newTaskDate").value, link: document.getElementById("newTaskLink").value });
+            
+            tasksData.push({
+                id: tasksData.length + 1,
+                subject: document.getElementById("newTaskSubject").value,
+                title: document.getElementById("newTaskTitle").value,
+                type: type,
+                groups: groupsData,
+                dueDate: document.getElementById("newTaskDate").value,
+                moduleLink: document.getElementById("newTaskModuleLink").value,
+                submissionLink: document.getElementById("newTaskSubLink").value,
+                driveLink: document.getElementById("newTaskDriveLink").value,
+                instructions: document.getElementById("newTaskInstructions").value,
+                rubrics: document.getElementById("newTaskRubrics").value
+            });
+
             localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
             closeTaskModal();
             renderTasks();
-            alert("Requirement saved!");
+            alert("Requirement saved successfully!");
         }
 
         if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", initApp); } else { initApp(); }
