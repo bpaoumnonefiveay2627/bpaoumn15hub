@@ -1191,25 +1191,163 @@
 
         function renderMasterMatrix() {
             const table = document.getElementById("masterMatrixTable");
-            let html = `<thead><tr class="bg-[#3b0609] text-[#FAD5A5] uppercase text-[11px] border-b border-[#252538]"><th class="p-3 sticky left-0 bg-[#3b0609] z-10">Student Name</th>`;
-            tasksData.forEach(task => { html += `<th class="p-3 text-center whitespace-nowrap">${task.subject}:<br>${task.title}</th>`; });
+            if (!table) return;
+
+            let html = `<thead><tr class="bg-[#3b0609] text-[#FAD5A5] uppercase text-[11px] border-b border-[#252538]">
+                <th class="p-3 sticky left-0 bg-[#3b0609] z-10 text-left border-r border-[#252538]">Student Name</th>`;
+
+            // Table Headers with Task Titles & Delete Button for Officers
+            tasksData.forEach(task => {
+                html += `<th class="p-3 text-center whitespace-nowrap min-w-[140px] border-r border-[#252538]">
+                    <div class="font-bold text-white">${escapeHtml(task.subject)}</div>
+                    <div class="text-[10px] text-[#FAD5A5]/80 font-normal truncate max-w-[130px] mx-auto">${escapeHtml(task.title)}</div>
+                    <button onclick="officerDeleteTaskFromMatrix(${task.id})" class="mt-1.5 text-[10px] bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/30 px-2 py-0.5 rounded transition-all">
+                        <i class="fa-solid fa-trash mr-1"></i> Delete
+                    </button>
+                </th>`;
+            });
             html += `</tr></thead><tbody class="divide-y divide-[#252538]">`;
 
+            // Matrix Rows per Student with Interactive Officer Toggle Buttons
             studentsData.forEach(student => {
-                html += `<tr class="hover:bg-[#3b0609]/40"><td class="p-3 font-semibold text-white sticky left-0 bg-[#161622] z-10 whitespace-nowrap border-r border-[#252538]">${student}</td>`;
+                html += `<tr class="hover:bg-[#3b0609]/40"><td class="p-3 font-semibold text-white sticky left-0 bg-[#161622] z-10 whitespace-nowrap border-r border-[#252538] text-xs">${student}</td>`;
+                
                 tasksData.forEach(task => {
-                    let isDone = false; let isAssigned = true;
-                    if (task.type === "Individual") { isDone = userCompletions[student + "_" + task.id] || false; }
-                    else if (task.groups) {
+                    let isDone = false; 
+                    let isAssigned = true;
+
+                    if (task.type === "Individual") { 
+                        isDone = userCompletions[student + "_" + task.id] || false; 
+                    } else if (task.groups) {
                         const studentGroup = task.groups.find(g => g.leader === student || (g.members && g.members.includes(student)));
-                        if (studentGroup) { isDone = groupCompletions[task.id + "_" + studentGroup.leader] || false; } else { isAssigned = false; }
+                        if (studentGroup) { 
+                            isDone = groupCompletions[task.id + "_" + studentGroup.leader] || false; 
+                        } else { 
+                            isAssigned = false; 
+                        }
                     }
-                    html += `<td class="p-3 text-center"><span class="px-2 py-1 rounded font-bold text-[10px] ${!isAssigned ? 'text-slate-600' : (isDone ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-[#3b0609] text-[#FAD5A5]/50')}">${!isAssigned ? '—' : (isDone ? '✓' : '—')}</span></td>`;
+
+                    if (!isAssigned) {
+                        html += `<td class="p-2 text-center border-r border-[#252538]"><span class="text-slate-600 font-bold text-xs">—</span></td>`;
+                    } else {
+                        const badgeColor = isDone 
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' 
+                            : 'bg-[#3b0609] text-[#FAD5A5]/60 border-[#902636]/40 hover:text-white hover:bg-[#902636]/30';
+                        
+                        html += `<td class="p-2 text-center border-r border-[#252538]">
+                            <button onclick="officerToggleStudentCompletion('${escapeHtml(student)}', ${task.id}, '${task.type}')" 
+                                class="px-2.5 py-1 rounded border text-[11px] font-bold transition-all shadow-sm flex items-center justify-center gap-1 mx-auto ${badgeColor}" 
+                                title="Click to override status on behalf of ${student}">
+                                ${isDone ? '<i class="fa-solid fa-check text-emerald-400"></i> Done' : '<i class="fa-regular fa-circle"></i> Pending'}
+                            </button>
+                        </td>`;
+                    }
                 });
                 html += `</tr>`;
             });
             html += `</tbody>`;
             table.innerHTML = html;
+        }
+
+        // Officer Action: Delete task across all profiles & sync with Google Sheet
+        async function officerDeleteTaskFromMatrix(taskId) {
+            const task = tasksData.find(t => t.id === taskId);
+            if (!task) return;
+
+            if (!confirm(`Are you sure you want to delete "${task.subject}: ${task.title}" across all students? This cannot be undone.`)) {
+                return;
+            }
+
+            // Sync deletion to Google Sheets
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            action: "deleteTask",
+                            subject: task.subject,
+                            title: task.title
+                        })
+                    });
+                } catch(err) {
+                    console.error("Error deleting task from Google Sheets:", err);
+                }
+            }
+
+            // Update local state and re-render across UI
+            tasksData = tasksData.filter(t => t.id !== taskId);
+            localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
+
+            renderTasks();
+            renderCalendar();
+            renderMasterMatrix();
+            alert("Requirement deleted successfully!");
+        }
+
+        // Officer Action: Toggle student completion on their behalf
+        async function officerToggleStudentCompletion(studentName, taskId, taskType) {
+            const task = tasksData.find(t => t.id === taskId);
+            if (!task) return;
+
+            if (taskType === "Individual") {
+                const currentStatus = !!userCompletions[studentName + "_" + taskId];
+                const newStatus = !currentStatus;
+                userCompletions[studentName + "_" + taskId] = newStatus;
+                localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
+
+                // Sync override to Google Sheets
+                if (GOOGLE_SCRIPT_URL) {
+                    try {
+                        fetch(GOOGLE_SCRIPT_URL, {
+                            method: "POST",
+                            mode: "no-cors",
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            body: JSON.stringify({
+                                action: "officerSetCompletion",
+                                officerName: activeStudent,
+                                targetStudent: studentName,
+                                taskId: `${task.subject} - ${task.title}`,
+                                completed: newStatus
+                            })
+                        });
+                    } catch(err) {
+                        console.error("Error syncing officer override to Google Sheets:", err);
+                    }
+                }
+            } else if (taskType === "Grouping" && task.groups) {
+                const studentGroup = task.groups.find(g => g.leader === studentName || (g.members && g.members.includes(studentName)));
+                if (studentGroup) {
+                    const groupKey = taskId + "_" + studentGroup.leader;
+                    const currentStatus = !!groupCompletions[groupKey];
+                    const newStatus = !currentStatus;
+                    groupCompletions[groupKey] = newStatus;
+                    localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
+
+                    if (GOOGLE_SCRIPT_URL) {
+                        try {
+                            fetch(GOOGLE_SCRIPT_URL, {
+                                method: "POST",
+                                mode: "no-cors",
+                                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                body: JSON.stringify({
+                                    action: "officerSetCompletion",
+                                    officerName: activeStudent,
+                                    targetStudent: `Group Leader: ${studentGroup.leader}`,
+                                    taskId: `${task.subject} - ${task.title}`,
+                                    completed: newStatus
+                                })
+                            });
+                        } catch(err) {
+                            console.error("Error syncing group override to Google Sheets:", err);
+                        }
+                    }
+                }
+            }
+
+            renderTasks();
+            renderMasterMatrix();
         }
 
         // OPEN / CLOSE INSTRUCTIONS MODAL
