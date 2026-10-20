@@ -1255,6 +1255,12 @@
           
           if (!file) return;
           
+          // Check file size (Google Apps Script has strict payload limits, keep files under 5MB)
+          if (file.size > 5 * 1024 * 1024) {
+            alert("File is too large! Please upload a file smaller than 5MB to prevent timeout errors.");
+            return;
+          }
+          
           const submitBtn = document.getElementById("driveUploadSubmitBtn");
           submitBtn.disabled = true;
           submitBtn.textContent = "Uploading to Drive...";
@@ -1263,27 +1269,27 @@
           reader.onload = async function(e) {
             if (GOOGLE_SCRIPT_URL) {
               try {
-                // FIXED: Use text/plain so no-cors allows the body content through to Google Apps Script
                 await fetch(GOOGLE_SCRIPT_URL, {
-                  method: "POST", 
+                  method: "POST",
                   mode: "no-cors",
                   headers: { "Content-Type": "text/plain;charset=utf-8" },
-                  body: JSON.stringify({
-                    action: "uploadToDriveFolder",
-                    studentName: activeStudent,
-                    taskId: taskId,
-                    folderUrl: folderUrl,
-                    fileName: file.name,
-                    mimeType: file.type,
-                    fileData: e.target.result,
-                    remarks: remarks
-                  })
+                    body: JSON.stringify({
+                      action: "uploadToDriveFolder",
+                      studentName: activeStudent,
+                      taskId: taskId,
+                      folderUrl: folderUrl,
+                      fileName: file.name,
+                      mimeType: file.type,
+                      fileData: e.target.result,
+                      remarks: remarks
+                    })
                 });
                 alert("File submitted & uploaded directly to Google Drive successfully!");
                 closeDriveUploadModal();
               } catch(err) {
-                alert("Drive upload error. Check connection.");
-              } finally {
+                console.error("Upload error details:", err);
+                alert("Drive upload error: " + err.message);
+                } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `<i class="fa-solid fa-upload"></i> Upload Directly`;
               }
