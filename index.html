@@ -1246,50 +1246,52 @@
 
         // HANDLE DIRECT GOOGLE DRIVE FILE UPLOAD
         async function handleDirectDriveUpload(event) {
-            event.preventDefault();
-            const fileInput = document.getElementById("directDriveFile");
-            const file = fileInput.files[0];
-            const taskId = document.getElementById("driveUploadTaskId").value;
-            const folderUrl = document.getElementById("driveUploadFolderUrl").value;
-            const remarks = document.getElementById("directDriveRemarks").value;
-            
-            if (!file) return;
-
-            const submitBtn = document.getElementById("driveUploadSubmitBtn");
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Uploading to Drive...";
-
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                if (GOOGLE_SCRIPT_URL) {
-                    try {
-                        await fetch(GOOGLE_SCRIPT_URL, {
-                            method: "POST", mode: "no-cors",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                action: "uploadToDriveFolder",
-                                studentName: activeStudent,
-                                taskId: taskId,
-                                folderUrl: folderUrl,
-                                fileName: file.name,
-                                mimeType: file.type,
-                                fileData: e.target.result,
-                                remarks: remarks
-                            })
-                        });
-                        alert("File submitted & uploaded directly to Google Drive successfully!");
-                        closeDriveUploadModal();
-                    } catch(err) {
-                        alert("Drive upload error. Check Google Apps Script configuration.");
-                    } finally {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = `<i class="fa-solid fa-upload"></i> Upload Directly`;
-                    }
-                }
-            };
-            reader.readAsDataURL(file);
+          event.preventDefault();
+          const fileInput = document.getElementById("directDriveFile");
+          const file = fileInput.files[0];
+          const taskId = document.getElementById("driveUploadTaskId").value;
+          const folderUrl = document.getElementById("driveUploadFolderUrl").value;
+          const remarks = document.getElementById("directDriveRemarks").value;
+          
+          if (!file) return;
+          
+          const submitBtn = document.getElementById("driveUploadSubmitBtn");
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Uploading to Drive...";
+          
+          const reader = new FileReader();
+          reader.onload = async function(e) {
+            if (GOOGLE_SCRIPT_URL) {
+              try {
+                // FIXED: Use text/plain so no-cors allows the body content through to Google Apps Script
+                await fetch(GOOGLE_SCRIPT_URL, {
+                  method: "POST", 
+                  mode: "no-cors",
+                  headers: { "Content-Type": "text/plain;charset=utf-8" },
+                  body: JSON.stringify({
+                    action: "uploadToDriveFolder",
+                    studentName: activeStudent,
+                    taskId: taskId,
+                    folderUrl: folderUrl,
+                    fileName: file.name,
+                    mimeType: file.type,
+                    fileData: e.target.result,
+                    remarks: remarks
+                  })
+                });
+                alert("File submitted & uploaded directly to Google Drive successfully!");
+                closeDriveUploadModal();
+              } catch(err) {
+                alert("Drive upload error. Check connection.");
+              } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-upload"></i> Upload Directly`;
+              }
+            }
+          };
+          reader.readAsDataURL(file);
         }
-
+      
         async function handleImageUpload(event) {
             event.preventDefault();
             if (activeStudent === "Guest") { alert("Select your profile first!"); return; }
