@@ -1381,7 +1381,56 @@
         function closeTaskModal() { document.getElementById("taskModal").classList.remove("flex"); document.getElementById("taskModal").classList.add("hidden"); }
         function openAnnouncementModal() { document.getElementById("announcementModal").classList.remove("hidden"); document.getElementById("announcementModal").classList.add("flex"); }
         function closeAnnouncementModal() { document.getElementById("announcementModal").classList.remove("flex"); document.getElementById("announcementModal").classList.add("hidden"); }
+      
+      async function initApp() {
+            const selectEl = document.getElementById("studentProfileSelect");
+            const isMobile = window.innerWidth < 640;
 
+            if (selectEl) {
+                selectEl.innerHTML = '<option value="Guest" class="bg-[#314E52] text-[#FAD5A5]">Select Name</option>';
+                studentsFullRoster.forEach(s => {
+                    const fullName = `${s.lastName}, ${s.firstName} ${s.mi}`.trim();
+                    const displayName = isMobile ? s.lastName : fullName;
+                    const opt = document.createElement("option");
+                    opt.value = fullName; 
+                    opt.textContent = displayName;
+                    opt.className = "bg-[#314E52] text-white";
+                    if (fullName === activeStudent) opt.selected = true;
+                    selectEl.appendChild(opt);
+                });
+            }
+
+            updateRealtimeClock();
+            checkOfficerStatus();
+
+            // FETCH LIVE DATA FROM GOOGLE SHEETS ON LOAD
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    const res = await fetch(GOOGLE_SCRIPT_URL);
+                    const data = await res.json();
+                    
+                    if (data.tasks && data.tasks.length > 0) {
+                        tasksData = data.tasks;
+                    }
+                    if (data.announcements && data.announcements.length > 0) {
+                        blockAnnouncements = data.announcements;
+                    }
+                    if (data.completions) {
+                        userCompletions = data.completions;
+                    }
+                } catch (err) {
+                    console.error("Failed to sync live data from Google Sheets:", err);
+                }
+            }
+
+            renderTasks();
+            renderSchedule();
+            renderCalendar();
+            renderAnnouncements();
+
+            makeElementDraggable(document.getElementById("floatingChatBox"), document.getElementById("chatHeaderBar"));
+        }
+      
         async function handleSaveTask(event) {
             event.preventDefault();
             const type = document.getElementById("newTaskType").value;
@@ -1394,26 +1443,45 @@
                 });
             }
             
-            tasksData.push({
-                id: tasksData.length + 1,
+            const newTask = {
+                action: "addTask",
                 subject: document.getElementById("newTaskSubject").value,
                 title: document.getElementById("newTaskTitle").value,
                 type: type,
-                groups: groupsData,
                 dueDate: document.getElementById("newTaskDate").value,
                 moduleLink: document.getElementById("newTaskModuleLink").value,
-                submissionLink: document.getElementById("newTaskSubLink").value,
+                subLink: document.getElementById("newTaskSubLink").value,
                 driveLink: document.getElementById("newTaskDriveLink").value,
                 instructions: document.getElementById("newTaskInstructions").value,
                 rubrics: document.getElementById("newTaskRubrics").value
+            };
+
+            // Send to Google Sheet
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify(newTask)
+                    });
+                } catch(err) {
+                    console.error("Error saving task to sheet:", err);
+                }
+            }
+
+            // Push locally and re-render
+            tasksData.push({
+                id: tasksData.length + 1,
+                ...newTask,
+                groups: groupsData
             });
 
             localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
             closeTaskModal();
             renderTasks();
-            alert("Requirement saved successfully!");
+            alert("Requirement saved and synced to Google Sheets!");
         }
-
         if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", initApp); } else { initApp(); }
     </script>
 </body>
