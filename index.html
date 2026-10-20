@@ -1,3 +1,62 @@
+<!-- Firebase Modern Modular SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+  import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "bpaoumn-1-5-online-hub.firebaseapp.com",
+    databaseURL: "https://bpaoumn-1-5-online-hub-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "bpaoumn-1-5-online-hub",
+    storageBucket: "bpaoumn-1-5-online-hub.firebasestorage.app",
+    messagingSenderId: "425237490715",
+    appId: "YOUR_APP_ID"
+  };
+  
+  // Initialize Firebase and Realtime Database
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  window.db = db; // Bound globally
+  window.firebaseRef = ref;
+  window.firebasePush = push;
+  window.firebaseOnChildAdded = onChildAdded;
+
+  // Firebase Realtime Chat Listener Integration
+  document.addEventListener("DOMContentLoaded", () => {
+    const chatContainer = document.getElementById("chatMessagesContainer");
+    if (!chatContainer) return;
+
+    const chatRef = ref(db, "chat_messages");
+    
+    onChildAdded(chatRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+
+      // Remove loading text if present
+      if (chatContainer.querySelector("p") && chatContainer.querySelector("p").textContent.includes("Loading messages")) {
+        chatContainer.innerHTML = "";
+      }
+
+      const isMe = (data.studentName === activeStudent);
+      const isOfficer = AUTHORIZED_OFFICERS.includes(data.studentName);
+      const timeStr = data.timestamp ? new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+
+      const div = document.createElement("div");
+      div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+      div.innerHTML = `
+        <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mb-0.5">
+          <span class="font-semibold ${isOfficer ? 'text-amber-400' : 'text-slate-300'}">${getFirstName(data.studentName)} ${isOfficer ? '⭐' : ''}</span>
+          <span>•</span>
+          <span class="text-[10px] text-slate-500">${timeStr}</span>
+        </div>
+        <div class="max-w-xs sm:max-w-md px-3.5 py-2 rounded-2xl text-xs ${isMe ? 'bg-brand-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 border border-slate-700/60 rounded-tl-none'}">${escapeHtml(data.message)}</div>
+      `;
+      chatContainer.appendChild(div);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    });
+  });
+</script>
+
 <!DOCTYPE html>
 <html lang="en" class="h-full bg-slate-900 text-slate-100">
 <head>
@@ -18,6 +77,10 @@
                             amber: '#D99B26',
                             cream: '#FAD5A5',
                             teal: '#314E52',
+                        },
+                        brand: {
+                            500: '#902636',
+                            600: '#751e2b'
                         }
                     }
                 }
@@ -39,13 +102,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-    </style>
 </head>
 <body class="h-full flex flex-col antialiased selection:bg-brand-500 selection:text-white">
 
@@ -71,7 +127,7 @@
                     <span id="liveRealtimeClock">Loading clock...</span>
                 </div>
 
-                <!-- Profile Selector (Optimized for Mobile Margin & Last Name Display) -->
+                <!-- Profile Selector -->
                 <div class="flex items-center gap-2 flex-shrink-0 max-w-[48%] sm:max-w-none">
                     <div class="bg-[#314E52] border border-[#902636]/50 rounded-xl px-2.5 py-1.5 sm:px-3.5 sm:py-2 flex items-center gap-1.5 shadow-inner w-full">
                         <i class="fa-solid fa-user-graduate text-[#D99B26] text-xs flex-shrink-0"></i>
@@ -83,7 +139,7 @@
             </div>
         </div>
 
-        <!-- Layer 2: Dedicated Navigation Tabs Bar (Centered on Desktop) -->
+        <!-- Layer 2: Dedicated Navigation Tabs Bar -->
         <div class="bg-[#314E52]/90 border-t border-[#902636]/30 px-2 sm:px-6 lg:px-8">
             <div class="max-w-7xl mx-auto">
                 <nav class="flex items-center justify-start md:justify-center gap-1.5 sm:gap-2 overflow-x-auto py-2.5 no-scrollbar">
@@ -229,7 +285,7 @@
             <div id="tasksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
-        <!-- CLASS CHAT TAB -->
+        <!-- CLASS CHAT TAB (Powered by Firebase Realtime DB) -->
         <section id="tab-chat" class="tab-content hidden space-y-4">
             <div class="bg-slate-800/90 border border-slate-700/60 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col h-[75vh]">
                 <div class="flex justify-between items-center border-b border-slate-700/60 pb-3 mb-4">
@@ -237,12 +293,12 @@
                         <i class="fa-solid fa-comments text-brand-400 text-lg"></i>
                         <h3 class="font-bold text-white">BPAOUMN 1-5 Live Class Chat</h3>
                     </div>
-                    <span class="text-xs text-slate-400"><i class="fa-solid fa-sync fa-spin mr-1 text-emerald-400"></i> Auto Syncing</span>
+                    <span class="text-xs text-slate-400"><i class="fa-solid fa-sync fa-spin mr-1 text-emerald-400"></i> Firebase Realtime Sync Active</span>
                 </div>
                 <div id="chatMessagesContainer" class="flex-1 overflow-y-auto space-y-3 p-3 bg-slate-900/80 rounded-xl border border-slate-700/50 mb-4">
                     <p class="text-xs text-slate-500 text-center py-4">Loading messages...</p>
                 </div>
-                <form id="chatForm" onsubmit="handleSendChatMessage(event)" class="flex gap-2">
+                <form id="chatForm" onsubmit="handleSendFirebaseChatMessage(event)" class="flex gap-2">
                     <input type="text" id="chatInputMessage" placeholder="Type a message or question for your blockmates..." required class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
                     <button type="submit" class="bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
                         <i class="fa-solid fa-paper-plane"></i> Send
@@ -298,7 +354,7 @@
                 <div class="flex justify-between items-center border-b border-slate-700/60 pb-4">
                     <div>
                         <h3 class="font-bold text-lg text-white">Full Semester Course & Meeting Links Hub</h3>
-                        <p class="text-xs text-slate-400">1st Semester AY 2026-2027 | Officers can edit exact dates, modes (Synchronous vs Asynchronous Modular), and links</p>
+                        <p class="text-xs text-slate-400">1st Semester AY 2026-2027 | Officers can edit exact dates, modes, and links</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 gap-4" id="classScheduleList"></div>
@@ -322,6 +378,15 @@
         </section>
 
     </main>
+
+    <!-- FLOATING MESSENGER LAUNCHER WIDGET -->
+    <a href="https://m.me/j/Abn_MessengerGroupInviteLinkPlaceholder" 
+       target="_blank" 
+       rel="noopener noreferrer" 
+       class="fixed bottom-6 right-6 w-14 h-14 bg-[#0084FF] hover:bg-[#006edc] text-white rounded-full flex items-center justify-center shadow-2xl z-50 transition-transform hover:scale-110" 
+       title="Open Messenger Block GC">
+        <i class="fa-brands fa-facebook-messenger text-2xl"></i>
+    </a>
 
     <!-- UPLOAD SCREENSHOT / ERROR REPORT MODAL -->
     <div id="uploadModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -521,7 +586,7 @@
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxXfJhmQrlN7L4pCCyJhQooMFP1_fn_19qhl9mjV0lkXNett6pCmn40B1twxX2ZIxQt/exec";
         const OFFICER_PIN = "152026";
 
-        // STUDENTS ROSTER DECLARED FIRST SO INITAPP() CAN ACCESS THEM
+        // STUDENTS ROSTER
         const studentsFullRoster = [
             { lastName: "Acuzar", firstName: "Gedalen", mi: "P.", suffix: "", code: "acuzarbpa1501", role: "Officer" },
             { lastName: "Andres", firstName: "Yhe-Zscha Jhunes", mi: "J.", suffix: "", code: "andresbpa1502", role: "Student" },
@@ -568,42 +633,14 @@
         const AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => s.role === "Officer").map(s => `${s.lastName}, ${s.firstName} ${s.mi}`.trim());
 
         let scheduleList = JSON.parse(localStorage.getItem("bpa_schedule_list") || JSON.stringify([
-            // --- CYCLE 1 SYNCHRONOUS DATES ---
             { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-10-24", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
             { code: "GEED 002", title: "Readings in Philippine History", prof: "Assoc. Prof. Mc Donald Domingo M. Pascual", date: "2026-10-24", time: "Sat & Sun 4:30 PM - 6:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
             { code: "GEED 008", title: "ETHICS", prof: "Assoc. Prof. Elizabeth L. Pambuena", date: "2026-10-24", time: "Sat & Sun 6:00 PM - 7:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
             { code: "GEED 001", title: "UTS (Understanding the Self)", prof: "Assoc. Prof. Lorraine Charmayne S. Manansala", date: "2026-10-24", time: "Sat & Sun 7:30 PM - 9:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-
-            { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-11-14", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 002", title: "Readings in Philippine History", prof: "Assoc. Prof. Mc Donald Domingo M. Pascual", date: "2026-11-14", time: "Sat & Sun 4:30 PM - 6:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 008", title: "ETHICS", prof: "Assoc. Prof. Elizabeth L. Pambuena", date: "2026-11-14", time: "Sat & Sun 6:00 PM - 7:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 001", title: "UTS (Understanding the Self)", prof: "Assoc. Prof. Lorraine Charmayne S. Manansala", date: "2026-11-14", time: "Sat & Sun 7:30 PM - 9:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            
-            { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-12-05", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 002", title: "Readings in Philippine History", prof: "Assoc. Prof. Mc Donald Domingo M. Pascual", date: "2026-12-05", time: "Sat & Sun 4:30 PM - 6:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 008", title: "ETHICS", prof: "Assoc. Prof. Elizabeth L. Pambuena", date: "2026-12-05", time: "Sat & Sun 6:00 PM - 7:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 001", title: "UTS (Understanding the Self)", prof: "Assoc. Prof. Lorraine Charmayne S. Manansala", date: "2026-12-05", time: "Sat & Sun 7:30 PM - 9:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            
-            // --- CYCLE 2 SYNCHRONOUS DATES ---
             { code: "CWTS 001", title: "Civic Welfare Training Service 1", prof: "Mr. Kristoffer Dennis C. Villegas", date: "2026-10-10", time: "Sat & Sun 7:30 AM - 9:00 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
             { code: "GEED 019", title: "The Entrepreneurial Mind", prof: "Ms. Airice Marie M. Alfonso", date: "2026-10-10", time: "Sat & Sun 9:00 AM - 10:30 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
             { code: "PUAD 101", title: "Introduction to Public Administration", prof: "Prof. Ana Marie G. Ngo", date: "2026-10-10", time: "Sat & Sun 10:30 AM - 12:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "PATHFIT 1", title: "Physical Activity Towards Health and Fitness 1", prof: "Assigned Faculty", date: "2026-10-10", time: "Sat 12:00 PM - 2:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-
-            { code: "CWTS 001", title: "Civic Welfare Training Service 1", prof: "Mr. Kristoffer Dennis C. Villegas", date: "2026-11-07", time: "Sat & Sun 7:30 AM - 9:00 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 019", title: "The Entrepreneurial Mind", prof: "Ms. Airice Marie M. Alfonso", date: "2026-11-07", time: "Sat & Sun 9:00 AM - 10:30 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "PUAD 101", title: "Introduction to Public Administration", prof: "Prof. Ana Marie G. Ngo", date: "2026-11-07", time: "Sat & Sun 10:30 AM - 12:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "PATHFIT 1", title: "Physical Activity Towards Health and Fitness 1", prof: "Assigned Faculty", date: "2026-11-07", time: "Sat 12:00 PM - 2:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-
-            { code: "CWTS 001", title: "Civic Welfare Training Service 1", prof: "Mr. Kristoffer Dennis C. Villegas", date: "2026-11-21", time: "Sat & Sun 7:30 AM - 9:00 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 019", title: "The Entrepreneurial Mind", prof: "Ms. Airice Marie M. Alfonso", date: "2026-11-21", time: "Sat & Sun 9:00 AM - 10:30 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "PUAD 101", title: "Introduction to Public Administration", prof: "Prof. Ana Marie G. Ngo", date: "2026-11-21", time: "Sat & Sun 10:30 AM - 12:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "PATHFIT 1", title: "Physical Activity Towards Health and Fitness 1", prof: "Assigned Faculty", date: "2026-11-21", time: "Sat 12:00 PM - 2:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            
-            { code: "CWTS 001", title: "Civic Welfare Training Service 1", prof: "Mr. Kristoffer Dennis C. Villegas", date: "2026-12-12", time: "Sat & Sun 7:30 AM - 9:00 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 019", title: "The Entrepreneurial Mind", prof: "Ms. Airice Marie M. Alfonso", date: "2026-12-12", time: "Sat & Sun 9:00 AM - 10:30 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "PUAD 101", title: "Introduction to Public Administration", prof: "Prof. Ana Marie G. Ngo", date: "2026-12-12", time: "Sat & Sun 10:30 AM - 12:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "PATHFIT 1", title: "Physical Activity Towards Health and Fitness 1", prof: "Assigned Faculty", date: "2026-12-12", time: "Sat 12:00 PM - 2:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" }
+            { code: "PATHFIT 1", title: "Physical Activity Towards Health and Fitness 1", prof: "Assigned Faculty", date: "2026-10-10", time: "Sat 12:00 PM - 2:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" }
         ]));
 
         let tasksData = JSON.parse(localStorage.getItem("bpa_tasks_data") || JSON.stringify([
@@ -618,14 +655,17 @@
             { title: "Final Examinations", date: "2026-12-12", tag: "Exam" }
         ]));
 
-        let classChatMessages = [];
         let activeStudent = localStorage.getItem("bpa_active_student") || "Guest";
         let isOfficerVerified = localStorage.getItem("bpa_officer_verified") === "true";
         let userCompletions = JSON.parse(localStorage.getItem("bpa_user_completions") || "{}");
         let groupCompletions = JSON.parse(localStorage.getItem("bpa_group_completions") || "{}");
         let currentCalendarDate = new Date();
 
-        // HELPER TO CLEAN ISO DATE TIMESTAMPS
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
         function formatDateOnly(dateStr) {
             if (!dateStr) return "";
             return String(dateStr).split("T")[0];
@@ -634,21 +674,9 @@
         function updateRealtimeClock() {
             const clockEl = document.getElementById("liveRealtimeClock");
             if (!clockEl) return;
-            
             const now = new Date();
-            const options = {
-                weekday: 'short', 
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: true
-            };
-            clockEl.textContent = now.toLocaleString('en-US', options);
+            clockEl.textContent = now.toLocaleString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
         }
-
         setInterval(updateRealtimeClock, 1000);
 
         function getFirstName(fullName) {
@@ -657,12 +685,7 @@
             if (parts.length > 1) {
                 let firstNamePart = parts[1].trim(); 
                 let tokens = firstNamePart.split(" ");
-                let nameTokens = tokens.filter((t, i) => {
-                    if (i === tokens.length - 1 && (t.length === 1 || (t.length === 2 && t.endsWith('.')))) {
-                        return false;
-                    }
-                    return true;
-                });
+                let nameTokens = tokens.filter((t, i) => !(i === tokens.length - 1 && (t.length === 1 || (t.length === 2 && t.endsWith('.')))));
                 return nameTokens.join(" ");
             }
             return fullName;
@@ -675,42 +698,36 @@
 
             if (selectEl) {
                 selectEl.innerHTML = '<option value="Guest" class="bg-[#314E52] text-slate-300">Select Name</option>';
-                if (typeof studentsFullRoster !== 'undefined' && studentsFullRoster.length > 0) {
-                    studentsFullRoster.forEach(s => {
-                        const fullName = `${s.lastName}, ${s.firstName} ${s.mi}`.trim();
-                        // Display only last name on mobile if selected, full name in dropdown
-                        const displayName = isMobile ? s.lastName : fullName;
-                        const opt = document.createElement("option");
-                        opt.value = fullName; 
-                        opt.textContent = displayName;
-                        opt.className = "bg-[#314E52] text-white";
-                        if (fullName === activeStudent) opt.selected = true;
-                        selectEl.appendChild(opt);
-                    });
-                }
+                studentsFullRoster.forEach(s => {
+                    const fullName = `${s.lastName}, ${s.firstName} ${s.mi}`.trim();
+                    const displayName = isMobile ? s.lastName : fullName;
+                    const opt = document.createElement("option");
+                    opt.value = fullName; 
+                    opt.textContent = displayName;
+                    opt.className = "bg-[#314E52] text-white";
+                    if (fullName === activeStudent) opt.selected = true;
+                    selectEl.appendChild(opt);
+                });
             }
 
             if (schedSelect) {
                 schedSelect.innerHTML = "";
-                if (typeof scheduleList !== 'undefined' && scheduleList.length > 0) {
-                    scheduleList.forEach(s => {
-                        const sOpt = document.createElement("option");
-                        sOpt.value = s.code; 
-                        sOpt.textContent = s.code + " - " + s.title;
-                        sOpt.className = "bg-slate-900 text-white";
-                        schedSelect.appendChild(sOpt);
-                    });
-                    if (scheduleList[0]) populateScheduleEditForm(scheduleList[0].code);
-                }
+                scheduleList.forEach(s => {
+                    const sOpt = document.createElement("option");
+                    sOpt.value = s.code; 
+                    sOpt.textContent = s.code + " - " + s.title;
+                    sOpt.className = "bg-slate-900 text-white";
+                    schedSelect.appendChild(sOpt);
+                });
+                if (scheduleList[0]) populateScheduleEditForm(scheduleList[0].code);
             }
 
-            updateRealtimeClock(); // Initialize clock instantly
+            updateRealtimeClock();
             checkOfficerStatus();
             renderTasks();
             renderSchedule();
             renderCalendar();
             renderAnnouncements();
-            fetchServerData();
         }
 
         function handleProfileChange(name) {
@@ -770,9 +787,7 @@
 
         function checkOfficerStatus() {
             const masterTabBtn = document.getElementById("nav-master");
-            const mobileMasterBtn = document.getElementById("nav-mobile-master");
             const addBtn = document.getElementById("addRequirementBtn");
-            const addSchedBtn = document.getElementById("addScheduleBtn");
             const postAnnBtn = document.getElementById("postAnnouncementBtn");
             const addCalBtn = document.getElementById("addCalendarEventBtn");
             const subtitleEl = document.getElementById("welcomeSubtitle");
@@ -789,23 +804,17 @@
 
             if (isOfficer && isOfficerVerified) {
                 if (masterTabBtn) { masterTabBtn.classList.remove("hidden"); masterTabBtn.classList.add("flex"); }
-                if (mobileMasterBtn) mobileMasterBtn.classList.remove("hidden");
                 if (addBtn) addBtn.classList.remove("hidden");
-                if (addSchedBtn) addSchedBtn.classList.remove("hidden");
                 if (postAnnBtn) postAnnBtn.classList.remove("hidden");
                 if (addCalBtn) addCalBtn.classList.remove("hidden");
-                
                 document.getElementById("welcomeBadge").textContent = "Officer Verified View";
                 document.getElementById("welcomeTitle").textContent = `Welcome back, ${firstName} (Officer)`;
                 renderMasterMatrix();
             } else {
                 if (masterTabBtn) { masterTabBtn.classList.add("hidden"); masterTabBtn.classList.remove("flex"); }
-                if (mobileMasterBtn) mobileMasterBtn.classList.add("hidden");
                 if (addBtn) addBtn.classList.add("hidden");
-                if (addSchedBtn) addSchedBtn.classList.add("hidden");
                 if (postAnnBtn) postAnnBtn.classList.add("hidden");
                 if (addCalBtn) addCalBtn.classList.add("hidden");
-                
                 document.getElementById("welcomeBadge").textContent = "Student View";
                 document.getElementById("welcomeTitle").textContent = activeStudent === "Guest" ? "Welcome to BPAOUMN 1-5 Hub!" : `Hello, ${firstName}!`;
             }
@@ -873,11 +882,7 @@
                 dayClasses.forEach(c => {
                     const isCycle1 = c.cycle === "Cycle 1";
                     const isMod = c.type.includes("Modular");
-                    
-                    const cycleBg = isCycle1 
-                        ? (isMod ? 'bg-pink-900/40 text-pink-300 border-pink-500/40' : 'bg-red-500/20 text-red-300 border-red-500/40')
-                        : (isMod ? 'bg-emerald-900/40 text-emerald-300 border-emerald-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40');
-
+                    const cycleBg = isCycle1 ? (isMod ? 'bg-pink-900/40 text-pink-300 border-pink-500/40' : 'bg-red-500/20 text-red-300 border-red-500/40') : (isMod ? 'bg-emerald-900/40 text-emerald-300 border-emerald-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40');
                     eventsHtml += `<div class="text-[10px] ${cycleBg} border px-1.5 py-0.5 rounded truncate font-medium" title="${c.code}: ${c.title} (${c.time})">📚 ${c.code} (${c.cycle})</div>`;
                 });
 
@@ -898,6 +903,31 @@
             }
         }
 
+        // Firebase Chat Messaging Sender Handler
+        function handleSendFirebaseChatMessage(event) {
+            event.preventDefault();
+            if (activeStudent === "Guest") { alert("Please select your profile first!"); return; }
+            const input = document.getElementById("chatInputMessage");
+            const msgText = input.value.trim();
+            if (!msgText) return;
+
+            const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent);
+            
+            // Push message directly to Firebase Realtime Database
+            const chatRef = window.firebaseRef(window.db, "chat_messages");
+            window.firebasePush(chatRef, {
+                timestamp: Date.now(),
+                studentName: activeStudent,
+                role: isOfficer ? "Officer" : "Student",
+                message: msgText
+            }).then(() => {
+                input.value = "";
+            }).catch((err) => {
+                console.error("Firebase message send error:", err);
+                alert("Failed to send message. Check network or Firebase config.");
+            });
+        }
+
         function openCalendarEventModal() {
             document.getElementById("calendarEventForm").reset();
             document.getElementById("calendarEventModal").classList.remove("hidden");
@@ -907,61 +937,6 @@
         function closeCalendarEventModal() {
             document.getElementById("calendarEventModal").classList.remove("flex");
             document.getElementById("calendarEventModal").classList.add("hidden");
-        }
-
-        function handleSaveSchedule(event) {
-            event.preventDefault();
-            const code = document.getElementById("schedSubject").value;
-            const date = document.getElementById("schedDateInput").value;
-            const time = document.getElementById("schedTimeInput").value;
-            const type = document.getElementById("schedTypeInput").value;
-            const cycle = document.getElementById("schedCycleInput").value;
-            const link = document.getElementById("schedLinkInput").value.trim();
-
-            const target = scheduleList.find(s => s.code === code && s.date === date) || scheduleList.find(s => s.code === code);
-            if (target) {
-                target.date = date;
-                target.time = time;
-                target.type = type;
-                target.link = link;
-
-                if (type.includes("Modular") && link !== "") {
-                    const existingTask = tasksData.find(t => t.subject === code && formatDateOnly(t.dueDate) === date);
-                    if (!existingTask) {
-                        const newId = tasksData.length > 0 ? Math.max(...tasksData.map(t => t.id)) + 1 : 1;
-                        tasksData.push({
-                            id: newId,
-                            subject: code,
-                            title: `Module Output / Activity (${target.title})`,
-                            type: "Individual",
-                            dueDate: date,
-                            link: link,
-                            desc: `Auto-generated task from Modular session on ${date}.`
-                        });
-                        alert(`Schedule updated! Since a module link was provided, a task was automatically generated.`);
-                    } else {
-                        existingTask.link = link;
-                        alert(`Schedule and task link updated successfully!`);
-                    }
-                    localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
-                } else {
-                    alert(`Schedule adjusted successfully! (Cycle is locked to ${target.cycle}).`);
-                }
-
-                localStorage.setItem("bpa_schedule_list", JSON.stringify(scheduleList));
-                renderSchedule();
-                renderTasks();
-                renderCalendar();
-                closeScheduleModal();
-            }
-        }
-
-        function deleteCalendarEvent(date, title) {
-            if (confirm(`Delete plotted event "${title}"?`)) {
-                semesterEvents = semesterEvents.filter(e => !(e.date === date && e.title === title));
-                localStorage.setItem("bpa_semester_events", JSON.stringify(semesterEvents));
-                renderCalendar();
-            }
         }
 
         function renderTasks() {
@@ -993,7 +968,6 @@
                     let myGroup = task.groups.find(g => g.leader === activeStudent || (g.members && g.members.includes(activeStudent)));
                     const isLeader = myGroup && (myGroup.leader === activeStudent);
                     const groupDone = groupCompletions[task.id + "_" + (myGroup ? myGroup.leader : '')] || false;
-                    
                     isCompleted = groupDone && myGroup;
 
                     if (myGroup) {
@@ -1018,7 +992,7 @@
                 
                 const officerEditControls = isOfficer ? `
                     <div class="flex items-center gap-1.5 pt-2 border-t border-slate-700/50">
-                        <button onclick="openEditTaskModal(${task.id})" class="text-[11px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-2.5 py-1 rounded-lg font-medium"><i class="fa-solid fa-pen mr-1"></i> Edit Task / Deadline / Link</button>
+                        <button onclick="openEditTaskModal(${task.id})" class="text-[11px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-2.5 py-1 rounded-lg font-medium"><i class="fa-solid fa-pen mr-1"></i> Edit Task</button>
                         <button onclick="deleteTask(${task.id})" class="text-[11px] bg-red-500/20 hover:bg-red-500/30 text-red-300 px-2.5 py-1 rounded-lg font-medium"><i class="fa-solid fa-trash mr-1"></i> Delete</button>
                     </div>
                 ` : '';
@@ -1064,21 +1038,6 @@
             document.getElementById("statCompletedTasks").textContent = completedCount;
         }
 
-        function parseTimeToMinutes(timeStr) {
-            if (!timeStr) return 0;
-            const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-            if (!match) return 0;
-            
-            let hours = parseInt(match[1], 10);
-            const minutes = parseInt(match[2], 10);
-            const ampm = match[3].toUpperCase();
-
-            if (ampm === "PM" && hours < 12) hours += 12;
-            if (ampm === "AM" && hours === 12) hours = 0;
-
-            return hours * 60 + minutes;
-        }
-
         function renderSchedule() {
             const container = document.getElementById("classScheduleList");
             const weekendContainer = document.getElementById("weekendScheduleHighlightList");
@@ -1090,27 +1049,18 @@
 
             const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified;
 
-            const sortedSchedule = [...scheduleList].sort((a, b) => {
-                const dateCompare = (a.date || "").localeCompare(b.date || "");
-                if (dateCompare !== 0) return dateCompare;
-                return parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time);
-            });
-
-            sortedSchedule.forEach(item => {
+            scheduleList.forEach(item => {
                 const isModular = item.type.includes("Modular");
-                
                 const officerEditBtn = isOfficer ? `
                     <button onclick="openScheduleModalWithItem('${item.code}', '${item.date || ''}')" class="text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl font-medium flex items-center gap-1.5 transition-all">
                         <i class="fa-solid fa-pen"></i> Edit Session
                     </button>
                 ` : '';
 
-                const linkButton = item.link 
-                    ? `<a href="${item.link}" target="_blank" class="text-xs bg-brand-600 text-white px-3.5 py-1.5 rounded-xl font-medium hover:bg-brand-500 flex items-center gap-1.5"><i class="fa-solid fa-link"></i> ${isModular ? 'Open Module' : 'Join Class'}</a>` 
-                    : `<span class="text-xs text-slate-400 bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl">No Link Set</span>`;
+                const linkButton = item.link ? `<a href="${item.link}" target="_blank" class="text-xs bg-brand-600 text-white px-3.5 py-1.5 rounded-xl font-medium hover:bg-brand-500 flex items-center gap-1.5"><i class="fa-solid fa-link"></i> ${isModular ? 'Open Module' : 'Join Class'}</a>` : `<span class="text-xs text-slate-400 bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl">No Link Set</span>`;
 
                 const card = document.createElement("div");
-                card.className = "bg-slate-900/50 p-4 rounded-xl border border-slate-700/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 hover:border-slate-600 transition-all";
+                card.className = "bg-slate-900/50 p-4 rounded-xl border border-slate-700/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-3";
                 card.innerHTML = `
                     <div>
                         <div class="flex items-center gap-2 flex-wrap">
@@ -1118,7 +1068,6 @@
                             <span class="text-slate-600">•</span>
                             <span class="font-semibold text-white text-sm">${item.title}</span>
                             <span class="text-[10px] ${item.cycle === 'Cycle 1' ? 'bg-pink-900/40 text-pink-300 border-pink-500/40' : 'bg-emerald-900/40 text-emerald-300 border-emerald-500/40'} border px-1.5 py-0.5 rounded font-bold">${item.cycle}</span>
-                            <span class="text-[10px] ${isModular ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-brand-500/20 text-brand-300 border-brand-500/30'} border px-2 py-0.5 rounded font-bold">${item.type}</span>
                         </div>
                         <p class="text-xs text-slate-400 mt-1">
                             <i class="fa-solid fa-user-tie mr-1 text-slate-500"></i> ${item.prof} | 
@@ -1134,6 +1083,7 @@
                 container.appendChild(card);
             });
 
+            // Weekend highlight setup
             const today = new Date();
             const nextSat = new Date(today);
             nextSat.setDate(today.getDate() + ((6 - today.getDay() + 7) % 7 || 7));
@@ -1143,14 +1093,12 @@
             const formatDateStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             const satStr = formatDateStr(nextSat);
             const sunStr = formatDateStr(nextSun);
-
             const formatDisplayDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             if (nextWeekendDatesEl) nextWeekendDatesEl.textContent = `${formatDisplayDate(nextSat)} & ${formatDisplayDate(nextSun)}`;
 
-            const weekendClasses = sortedSchedule.filter(item => item.date === satStr || item.date === sunStr);
-
+            const weekendClasses = scheduleList.filter(item => item.date === satStr || item.date === sunStr);
             if (weekendClasses.length === 0) {
-                weekendContainer.innerHTML = `<p class="text-xs text-slate-400 italic col-span-2">No classes scheduled for this upcoming weekend (${formatDisplayDate(nextSat)} & ${formatDisplayDate(nextSun)}).</p>`;
+                weekendContainer.innerHTML = `<p class="text-xs text-slate-400 italic col-span-2">No classes scheduled for this upcoming weekend.</p>`;
             } else {
                 weekendClasses.forEach(item => {
                     const wCard = document.createElement("div");
@@ -1161,37 +1109,15 @@
                             <span class="text-[10px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">${item.type}</span>
                         </div>
                         <p class="text-xs font-semibold text-white">${item.title}</p>
-                        <p class="text-[11px] text-slate-400"><i class="fa-regular fa-clock mr-1 text-slate-500"></i> ${item.time}</p>
                     `;
                     weekendContainer.appendChild(wCard);
                 });
             }
         }
 
-        function openScheduleModalWithItem(code, date) {
-            openScheduleModal();
-            const schedSelect = document.getElementById("schedSubject");
-            if (schedSelect) schedSelect.value = code;
-            populateScheduleEditForm(code, date);
-        }
-
-        function populateScheduleEditForm(code, targetDate = null) {
-            const target = scheduleList.find(s => s.code === code && (!targetDate || s.date === targetDate)) || scheduleList.find(s => s.code === code);
-            if (target) {
-                document.getElementById("schedDateInput").value = target.date || "";
-                document.getElementById("schedTimeInput").value = target.time;
-                document.getElementById("schedTypeInput").value = target.type;
-                document.getElementById("schedCycleInput").value = target.cycle;
-                const cycleDisplay = document.getElementById("schedCycleDisplay");
-                if (cycleDisplay) cycleDisplay.value = target.cycle;
-                document.getElementById("schedLinkInput").value = target.link || "";
-            }
-        }
-
         function renderAnnouncements() {
             const container = document.getElementById("announcementsList");
             const dashboardPreview = document.getElementById("dashboardAnnouncementPreview");
-            
             if (container) container.innerHTML = "";
             if (dashboardPreview) dashboardPreview.innerHTML = "";
 
@@ -1208,7 +1134,6 @@
                 const tagColor = ann.tag === "Urgent" ? "bg-red-500/20 text-red-300 border-red-500/40" : (ann.tag === "Important" ? "bg-amber-500/20 text-amber-300 border-amber-500/40" : "bg-brand-500/20 text-brand-300 border-brand-500/40");
                 const officerEditControls = isOfficer ? `
                     <div class="flex items-center gap-2 pt-2 border-t border-slate-700/50">
-                        <button onclick="openEditAnnouncementModal(${index})" class="text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-1 rounded-lg font-medium"><i class="fa-solid fa-pen mr-1"></i> Edit Bulletin</button>
                         <button onclick="deleteAnnouncement(${index})" class="text-xs bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1 rounded-lg font-medium"><i class="fa-solid fa-trash mr-1"></i> Delete</button>
                     </div>
                 ` : '';
@@ -1227,47 +1152,6 @@
                 `;
                 if (container) container.appendChild(div);
             });
-
-            const latest = blockAnnouncements[0];
-            if (dashboardPreview && latest) {
-                const tagColor = latest.tag === "Urgent" ? "bg-red-500/20 text-red-300 border-red-500/40" : (latest.tag === "Important" ? "bg-amber-500/20 text-amber-300 border-amber-500/40" : "bg-brand-500/20 text-brand-300 border-brand-500/40");
-                dashboardPreview.innerHTML = `
-                    <div class="bg-slate-900/60 border border-slate-700/50 p-4 rounded-xl space-y-2">
-                        <div class="flex justify-between items-center">
-                            <span class="text-[10px] border px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${tagColor}">${latest.tag || 'General'}</span>
-                            <span class="text-[11px] text-slate-400">${latest.timestamp || ''}</span>
-                        </div>
-                        <h4 class="font-bold text-white text-sm">${latest.title}</h4>
-                        <p class="text-xs text-slate-300 line-clamp-2">${latest.content}</p>
-                        <p class="text-[10px] text-slate-500 pt-1 border-t border-slate-800">Posted by ${getFirstName(latest.postedBy)}</p>
-                    </div>
-                `;
-            }
-        }
-
-        function renderChat() {
-            const container = document.getElementById("chatMessagesContainer");
-            container.innerHTML = "";
-            if (classChatMessages.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No chat messages yet. Start the conversation!</p>`;
-                return;
-            }
-            classChatMessages.forEach(msg => {
-                const isMe = (msg.studentName === activeStudent);
-                const isOfficer = AUTHORIZED_OFFICERS.includes(msg.studentName);
-                const div = document.createElement("div");
-                div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
-                div.innerHTML = `
-                    <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mb-0.5">
-                        <span class="font-semibold ${isOfficer ? 'text-amber-400' : 'text-slate-300'}">${getFirstName(msg.studentName)} ${isOfficer ? '⭐' : ''}</span>
-                        <span>•</span>
-                        <span class="text-[10px] text-slate-500">${msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
-                    </div>
-                    <div class="max-w-xs sm:max-w-md px-3.5 py-2 rounded-2xl text-xs ${isMe ? 'bg-brand-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 border border-slate-700/60 rounded-tl-none'}">${msg.message}</div>
-                `;
-                container.appendChild(div);
-            });
-            container.scrollTop = container.scrollHeight;
         }
 
         function renderMasterMatrix() {
@@ -1301,42 +1185,6 @@
             table.innerHTML = html;
         }
 
-        async function fetchServerData() {
-            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") return;
-            try {
-                const res = await fetch(GOOGLE_SCRIPT_URL);
-                const data = await res.json();
-                
-                // Load live tasks from Google Sheets if available
-                if (data.tasks && data.tasks.length > 0) {
-                    tasksData = data.tasks;
-                    localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
-                    renderTasks();
-                    renderCalendar();
-                }
-
-                if (data.chat) { 
-                    classChatMessages = data.chat; 
-                    renderChat(); 
-                }
-                
-                if (data.announcements !== undefined) { 
-                    blockAnnouncements = data.announcements; 
-                    localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
-                    renderAnnouncements(); 
-                }
-
-                if (data.completions) {
-                    userCompletions = { ...userCompletions, ...data.completions };
-                    localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
-                    renderTasks();
-                    if (isOfficerVerified) renderMasterMatrix();
-                }
-            } catch(e) { 
-                console.log("Sync error:", e); 
-            }
-        }
-
         async function handleImageUpload(event) {
             event.preventDefault();
             if (activeStudent === "Guest") { alert("Please select your profile first!"); return; }
@@ -1346,18 +1194,17 @@
             if (!file) return;
 
             const btn = document.getElementById("uploadSubmitBtn");
-            btn.textContent = "Uploading to Drive...";
+            btn.textContent = "Uploading...";
             btn.disabled = true;
 
             const reader = new FileReader();
             reader.onload = async function(e) {
-                const base64Data = e.target.result;
                 if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
                     try {
                         await fetch(GOOGLE_SCRIPT_URL, {
                             method: "POST", mode: "no-cors",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ action: "uploadImage", studentName: activeStudent, fileName: file.name, mimeType: file.type, fileData: base64Data, description: desc })
+                            body: JSON.stringify({ action: "uploadImage", studentName: activeStudent, fileName: file.name, mimeType: file.type, fileData: e.target.result, description: desc })
                         });
                         alert("Screenshot / Report uploaded successfully to Google Drive!");
                         closeUploadModal();
@@ -1370,102 +1217,29 @@
             reader.readAsDataURL(file);
         }
 
-        async function handleSendChatMessage(event) {
-            event.preventDefault();
-            if (activeStudent === "Guest") { alert("Please select your profile first!"); return; }
-            const input = document.getElementById("chatInputMessage");
-            const msgText = input.value.trim();
-            if (!msgText) return;
-
-            const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent);
-            classChatMessages.push({ timestamp: new Date().toISOString(), studentName: activeStudent, role: isOfficer ? "Officer" : "Student", message: msgText });
-            renderChat();
-            input.value = "";
-
-            if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
-                try {
-                    await fetch(GOOGLE_SCRIPT_URL, {
-                        method: "POST", mode: "no-cors",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ action: "postChat", studentName: activeStudent, role: isOfficer ? "Officer" : "Student", message: msgText })
-                    });
-                } catch(e) { console.log(e); }
-            }
-        }
-
-        function openAnnouncementModal() {
-            document.getElementById("editAnnouncementIndex").value = "";
-            document.getElementById("announcementModalTitle").textContent = "Post Official Block Announcement";
-            document.getElementById("announcementForm").reset();
-            document.getElementById("announcementModal").classList.remove("hidden");
-            document.getElementById("announcementModal").classList.add("flex");
-        }
-
-        function openEditAnnouncementModal(index) {
-            const ann = blockAnnouncements[index];
-            if (!ann) return;
-            document.getElementById("editAnnouncementIndex").value = index;
-            document.getElementById("announcementModalTitle").textContent = "Edit Official Block Announcement";
-            document.getElementById("annTitle").value = ann.title;
-            document.getElementById("annTag").value = ann.tag || "General";
-            document.getElementById("annContent").value = ann.content;
-            document.getElementById("announcementModal").classList.remove("hidden");
-            document.getElementById("announcementModal").classList.add("flex");
-        }
-
         async function handleSaveAnnouncement(event) {
             event.preventDefault();
-            const editIdx = document.getElementById("editAnnouncementIndex").value;
             const title = document.getElementById("annTitle").value;
             const tag = document.getElementById("annTag").value;
             const content = document.getElementById("annContent").value;
 
-            if (editIdx !== "") {
-                blockAnnouncements[editIdx].title = title;
-                blockAnnouncements[editIdx].tag = tag;
-                blockAnnouncements[editIdx].content = content;
-                alert("Announcement updated successfully!");
-            } else {
-                blockAnnouncements.unshift({ postedBy: activeStudent, title: title, content: content, tag: tag, timestamp: new Date().toLocaleDateString() });
-                alert("Announcement posted successfully!");
-            }
-
+            blockAnnouncements.unshift({ postedBy: activeStudent, title: title, content: content, tag: tag, timestamp: new Date().toLocaleDateString() });
             localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
             closeAnnouncementModal();
             renderAnnouncements();
+            alert("Announcement posted successfully!");
         }
 
-        async function deleteAnnouncement(index) {
-            if (confirm("Are you sure you want to delete this bulletin for all students?")) {
-                const deletedItem = blockAnnouncements[index];
+        function deleteAnnouncement(index) {
+            if (confirm("Delete this bulletin?")) {
                 blockAnnouncements.splice(index, 1);
-                
                 localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
                 renderAnnouncements();
-
-                if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
-                    try {
-                        await fetch(GOOGLE_SCRIPT_URL, {
-                            method: "POST", mode: "no-cors",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ 
-                                action: "deleteAnnouncement", 
-                                title: deletedItem.title, 
-                                updatedAnnouncements: blockAnnouncements 
-                            })
-                        });
-                        alert("Bulletin deleted globally for all students!");
-                    } catch(e) { 
-                        console.log("Error syncing deletion to server:", e); 
-                    }
-                } else {
-                    alert("Bulletin deleted locally.");
-                }
             }
         }
 
         async function toggleTaskCompletion(taskId) {
-            if (activeStudent === "Guest") { alert("Please select your name from the profile dropdown first!"); return; }
+            if (activeStudent === "Guest") { alert("Please select your name first!"); return; }
             const key = activeStudent + "_" + taskId;
             userCompletions[key] = !userCompletions[key];
             localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
@@ -1530,7 +1304,6 @@
 
         function openUploadModal() { document.getElementById("uploadModal").classList.remove("hidden"); document.getElementById("uploadModal").classList.add("flex"); }
         function closeUploadModal() { document.getElementById("uploadModal").classList.remove("flex"); document.getElementById("uploadModal").classList.add("hidden"); }
-
         function openTaskModal() {
             document.getElementById("editTaskId").value = "";
             document.getElementById("taskModalTitle").textContent = "Add Class Requirement & Groups";
@@ -1540,44 +1313,9 @@
             document.getElementById("taskModal").classList.remove("hidden");
             document.getElementById("taskModal").classList.add("flex");
         }
-
-        function openEditTaskId(taskId) {
-            const task = tasksData.find(t => t.id === taskId);
-            if (!task) return;
-            document.getElementById("editTaskId").value = task.id;
-            document.getElementById("taskModalTitle").textContent = "Edit Class Requirement & Deadline/Link";
-            document.getElementById("newTaskSubject").value = task.subject;
-            document.getElementById("newTaskTitle").value = task.title;
-            document.getElementById("newTaskType").value = task.type;
-            document.getElementById("newTaskDate").value = formatDateOnly(task.dueDate);
-            document.getElementById("newTaskLink").value = task.link || "";
-
-            const gf = document.getElementById("groupFields");
-            const container = document.getElementById("groupRowsContainer");
-            container.innerHTML = "";
-
-            if (task.type === "Grouping") {
-                gf.classList.remove("hidden");
-                if (task.groups && task.groups.length > 0) {
-                    task.groups.forEach(g => addGroupBuilderRow(g));
-                } else {
-                    addGroupBuilderRow();
-                }
-            } else {
-                gf.classList.add("hidden");
-            }
-
-            document.getElementById("taskModal").classList.remove("hidden");
-            document.getElementById("taskModal").classList.add("flex");
-        }
-
-        function openEditTaskModal(id) { openEditTaskId(id); }
-
         function closeTaskModal() { document.getElementById("taskModal").classList.remove("flex"); document.getElementById("taskModal").classList.add("hidden"); }
-
         function openAnnouncementModal() { document.getElementById("announcementModal").classList.remove("hidden"); document.getElementById("announcementModal").classList.add("flex"); }
         function closeAnnouncementModal() { document.getElementById("announcementModal").classList.remove("flex"); document.getElementById("announcementModal").classList.add("hidden"); }
-
         function openScheduleModal() { document.getElementById("scheduleModal").classList.remove("hidden"); document.getElementById("scheduleModal").classList.add("flex"); }
         function closeScheduleModal() { document.getElementById("scheduleModal").classList.remove("flex"); document.getElementById("scheduleModal").classList.add("hidden"); }
 
@@ -1589,19 +1327,15 @@
 
             if (type === "Grouping") {
                 const rows = document.querySelectorAll(".group-builder-row");
-                let hasError = false;
-
                 rows.forEach(row => {
                     const leader = row.querySelector(".group-leader-select").value;
                     const checkboxes = row.querySelectorAll("input[name='member_checkbox']:checked");
                     let members = [];
-
-                    if (!leader) { hasError = true; alert("Select Team Leader."); return; }
-                    checkboxes.forEach(cb => { members.push(cb.value); });
-                    groupsData.push({ leader: leader, members: members });
+                    if (leader) {
+                        checkboxes.forEach(cb => members.push(cb.value));
+                        groupsData.push({ leader: leader, members: members });
+                    }
                 });
-
-                if (hasError) return;
             }
 
             const subjectVal = document.getElementById("newTaskSubject").value;
@@ -1618,20 +1352,10 @@
                     task.groups = groupsData;
                     task.dueDate = dueDateVal;
                     task.link = linkVal;
-                    alert("Requirement updated successfully!");
                 }
             } else {
                 const newId = tasksData.length > 0 ? Math.max(...tasksData.map(t => t.id)) + 1 : 1;
-                tasksData.push({
-                    id: newId,
-                    subject: subjectVal,
-                    title: titleVal,
-                    type: type,
-                    groups: groupsData,
-                    dueDate: dueDateVal,
-                    link: linkVal
-                });
-                alert("Requirement added successfully!");
+                tasksData.push({ id: newId, subject: subjectVal, title: titleVal, type: type, groups: groupsData, dueDate: dueDateVal, link: linkVal });
             }
 
             localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
@@ -1639,42 +1363,19 @@
             renderTasks();
             renderCalendar();
             if (isOfficerVerified) renderMasterMatrix();
-
-            // Send to Google Sheets backend so it persists across GitHub updates
-            if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
-                try {
-                    await fetch(GOOGLE_SCRIPT_URL, {
-                        method: "POST",
-                        mode: "no-cors",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            action: "addTask",
-                            subject: subjectVal,
-                            title: titleVal,
-                            type: type,
-                            dueDate: dueDateVal,
-                            moduleLink: linkVal,
-                            subLink: ""
-                        })
-                    });
-                } catch (err) {
-                    console.error("Failed to sync task to Google Sheets:", err);
-                }
-            }
+            alert("Requirement saved successfully!");
         }
 
         function deleteTask(id) {
-            if (confirm("Are you sure you want to delete this requirement or group task?")) {
+            if (confirm("Delete this requirement?")) {
                 tasksData = tasksData.filter(t => t.id !== id);
                 localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
                 renderTasks();
                 renderCalendar();
                 if (isOfficerVerified) renderMasterMatrix();
-                alert("Requirement deleted.");
             }
         }
 
-        // INITIALIZE APP ON DOM LOAD
         if (document.readyState === "loading") {
             document.addEventListener("DOMContentLoaded", initApp);
         } else {
