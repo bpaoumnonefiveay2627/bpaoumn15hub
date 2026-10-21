@@ -1541,20 +1541,23 @@
             updateRealtimeClock();
             checkOfficerStatus();
 
-            // FETCH LIVE DATA FROM GOOGLE SHEETS ON LOAD
+            // ALWAYS FETCH FRESH DATA FROM GOOGLE SHEETS ON LOAD & OVERWRITE LOCAL CACHE
             if (GOOGLE_SCRIPT_URL) {
                 try {
                     const res = await fetch(GOOGLE_SCRIPT_URL);
                     const data = await res.json();
                     
-                    if (data.tasks && data.tasks.length > 0) {
+                    if (data.tasks) {
                         tasksData = data.tasks;
+                        localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
                     }
-                    if (data.announcements && data.announcements.length > 0) {
+                    if (data.announcements) {
                         blockAnnouncements = data.announcements;
+                        localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
                     }
                     if (data.completions) {
                         userCompletions = data.completions;
+                        localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
                     }
                 } catch (err) {
                     console.error("Failed to sync live data from Google Sheets:", err);
