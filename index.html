@@ -1196,32 +1196,37 @@
             let html = `<thead><tr class="bg-[#3b0609] text-[#FAD5A5] uppercase text-[11px] border-b border-[#252538]">
                 <th class="p-3 sticky left-0 bg-[#3b0609] z-10 text-left border-r border-[#252538]">Student Name</th>`;
 
-            // Table Headers with Task Titles & Delete Button for Officers
             tasksData.forEach(task => {
-                html += `<th class="p-3 text-center whitespace-nowrap min-w-[140px] border-r border-[#252538]">
+                html += `<th class="p-3 text-center whitespace-nowrap min-w-[150px] border-r border-[#252538]">
                     <div class="font-bold text-white">${escapeHtml(task.subject)}</div>
-                    <div class="text-[10px] text-[#FAD5A5]/80 font-normal truncate max-w-[130px] mx-auto">${escapeHtml(task.title)}</div>
-                    <button onclick="officerDeleteTaskFromMatrix(${task.id})" class="mt-1.5 text-[10px] bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/30 px-2 py-0.5 rounded transition-all">
-                        <i class="fa-solid fa-trash mr-1"></i> Delete
-                    </button>
+                    <div class="text-[10px] text-[#FAD5A5]/80 font-normal truncate max-w-[140px] mx-auto">${escapeHtml(task.title)}</div>
+                    <span class="text-[9px] px-1.5 py-0.2 rounded bg-[#161622] text-[#D99B26] border border-[#252538]">${task.type}</span>
+                    <div class="mt-1">
+                        <button onclick="officerDeleteTaskFromMatrix(${task.id})" class="text-[10px] bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/30 px-2 py-0.5 rounded transition-all">
+                            <i class="fa-solid fa-trash mr-1"></i> Delete
+                        </button>
+                    </div>
                 </th>`;
             });
             html += `</tr></thead><tbody class="divide-y divide-[#252538]">`;
 
-            // Matrix Rows per Student with Interactive Officer Toggle Buttons
             studentsData.forEach(student => {
                 html += `<tr class="hover:bg-[#3b0609]/40"><td class="p-3 font-semibold text-white sticky left-0 bg-[#161622] z-10 whitespace-nowrap border-r border-[#252538] text-xs">${student}</td>`;
                 
-                tasksData.forEach(task => {
+                tasksData.forEach((task, index) => {
                     let isDone = false; 
                     let isAssigned = true;
+                    let groupDisplay = "";
 
                     if (task.type === "Individual") { 
                         isDone = userCompletions[student + "_" + task.id] || false; 
                     } else if (task.groups) {
-                        const studentGroup = task.groups.find(g => g.leader === student || (g.members && g.members.includes(student)));
-                        if (studentGroup) { 
-                            isDone = groupCompletions[task.id + "_" + studentGroup.leader] || false; 
+                        const studentGroupIndex = task.groups.findIndex(g => g.leader === student || (g.members && g.members.includes(student)));
+                        if (studentGroupIndex !== -1) {
+                            const groupNum = studentGroupIndex + 1;
+                            const studentGroup = task.groups[studentGroupIndex];
+                            isDone = groupCompletions[task.id + "_" + studentGroup.leader] || false;
+                            groupDisplay = `<div class="text-[10px] text-[#D99B26] font-semibold mb-1">Group ${groupNum} (TL: ${getFirstName(studentGroup.leader)})</div>`;
                         } else { 
                             isAssigned = false; 
                         }
@@ -1235,6 +1240,7 @@
                             : 'bg-[#3b0609] text-[#FAD5A5]/60 border-[#902636]/40 hover:text-white hover:bg-[#902636]/30';
                         
                         html += `<td class="p-2 text-center border-r border-[#252538]">
+                            ${groupDisplay}
                             <button onclick="officerToggleStudentCompletion('${escapeHtml(student)}', ${task.id}, '${task.type}')" 
                                 class="px-2.5 py-1 rounded border text-[11px] font-bold transition-all shadow-sm flex items-center justify-center gap-1 mx-auto ${badgeColor}" 
                                 title="Click to override status on behalf of ${student}">
