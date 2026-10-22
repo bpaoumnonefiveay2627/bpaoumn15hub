@@ -1154,9 +1154,13 @@
             container.innerHTML = "";
             weekendContainer.innerHTML = "";
 
+            const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified;
+
             scheduleList.forEach(item => {
                 const isModular = item.type.includes("Modular");
                 const linkButton = item.link ? `<a href="${item.link}" target="_blank" class="text-xs bg-[#902636] text-white px-3.5 py-1.5 rounded-xl font-medium hover:bg-[#751e2b] flex items-center gap-1.5"><i class="fa-solid fa-link"></i> ${isModular ? 'Module' : 'Class'}</a>` : `<span class="text-xs text-[#FAD5A5]/60 bg-[#161622] border border-[#252538] px-3 py-1.5 rounded-xl">No Link</span>`;
+                
+                const officerScheduleEditBtn = isOfficer ? `<button onclick="openEditScheduleModal('${item.code}')" class="text-[11px] bg-[#D99B26]/20 hover:bg-[#D99B26]/30 text-[#D99B26] border border-[#D99B26]/30 px-3 py-1.5 rounded-xl font-medium transition-all flex items-center gap-1"><i class="fa-solid fa-pen"></i> Edit</button>` : '';
 
                 const card = document.createElement("div");
                 card.className = "bg-[#161622] p-4 rounded-xl border border-[#252538] flex flex-col md:flex-row justify-between items-start md:items-center gap-3";
@@ -1170,11 +1174,15 @@
                         </div>
                         <p class="text-xs text-[#FAD5A5]/70 mt-1">${item.prof} | Date: <strong class="text-white">${item.date || 'TBD'}</strong> | ${item.time}</p>
                     </div>
-                    <div>${linkButton}</div>
+                    <div class="flex items-center gap-2">
+                        ${linkButton}
+                        ${officerScheduleEditBtn}
+                    </div>
                 `;
                 container.appendChild(card);
             });
 
+            // Rest of your existing weekend calculations remain completely untouched...
             const today = new Date();
             const nextSat = new Date(today);
             nextSat.setDate(today.getDate() + ((6 - today.getDay() + 7) % 7 || 7));
@@ -1791,7 +1799,82 @@
             alert(editTaskId ? "Requirement updated successfully!" : "Requirement saved and synced to Google Sheets!");
         }
 
+      function openEditScheduleModal(code) {
+            const sched = scheduleList.find(s => s.code === code);
+            if (!sched) return;
+
+            document.getElementById("editScheduleCode").value = sched.code;
+            document.getElementById("editScheduleTitleDisplay").value = `${sched.code} - ${sched.title}`;
+            document.getElementById("editScheduleDate").value = sched.date || "";
+            document.getElementById("editScheduleTime").value = sched.time || "";
+            document.getElementById("editScheduleLink").value = sched.link || "";
+
+            document.getElementById("scheduleModal").classList.remove("hidden");
+            document.getElementById("scheduleModal").classList.add("flex");
+        }
+
+        function closeScheduleModal() {
+            document.getElementById("scheduleModal").classList.remove("flex");
+            document.getElementById("scheduleModal").classList.add("hidden");
+        }
+
+        function handleSaveSchedule(event) {
+            event.preventDefault();
+            const code = document.getElementById("editScheduleCode").value;
+            const date = document.getElementById("editScheduleDate").value;
+            const time = document.getElementById("editScheduleTime").value;
+            const link = document.getElementById("editScheduleLink").value;
+
+            const schedIndex = scheduleList.findIndex(s => s.code === code);
+            if (schedIndex !== -1) {
+                scheduleList[schedIndex] = {
+                    ...scheduleList[schedIndex],
+                    date,
+                    time,
+                    link
+                };
+            }
+
+            localStorage.setItem("bpa_schedule_list", JSON.stringify(scheduleList));
+            closeScheduleModal();
+            renderSchedule();
+            renderCalendar();
+            alert("Class schedule and meeting link updated successfully!");
+        }
+
         if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", initApp); } else { initApp(); }
     </script>
+  <!-- EDIT SCHEDULE MODAL (OFFICERS ONLY) -->
+    <div id="scheduleModal" class="fixed inset-0 bg-[#540B0E]/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#3b0609] border border-[#902636]/60 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-[#902636]/40 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-[#D99B26]"></i> Edit Class Schedule & Link</h3>
+                <button onclick="closeScheduleModal()" class="text-[#FAD5A5]/70 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="scheduleForm" onsubmit="handleSaveSchedule(event)" class="space-y-4 text-sm">
+                <input type="hidden" id="editScheduleCode" value="">
+                <div>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Subject Code & Title</label>
+                    <input type="text" id="editScheduleTitleDisplay" disabled class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-[#FAD5A5] opacity-80">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Class Date *</label>
+                    <input type="date" id="editScheduleDate" required class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Meeting Time *</label>
+                    <input type="text" id="editScheduleTime" required placeholder="e.g. Sat & Sun 3:00 PM - 4:30 PM" class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1"><i class="fa-solid fa-link text-[#D99B26] mr-1"></i> Synchronous Class / Meeting Link</label>
+                    <input type="url" id="editScheduleLink" placeholder="https://zoom.us/... or https://meet.google.com/..." class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeScheduleModal()" class="px-4 py-2 bg-[#314E52] hover:bg-[#314E52]/80 rounded-xl text-xs font-medium text-[#FAD5A5]">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-[#902636] hover:bg-[#751e2b] rounded-xl text-xs font-medium text-white shadow-md">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
