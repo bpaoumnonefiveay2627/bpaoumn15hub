@@ -432,23 +432,24 @@
         </div>
     </div>
 
-    <!-- INSTRUCTIONS & RUBRICS VIEW MODAL -->
+    <!-- INSTRUCTIONS & ITEM DETAILS VIEW MODAL -->
     <div id="instructionsModal" class="fixed inset-0 bg-[#540B0E]/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#3b0609] border border-[#902636]/60 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-[#902636]/40 pb-3">
-                <h3 id="instructionsModalTitle" class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-file-circle-check text-[#D99B26]"></i> Activity Instructions & Rubrics</h3>
+                <h3 id="instructionsModalTitle" class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-file-circle-check text-[#D99B26]"></i> Activity Instructions & Details</h3>
                 <button onclick="closeInstructionsModal()" class="text-[#FAD5A5]/70 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-4 text-sm">
                 <div>
-                    <h4 class="text-xs font-semibold text-[#D99B26] uppercase tracking-wider mb-1">Activity Instructions</h4>
+                    <h4 class="text-xs font-semibold text-[#D99B26] uppercase tracking-wider mb-1">Instructions / Class Information</h4>
                     <div id="displayActivityInstructions" class="bg-[#161622] border border-[#252538] p-3.5 rounded-xl text-xs text-slate-200 whitespace-pre-wrap leading-relaxed">No instructions provided.</div>
                 </div>
                 <div>
-                    <h4 class="text-xs font-semibold text-[#D99B26] uppercase tracking-wider mb-1">Grading Rubrics / Criteria</h4>
+                    <h4 class="text-xs font-semibold text-[#D99B26] uppercase tracking-wider mb-1">Grading Rubrics / Meeting Links</h4>
                     <div id="displayActivityRubrics" class="bg-[#161622] border border-[#252538] p-3.5 rounded-xl text-xs text-slate-200 whitespace-pre-wrap leading-relaxed">No rubric links or criteria specified.</div>
                 </div>
-                <div class="flex justify-end pt-2">
+                <div class="flex justify-between items-center pt-2">
+                    <div id="instructionsOfficerActions"></div>
                     <button type="button" onclick="closeInstructionsModal()" class="px-5 py-2 bg-[#314E52] hover:bg-[#314E52]/80 rounded-xl text-xs font-medium text-[#FAD5A5]">Close</button>
                 </div>
             </div>
@@ -507,6 +508,39 @@
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="closeAnnouncementModal()" class="px-4 py-2 bg-[#314E52] hover:bg-[#314E52]/80 rounded-xl text-sm font-medium text-[#FAD5A5]">Cancel</button>
                     <button type="submit" class="px-5 py-2 bg-[#902636] hover:bg-[#751e2b] rounded-xl text-sm font-medium text-white shadow-md">Save Bulletin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT SCHEDULE MODAL (OFFICERS ONLY) -->
+    <div id="scheduleModal" class="fixed inset-0 bg-[#540B0E]/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#3b0609] border border-[#902636]/60 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-[#902636]/40 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-[#D99B26]"></i> Edit Class Schedule & Link</h3>
+                <button onclick="closeScheduleModal()" class="text-[#FAD5A5]/70 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="scheduleForm" onsubmit="handleSaveSchedule(event)" class="space-y-4 text-sm">
+                <input type="hidden" id="editScheduleCode" value="">
+                <div>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Subject Code & Title</label>
+                    <input type="text" id="editScheduleTitleDisplay" disabled class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-[#FAD5A5] opacity-80">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Class Date *</label>
+                    <input type="date" id="editScheduleDate" required class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Meeting Time *</label>
+                    <input type="text" id="editScheduleTime" required placeholder="e.g. Sat & Sun 3:00 PM - 4:30 PM" class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1"><i class="fa-solid fa-link text-[#D99B26] mr-1"></i> Synchronous Class / Meeting Link</label>
+                    <input type="url" id="editScheduleLink" placeholder="https://zoom.us/... or https://meet.google.com/..." class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeScheduleModal()" class="px-4 py-2 bg-[#314E52] hover:bg-[#314E52]/80 rounded-xl text-xs font-medium text-[#FAD5A5]">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-[#902636] hover:bg-[#751e2b] rounded-xl text-xs font-medium text-white shadow-md">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -807,6 +841,7 @@
                 localStorage.removeItem("bpa_officer_verified");
                 checkOfficerStatus();
                 renderTasks();
+                renderCalendar();
                 return;
             }
 
@@ -957,11 +992,11 @@
                 
                 dayClasses.forEach(c => {
                     const cycleColor = c.cycle === 'Cycle 1' ? 'bg-[#902636]/80 border-[#902636]' : 'bg-emerald-800/80 border-emerald-600';
-                    eventsHtml += `<div class="text-[10px] ${cycleColor} text-white border px-1.5 py-0.5 rounded truncate font-medium" title="${c.code}: ${c.title} (${c.cycle}, ${c.time})">📚 ${c.code} (${c.cycle === 'Cycle 1' ? 'C1' : 'C2'})</div>`;
+                    eventsHtml += `<div onclick="openClassDetailModal('${c.code}')" class="text-[10px] ${cycleColor} text-white border px-1.5 py-0.5 rounded truncate font-medium cursor-pointer hover:brightness-125 transition-all" title="Click to view details: ${c.code}: ${c.title}">📚 ${c.code} (${c.cycle === 'Cycle 1' ? 'C1' : 'C2'})</div>`;
                 });
 
                 dayTasks.forEach(t => {
-                    eventsHtml += `<div class="text-[10px] bg-[#902636]/60 text-white border border-[#902636] px-1.5 py-0.5 rounded truncate font-medium cursor-pointer" onclick="openInstructionsModal(${t.id})" title="Click to view instructions: ${t.subject} ${t.title}">📌 ${t.subject}</div>`;
+                    eventsHtml += `<div onclick="openInstructionsModal(${t.id})" class="text-[10px] bg-[#902636]/60 text-white border border-[#902636] px-1.5 py-0.5 rounded truncate font-medium cursor-pointer hover:bg-[#902636] transition-all" title="Click to view details: ${t.subject} ${t.title}">📌 ${t.subject}</div>`;
                 });
 
                 dayEvents.forEach((e) => {
@@ -1182,7 +1217,6 @@
                 container.appendChild(card);
             });
 
-            // Rest of your existing weekend calculations remain completely untouched...
             const today = new Date();
             const nextSat = new Date(today);
             nextSat.setDate(today.getDate() + ((6 - today.getDay() + 7) % 7 || 7));
@@ -1427,16 +1461,58 @@
             renderMasterMatrix();
         }
 
-        function openInstructionsModal(taskId) {
-            const task = tasksData.find(t => t.id === taskId);
-            if (!task) return;
-            document.getElementById("instructionsModalTitle").textContent = `${task.subject}: ${task.title}`;
-            document.getElementById("displayActivityInstructions").textContent = task.instructions || "No instructions provided.";
-            document.getElementById("displayActivityRubrics").textContent = task.rubrics || "No rubric links or criteria specified.";
+        function openClassDetailModal(code) {
+            const sched = scheduleList.find(s => s.code === code);
+            if (!sched) return;
+
+            const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified;
+
+            document.getElementById("instructionsModalTitle").textContent = `📚 ${sched.code}: ${sched.title}`;
+            document.getElementById("displayActivityInstructions").innerHTML = `
+                <p><strong>Faculty / Instructor:</strong> ${sched.prof}</p>
+                <p class="mt-1"><strong>Meeting Schedule:</strong> ${sched.time}</p>
+                <p class="mt-1"><strong>Scheduled Date:</strong> ${sched.date || 'TBD'}</p>
+                <p class="mt-1"><strong>Academic Cycle:</strong> ${sched.cycle}</p>
+            `;
             
+            document.getElementById("displayActivityRubrics").innerHTML = sched.link 
+                ? `<a href="${sched.link}" target="_blank" class="inline-flex items-center gap-1.5 text-xs bg-[#902636] text-white px-3.5 py-1.5 rounded-xl font-medium hover:bg-[#751e2b]"><i class="fa-solid fa-link"></i> Join Class / View Link</a>`
+                : `<span class="text-xs text-[#FAD5A5]/60 italic">No direct meeting/module link specified yet.</span>`;
+
+            const officerBtn = isOfficer ? `
+                <button onclick="closeInstructionsModal(); openEditScheduleModal('${sched.code}')" class="text-xs bg-[#D99B26]/20 hover:bg-[#D99B26]/30 text-[#D99B26] border border-[#D99B26]/30 px-3.5 py-1.5 rounded-xl font-medium transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-pen-to-square"></i> Edit Class Schedule (Officer)
+                </button>
+            ` : '';
+
+            document.getElementById("instructionsOfficerActions").innerHTML = officerBtn;
+
             document.getElementById("instructionsModal").classList.remove("hidden");
             document.getElementById("instructionsModal").classList.add("flex");
         }
+
+        function openInstructionsModal(taskId) {
+            const task = tasksData.find(t => t.id === taskId);
+            if (!task) return;
+
+            const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified;
+
+            document.getElementById("instructionsModalTitle").textContent = `📌 ${task.subject}: ${task.title}`;
+            document.getElementById("displayActivityInstructions").textContent = task.instructions || "No instructions provided.";
+            document.getElementById("displayActivityRubrics").textContent = task.rubrics || "No rubric links or criteria specified.";
+            
+            const officerBtn = isOfficer ? `
+                <button onclick="closeInstructionsModal(); openEditTaskModal(${task.id})" class="text-xs bg-[#D99B26]/20 hover:bg-[#D99B26]/30 text-[#D99B26] border border-[#D99B26]/30 px-3.5 py-1.5 rounded-xl font-medium transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-pen-to-square"></i> Edit Requirement Details (Officer)
+                </button>
+            ` : '';
+
+            document.getElementById("instructionsOfficerActions").innerHTML = officerBtn;
+
+            document.getElementById("instructionsModal").classList.remove("hidden");
+            document.getElementById("instructionsModal").classList.add("flex");
+        }
+
         function closeInstructionsModal() {
             document.getElementById("instructionsModal").classList.remove("flex");
             document.getElementById("instructionsModal").classList.add("hidden");
@@ -1647,6 +1723,49 @@
         
         function openAnnouncementModal() { document.getElementById("announcementModal").classList.remove("hidden"); document.getElementById("announcementModal").classList.add("flex"); }
         function closeAnnouncementModal() { document.getElementById("announcementModal").classList.remove("flex"); document.getElementById("announcementModal").classList.add("hidden"); }
+
+        function openEditScheduleModal(code) {
+            const sched = scheduleList.find(s => s.code === code);
+            if (!sched) return;
+
+            document.getElementById("editScheduleCode").value = sched.code;
+            document.getElementById("editScheduleTitleDisplay").value = `${sched.code} - ${sched.title}`;
+            document.getElementById("editScheduleDate").value = sched.date || "";
+            document.getElementById("editScheduleTime").value = sched.time || "";
+            document.getElementById("editScheduleLink").value = sched.link || "";
+
+            document.getElementById("scheduleModal").classList.remove("hidden");
+            document.getElementById("scheduleModal").classList.add("flex");
+        }
+
+        function closeScheduleModal() {
+            document.getElementById("scheduleModal").classList.remove("flex");
+            document.getElementById("scheduleModal").classList.add("hidden");
+        }
+
+        function handleSaveSchedule(event) {
+            event.preventDefault();
+            const code = document.getElementById("editScheduleCode").value;
+            const date = document.getElementById("editScheduleDate").value;
+            const time = document.getElementById("editScheduleTime").value;
+            const link = document.getElementById("editScheduleLink").value;
+
+            const schedIndex = scheduleList.findIndex(s => s.code === code);
+            if (schedIndex !== -1) {
+                scheduleList[schedIndex] = {
+                    ...scheduleList[schedIndex],
+                    date,
+                    time,
+                    link
+                };
+            }
+
+            localStorage.setItem("bpa_schedule_list", JSON.stringify(scheduleList));
+            closeScheduleModal();
+            renderSchedule();
+            renderCalendar();
+            alert("Class schedule and meeting link updated successfully!");
+        }
       
         function openEditTaskModal(taskId) {
             const task = tasksData.find(t => t.id === taskId);
@@ -1664,7 +1783,6 @@
             document.getElementById("newTaskInstructions").value = task.instructions || "";
             document.getElementById("newTaskRubrics").value = task.rubrics || "";
 
-            // Keep reference to old subject/title for grouping updates on backend
             window.oldTaskSubject = task.subject;
             window.oldTaskTitle = task.title;
 
@@ -1677,7 +1795,6 @@
                 addGroupBuilderRow();
             }
 
-            // Open modal directly WITHOUT calling form.reset()
             document.getElementById("taskModal").classList.remove("hidden");
             document.getElementById("taskModal").classList.add("flex");
         }
@@ -1706,7 +1823,6 @@
             const instructions = document.getElementById("newTaskInstructions").value;
             const rubrics = document.getElementById("newTaskRubrics").value;
 
-            // IF EDITING EXISTING TASK
             if (editTaskId) {
                 const existingIndex = tasksData.findIndex(t => t.id === parseInt(editTaskId));
                 if (existingIndex !== -1) {
@@ -1757,7 +1873,6 @@
                     };
                 }
             } else {
-                // IF ADDING NEW TASK
                 const newTask = {
                     action: "addTask",
                     subject,
@@ -1799,82 +1914,7 @@
             alert(editTaskId ? "Requirement updated successfully!" : "Requirement saved and synced to Google Sheets!");
         }
 
-      function openEditScheduleModal(code) {
-            const sched = scheduleList.find(s => s.code === code);
-            if (!sched) return;
-
-            document.getElementById("editScheduleCode").value = sched.code;
-            document.getElementById("editScheduleTitleDisplay").value = `${sched.code} - ${sched.title}`;
-            document.getElementById("editScheduleDate").value = sched.date || "";
-            document.getElementById("editScheduleTime").value = sched.time || "";
-            document.getElementById("editScheduleLink").value = sched.link || "";
-
-            document.getElementById("scheduleModal").classList.remove("hidden");
-            document.getElementById("scheduleModal").classList.add("flex");
-        }
-
-        function closeScheduleModal() {
-            document.getElementById("scheduleModal").classList.remove("flex");
-            document.getElementById("scheduleModal").classList.add("hidden");
-        }
-
-        function handleSaveSchedule(event) {
-            event.preventDefault();
-            const code = document.getElementById("editScheduleCode").value;
-            const date = document.getElementById("editScheduleDate").value;
-            const time = document.getElementById("editScheduleTime").value;
-            const link = document.getElementById("editScheduleLink").value;
-
-            const schedIndex = scheduleList.findIndex(s => s.code === code);
-            if (schedIndex !== -1) {
-                scheduleList[schedIndex] = {
-                    ...scheduleList[schedIndex],
-                    date,
-                    time,
-                    link
-                };
-            }
-
-            localStorage.setItem("bpa_schedule_list", JSON.stringify(scheduleList));
-            closeScheduleModal();
-            renderSchedule();
-            renderCalendar();
-            alert("Class schedule and meeting link updated successfully!");
-        }
-
         if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", initApp); } else { initApp(); }
     </script>
-  <!-- EDIT SCHEDULE MODAL (OFFICERS ONLY) -->
-    <div id="scheduleModal" class="fixed inset-0 bg-[#540B0E]/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[#3b0609] border border-[#902636]/60 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div class="flex justify-between items-center border-b border-[#902636]/40 pb-3">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-[#D99B26]"></i> Edit Class Schedule & Link</h3>
-                <button onclick="closeScheduleModal()" class="text-[#FAD5A5]/70 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form id="scheduleForm" onsubmit="handleSaveSchedule(event)" class="space-y-4 text-sm">
-                <input type="hidden" id="editScheduleCode" value="">
-                <div>
-                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Subject Code & Title</label>
-                    <input type="text" id="editScheduleTitleDisplay" disabled class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-[#FAD5A5] opacity-80">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Class Date *</label>
-                    <input type="date" id="editScheduleDate" required class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Meeting Time *</label>
-                    <input type="text" id="editScheduleTime" required placeholder="e.g. Sat & Sun 3:00 PM - 4:30 PM" class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1"><i class="fa-solid fa-link text-[#D99B26] mr-1"></i> Synchronous Class / Meeting Link</label>
-                    <input type="url" id="editScheduleLink" placeholder="https://zoom.us/... or https://meet.google.com/..." class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeScheduleModal()" class="px-4 py-2 bg-[#314E52] hover:bg-[#314E52]/80 rounded-xl text-xs font-medium text-[#FAD5A5]">Cancel</button>
-                    <button type="submit" class="px-5 py-2 bg-[#902636] hover:bg-[#751e2b] rounded-xl text-xs font-medium text-white shadow-md">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
 </body>
 </html>
