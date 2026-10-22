@@ -1043,15 +1043,75 @@
             });
         }
 
+      let activeTaskSubjectFilter = "ALL";
+      
         function renderTasks() {
             const grid = document.getElementById("tasksGrid");
             const personalTable = document.getElementById("personalTaskTableBody");
-            grid.innerHTML = ""; personalTable.innerHTML = "";
+            if (!grid || !personalTable) return;
 
-            let pendingCount = 0; let completedCount = 0;
+            grid.innerHTML = ""; 
+            personalTable.innerHTML = "";
+
+            let pendingCount = 0; 
+            let completedCount = 0;
             const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified;
 
+            // Step A: Calculate Completion & Total Ratios per Subject for Active Student
+            const subjectStats = {};
+            tasksData.forEach(task => {
+                if (!subjectStats[task.subject]) {
+                    subjectStats[task.subject] = { total: 0, completed: 0 };
+                }
+
+                // Verify if task applies to active student
+                let appliesToUser = task.type === "Individual";
+                let myGroup = null;
+                if (task.type === "Grouping" && task.groups) {
+                    myGroup = task.groups.find(g => g.leader === activeStudent || (g.members && g.members.includes(activeStudent)));
+                    if (myGroup || isOfficer) appliesToUser = true;
+                }
+
+                if (appliesToUser) {
+                    subjectStats[task.subject].total++;
+
+                    let isComp = false;
+                    if (task.type === "Individual") {
+                        isComp = userCompletions[activeStudent + "_" + task.id] || false;
+                    } else if (myGroup) {
+                        isComp = groupCompletions[task.id + "_" + myGroup.leader] || false;
+                    }
+
+                    if (isComp) subjectStats[task.subject].completed++;
+                }
+            });
+
+            // Step B: Render Subject Summary / Filter Cards at Top of Tasks Grid
+            const summaryContainer = document.createElement("div");
+            summaryContainer.className = "col-span-full grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 mb-2";
+
+            let summaryCardsHtml = `
+                <div onclick="filterTaskSubject('ALL')" class="bg-[#161622] border ${activeTaskSubjectFilter === 'ALL' ? 'border-[#D99B26] bg-[#3b0609]/60' : 'border-[#252538]'} p-3.5 rounded-2xl cursor-pointer hover:border-[#D99B26] transition-all shadow-md">
+                    <div class="text-[10px] text-[#FAD5A5]/70 uppercase font-bold tracking-wider">All Subjects</div>
+                    <div class="text-lg font-bold text-white mt-1">${tasksData.length} Tasks</div>
+                </div>`;
+
+            Object.keys(subjectStats).forEach(subj => {
+                const stat = subjectStats[subj];
+                const isActive = activeTaskSubjectFilter === subj;
+                summaryCardsHtml += `
+                    <div onclick="filterTaskSubject('${subj}')" class="bg-[#161622] border ${isActive ? 'border-[#D99B26] bg-[#3b0609]/60' : 'border-[#252538]'} p-3.5 rounded-2xl cursor-pointer hover:border-[#D99B26] transition-all shadow-md">
+                        <div class="text-[10px] text-[#FAD5A5]/70 uppercase font-bold tracking-wider truncate">${subj}</div>
+                        <div class="text-base font-bold text-[#D99B26] mt-1">${stat.completed} / ${stat.total} <span class="text-xs font-normal text-white">Done</span></div>
+                    </div>`;
+            });
+
+            summaryContainer.innerHTML = summaryCardsHtml;
+            grid.appendChild(summaryContainer);
+
+            // Step C: Filter Tasks according to Selected Subject Card
             const assignedTasks = tasksData.filter(task => {
+                if (activeTaskSubjectFilter !== "ALL" && task.subject !== activeTaskSubjectFilter) return false;
                 if (task.type === "Individual") return true;
                 if (activeStudent === "Guest") return false;
                 if (isOfficer) return true; // Officers see all group tasks
@@ -1060,6 +1120,7 @@
                 return foundGroup !== undefined;
             });
 
+            // Step D: Render Requirement Cards & Checklist Rows
             assignedTasks.forEach(task => {
                 let isCompleted = false;
                 let permissionNotice = "";
