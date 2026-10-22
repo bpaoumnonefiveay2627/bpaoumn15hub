@@ -765,7 +765,7 @@
         let currentCalendarDate = new Date();
 
         let activeTaskSubjectFilter = "ALL";
-        let activeMatrixSubjectFilter = "ALL";
+        let activeMatrixSubjectFilter = "";
 
         function escapeHtml(text) {
             if (!text) return "";
@@ -784,7 +784,6 @@
             clockEl.textContent = now.toLocaleString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
         }
         setInterval(updateRealtimeClock, 1000);
-        updateRealtimeClock(); // Start clock right away on script parse
 
         function getFirstName(fullName) {
             if (!fullName || fullName === "Guest") return "BPAOUMN 1-5";
@@ -847,7 +846,6 @@
         }
 
         async function initApp() {
-            // Populate select box synchronously on load
             const selectEl = document.getElementById("studentProfileSelect");
             const isMobile = window.innerWidth < 640;
 
@@ -865,49 +863,41 @@
                 });
             }
 
+            updateRealtimeClock();
             checkOfficerStatus();
+
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    const res = await fetch(GOOGLE_SCRIPT_URL);
+                    const data = await res.json();
+                    
+                    if (data.schedule && data.schedule.length > 0) {
+                        scheduleList = data.schedule;
+                        localStorage.setItem("bpa_schedule_list", JSON.stringify(scheduleList));
+                    }
+                    if (data.tasks && data.tasks.length > 0) {
+                        tasksData = data.tasks;
+                        localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
+                    }
+                    if (data.announcements && data.announcements.length > 0) {
+                        blockAnnouncements = data.announcements;
+                        localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
+                    }
+                    if (data.completions) {
+                        userCompletions = data.completions;
+                        localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
+                    }
+                } catch (err) {
+                    console.error("Failed to sync live data from Google Sheets, using local state:", err);
+                }
+            }
 
             renderTasks();
             renderSchedule();
             renderCalendar();
             renderAnnouncements();
 
-            const chatBoxEl = document.getElementById("floatingChatBox");
-            const chatHeaderEl = document.getElementById("chatHeaderBar");
-            if (chatBoxEl && chatHeaderEl) {
-                makeElementDraggable(chatBoxEl, chatHeaderEl);
-            }
-
-            // Asynchronously fetch Google Sheets updates without blocking UI
-            if (GOOGLE_SCRIPT_URL) {
-                fetch(GOOGLE_SCRIPT_URL)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.schedule && data.schedule.length > 0) {
-                            scheduleList = data.schedule;
-                            localStorage.setItem("bpa_schedule_list", JSON.stringify(scheduleList));
-                        }
-                        if (data.tasks && data.tasks.length > 0) {
-                            tasksData = data.tasks;
-                            localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
-                        }
-                        if (data.announcements && data.announcements.length > 0) {
-                            blockAnnouncements = data.announcements;
-                            localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
-                        }
-                        if (data.completions) {
-                            userCompletions = data.completions;
-                            localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
-                        }
-                        renderTasks();
-                        renderSchedule();
-                        renderCalendar();
-                        renderAnnouncements();
-                    })
-                    .catch(err => {
-                        console.error("Failed to sync live data from Google Sheets, using local state:", err);
-                    });
-            }
+            makeElementDraggable(document.getElementById("floatingChatBox"), document.getElementById("chatHeaderBar"));
         }
 
         function handleProfileChange(name) {
@@ -1427,7 +1417,9 @@
             }
         }
 
-        let activeMatrixCategoryFilter = "";
+        // Default to the first available subject when no subject is selected.
+        let activeMatrixCategoryFilter = ""; // e.g., Quiz, Assignment, Module, Activity
+        let activeMatrixTitleFilter = ""; // Search activity/task titles within the selected subject and category
 
         function renderMasterMatrix() {
             const table = document.getElementById("masterMatrixTable");
@@ -1438,18 +1430,30 @@
                 activeMatrixSubjectFilter = uniqueSubjects[0];
             }
 
+            // Extract categories dynamically or use standard types (Quiz, Assignment, Module, Activity)
             const categories = ["Assignment", "Quiz", "Module", "Activity", "Grouping", "Individual"];
 
+            // Filter tasks based on selected Subject and Category
             const filteredTasks = tasksData.filter(task => {
                 if (task.subject !== activeMatrixSubjectFilter) return false;
                 if (activeMatrixCategoryFilter) {
-                    const matchesType = task.type.toLowerCase() === activeMatrixCategoryFilter.toLowerCase();
-                    const matchesTitle = task.title.toLowerCase().includes(activeMatrixCategoryFilter.toLowerCase());
-                    if (!matchesType && !matchesTitle) return false;
+                    const taskType = (task.type || "").toLowerCase();
+                    const taskTitle = (task.title || "").toLowerCase();
+                    const categoryQuery = activeMatrixCategoryFilter.toLowerCase();
+                    const matchesType = taskType === categoryQuery;
+                    const matchesCategoryInTitle = taskTitle.includes(categoryQuery);
+                    if (!matchesType && !matchesCategoryInTitle) return false;
+                }
+
+                // Match partial words/phrases in the activity title (case-insensitive).
+                const titleQuery = activeMatrixTitleFilter.trim().toLowerCase();
+                if (titleQuery && !(task.title || "").toLowerCase().includes(titleQuery)) {
+                    return false;
                 }
                 return true;
             });
 
+            // Build Horizontal Filter Bars
             let subjectTabsHtml = `<div class="p-3 bg-[#161622] border-b border-[#252538] flex flex-col gap-2">
                 <div class="flex items-center gap-2 overflow-x-auto no-scrollbar whitespace-nowrap">
                     <span class="text-xs text-[#FAD5A5] font-bold mr-1">Subject:</span>`;
@@ -1460,6 +1464,7 @@
             });
             subjectTabsHtml += `</div>`;
 
+            // Category Filter Bar (Horizontal)
             subjectTabsHtml += `<div class="flex items-center gap-2 overflow-x-auto no-scrollbar whitespace-nowrap pt-1 border-t border-[#252538]/50">
                 <span class="text-xs text-[#FAD5A5] font-bold mr-1">Type/Category:</span>
                 <button onclick="filterMatrixCategory('')" class="text-xs px-2.5 py-1 rounded-md font-semibold transition-all ${activeMatrixCategoryFilter === '' ? 'bg-[#D99B26] text-[#3b0609]' : 'bg-[#3b0609] text-[#FAD5A5]/70 hover:text-white'}">All Types</button>`;
@@ -1468,8 +1473,32 @@
                 const isActive = activeMatrixCategoryFilter === cat;
                 subjectTabsHtml += `<button onclick="filterMatrixCategory('${cat}')" class="text-xs px-2.5 py-1 rounded-md font-semibold transition-all ${isActive ? 'bg-[#D99B26] text-[#3b0609]' : 'bg-[#3b0609] text-[#FAD5A5]/70 hover:text-white'}">${cat}</button>`;
             });
-            subjectTabsHtml += `</div></div>`;
+            subjectTabsHtml += `</div>`;
 
+            // Activity title search bar. This works together with the subject and category filters.
+            subjectTabsHtml += `
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t border-[#252538]/50">
+                    <label for="matrixTitleSearch" class="text-xs text-[#FAD5A5] font-bold whitespace-nowrap">Activity title:</label>
+                    <input
+                        id="matrixTitleSearch"
+                        type="search"
+                        value="${escapeHtml(activeMatrixTitleFilter)}"
+                        placeholder="Search title or part of a title..."
+                        aria-label="Filter Master Matrix by activity title"
+                        oninput="filterMatrixTitle(this.value)"
+                        class="w-full sm:max-w-md bg-[#0f0f18] border border-[#252538] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]"
+                    />
+                    <button
+                        type="button"
+                        onclick="filterMatrixTitle('')"
+                        class="text-xs px-3 py-2 rounded-lg bg-[#3b0609] text-[#FAD5A5] border border-[#902636]/40 hover:text-white whitespace-nowrap">
+                        Clear search
+                    </button>
+                    <span class="text-[10px] text-[#FAD5A5]/60">${filteredTasks.length} matching task${filteredTasks.length === 1 ? '' : 's'}</span>
+                </div>
+                </div>`;
+
+            // Build Table Headers
             let html = subjectTabsHtml + `<thead><tr class="bg-[#3b0609] text-[#FAD5A5] uppercase text-[11px] border-b border-[#252538]">
                 <th class="p-3 sticky left-0 bg-[#3b0609] z-10 text-left border-r border-[#252538]">Student Name</th>`;
 
@@ -1553,6 +1582,21 @@
         function filterMatrixCategory(cat) {
             activeMatrixCategoryFilter = cat;
             renderMasterMatrix();
+        }
+
+        function filterMatrixTitle(title) {
+            activeMatrixTitleFilter = title || "";
+            renderMasterMatrix();
+
+            // Keep the search usable while the table is re-rendered on each keystroke.
+            const input = document.getElementById("matrixTitleSearch");
+            if (input) {
+                input.focus();
+                const cursorPosition = input.value.length;
+                if (typeof input.setSelectionRange === "function") {
+                    input.setSelectionRange(cursorPosition, cursorPosition);
+                }
+            }
         }
 
         async function officerDeleteTaskFromMatrix(taskId) {
@@ -2174,6 +2218,7 @@
                 });
             }
 
+            // Apply Initial Completion Status if marked as Completed on creation
             if (initialStatus === "Completed") {
                 if (type === "Individual") {
                     studentsData.forEach(student => {
@@ -2203,11 +2248,7 @@
             alert(editTaskId ? "Requirement updated successfully!" : "Requirement saved and synced to Google Sheets!");
         }
 
-        if (document.readyState === "loading") { 
-            document.addEventListener("DOMContentLoaded", initApp); 
-        } else { 
-            initApp(); 
-        }
+        if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", initApp); } else { initApp(); }
     </script>
 </body>
 </html>
