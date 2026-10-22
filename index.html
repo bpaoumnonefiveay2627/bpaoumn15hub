@@ -506,7 +506,7 @@
         </div>
     </div>
 
-    <!-- EXPANDED TASK & REQUIREMENT MODAL (UPDATED WITH SEPARATE LINKS, INSTRUCTIONS & DRIVE DIRECT UPLOADS) -->
+    <!-- EXPANDED TASK & REQUIREMENT MODAL -->
     <div id="taskModal" class="fixed inset-0 bg-[#540B0E]/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#3b0609] border border-[#902636]/60 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-[#902636]/40 pb-3">
@@ -551,7 +551,6 @@
                     <input type="date" id="newTaskDate" required class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-sm text-white">
                 </div>
 
-                <!-- SEPARATE LINKS: MODULE VS SUBMISSION VS DRIVE FOLDER -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1"><i class="fa-solid fa-book-open text-[#D99B26] mr-1"></i> Module Link</label>
@@ -563,13 +562,11 @@
                     </div>
                 </div>
 
-                <!-- GOOGLE DRIVE FOLDER LINK FOR DIRECT UPLOAD -->
                 <div>
                     <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1"><i class="fa-brands fa-google-drive text-[#D99B26] mr-1"></i> Google Drive Folder Link (For Direct Student Uploads)</label>
                     <input type="url" id="newTaskDriveLink" placeholder="https://drive.google.com/drive/folders/..." class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
                 </div>
 
-                <!-- ACTIVITY INSTRUCTIONS & RUBRICS CRITERIA -->
                 <div>
                     <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1"><i class="fa-solid fa-list-ol text-[#D99B26] mr-1"></i> Activity Instructions</label>
                     <textarea id="newTaskInstructions" rows="3" placeholder="Step-by-step instructions for the requirement..." class="w-full bg-[#161622] border border-[#252538] rounded-xl p-3 text-xs text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]"></textarea>
@@ -745,7 +742,7 @@
             }
         }
 
-        function initApp() {
+        async function initApp() {
             const selectEl = document.getElementById("studentProfileSelect");
             const isMobile = window.innerWidth < 640;
 
@@ -765,6 +762,30 @@
 
             updateRealtimeClock();
             checkOfficerStatus();
+
+            // FETCH FRESH TASKS/ANNOUNCEMENTS FROM GOOGLE SHEETS SAFELY
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    const res = await fetch(GOOGLE_SCRIPT_URL);
+                    const data = await res.json();
+                    
+                    if (data.tasks && data.tasks.length > 0) {
+                        tasksData = data.tasks;
+                        localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
+                    }
+                    if (data.announcements && data.announcements.length > 0) {
+                        blockAnnouncements = data.announcements;
+                        localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
+                    }
+                    if (data.completions) {
+                        userCompletions = data.completions;
+                        localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
+                    }
+                } catch (err) {
+                    console.error("Failed to sync live data from Google Sheets, using local state:", err);
+                }
+            }
+
             renderTasks();
             renderSchedule();
             renderCalendar();
@@ -1029,9 +1050,10 @@
 
                 if (isCompleted) completedCount++; else pendingCount++;
 
-                // LINK BUTTONS (Separated Module, Submission, Drive Direct Upload)
+                // LINK BUTTONS (Fixed submissionLink fallback mapping to subLink)
                 const moduleBtn = task.moduleLink ? `<a href="${task.moduleLink}" target="_blank" class="inline-flex items-center gap-1.5 text-xs bg-[#314E52] text-[#FAD5A5] border border-[#D99B26]/30 px-2.5 py-1 rounded-lg font-medium hover:bg-[#314E52]/80"><i class="fa-solid fa-book-open text-[#D99B26]"></i> Module</a>` : '';
-                const subBtn = task.submissionLink ? `<a href="${task.submissionLink}" target="_blank" class="inline-flex items-center gap-1.5 text-xs bg-[#902636]/20 text-[#FAD5A5] border border-[#902636]/40 px-2.5 py-1 rounded-lg font-medium hover:bg-[#902636]/40"><i class="fa-solid fa-paper-plane text-[#D99B26]"></i> Submit Portal</a>` : '';
+                const subLinkUrl = task.submissionLink || task.subLink;
+                const subBtn = subLinkUrl ? `<a href="${subLinkUrl}" target="_blank" class="inline-flex items-center gap-1.5 text-xs bg-[#902636]/20 text-[#FAD5A5] border border-[#902636]/40 px-2.5 py-1 rounded-lg font-medium hover:bg-[#902636]/40"><i class="fa-solid fa-paper-plane text-[#D99B26]"></i> Submit Portal</a>` : '';
                 const driveUploadBtn = task.driveLink ? `<button onclick="openDriveUploadModal(${task.id}, '${escapeHtml(task.driveLink)}')" class="inline-flex items-center gap-1.5 text-xs bg-[#D99B26]/20 text-[#FAD5A5] border border-[#D99B26]/40 px-2.5 py-1 rounded-lg font-medium hover:bg-[#D99B26]/30"><i class="fa-brands fa-google-drive text-[#D99B26]"></i> Upload to Drive</button>` : '';
                 const viewInstructionsBtn = `<button onclick="openInstructionsModal(${task.id})" class="inline-flex items-center gap-1.5 text-xs bg-[#161622] text-[#FAD5A5] border border-[#252538] px-2.5 py-1 rounded-lg font-medium hover:bg-[#252538]"><i class="fa-solid fa-circle-info text-[#D99B26]"></i> Instructions & Rubrics</button>`;
 
@@ -1228,7 +1250,6 @@
                             const groupKey = task.id + "_" + studentGroup.leader;
                             isDone = groupCompletions[groupKey] || false;
 
-                            // Clicking this group badge toggles completion for the ENTIRE group (TL + Members)
                             groupBadgeHtml = `<button onclick="officerToggleGroupCompletion(${task.id}, '${escapeHtml(studentGroup.leader)}')" class="text-[10px] text-[#D99B26] font-semibold bg-[#161622] hover:bg-[#D99B26]/20 border border-[#D99B26]/30 px-2 py-0.5 rounded mb-1 transition-all" title="Click to toggle status for entire Group ${groupNum}">Group ${groupNum} (TL: ${getFirstName(studentGroup.leader)})</button>`;
                         } else { 
                             isAssigned = false; 
@@ -1242,9 +1263,10 @@
                             ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' 
                             : 'bg-[#3b0609] text-[#FAD5A5]/60 border-[#902636]/40 hover:text-white hover:bg-[#902636]/30';
                         
+                        const groupMatch = task.type === "Grouping" && task.groups ? task.groups.find(g => g.leader === student || g.members.includes(student)) : null;
                         const clickAction = task.type === "Individual" 
                             ? `officerToggleStudentCompletion('${escapeHtml(student)}', ${task.id}, 'Individual')` 
-                            : `officerToggleGroupCompletion(${task.id}, '${escapeHtml(task.groups.find(g => g.leader === student || g.members.includes(student))?.leader || '')}')`;
+                            : `officerToggleGroupCompletion(${task.id}, '${escapeHtml(groupMatch ? groupMatch.leader : '')}')`;
 
                         html += `<td class="p-2 text-center border-r border-[#252538]">
                             ${groupBadgeHtml}
@@ -1262,7 +1284,6 @@
             table.innerHTML = html;
         }
 
-        // Officer Action: Delete task across all profiles & sync with Google Sheet
         async function officerDeleteTaskFromMatrix(taskId) {
             const task = tasksData.find(t => t.id === taskId);
             if (!task) return;
@@ -1297,7 +1318,6 @@
             alert("Requirement deleted successfully!");
         }
 
-        // Officer Action: Toggle entire group completion from Matrix
         async function officerToggleGroupCompletion(taskId, leaderName) {
             if (!leaderName) return;
             const task = tasksData.find(t => t.id === taskId);
@@ -1332,7 +1352,6 @@
             renderMasterMatrix();
         }
 
-        // Officer Action: Toggle individual student completion on their behalf
         async function officerToggleStudentCompletion(studentName, taskId, taskType) {
             const task = tasksData.find(t => t.id === taskId);
             if (!task) return;
@@ -1365,7 +1384,6 @@
             renderMasterMatrix();
         }
 
-        // OPEN / CLOSE INSTRUCTIONS MODAL
         function openInstructionsModal(taskId) {
             const task = tasksData.find(t => t.id === taskId);
             if (!task) return;
@@ -1381,7 +1399,6 @@
             document.getElementById("instructionsModal").classList.add("hidden");
         }
 
-        // OPEN / CLOSE DRIVE UPLOAD MODAL
         function openDriveUploadModal(taskId, driveFolderUrl) {
             if (activeStudent === "Guest") { alert("Select your profile first!"); return; }
             const task = tasksData.find(t => t.id === taskId);
@@ -1397,7 +1414,6 @@
             document.getElementById("driveUploadModal").classList.add("hidden");
         }
 
-        // HANDLE DIRECT GOOGLE DRIVE FILE UPLOAD
         async function handleDirectDriveUpload(event) {
           event.preventDefault();
           const fileInput = document.getElementById("directDriveFile");
@@ -1408,7 +1424,6 @@
           
           if (!file) return;
           
-          // Check file size (Google Apps Script has strict payload limits, keep files under 5MB)
           if (file.size > 5 * 1024 * 1024) {
             alert("File is too large! Please upload a file smaller than 5MB to prevent timeout errors.");
             return;
@@ -1493,8 +1508,32 @@
 
         async function toggleTaskCompletion(taskId) {
             if (activeStudent === "Guest") { alert("Select your name first!"); return; }
-            userCompletions[activeStudent + "_" + taskId] = !userCompletions[activeStudent + "_" + taskId];
+            const task = tasksData.find(t => t.id === taskId);
+            if (!task) return;
+
+            const currentStatus = !!userCompletions[activeStudent + "_" + taskId];
+            const newStatus = !currentStatus;
+            userCompletions[activeStudent + "_" + taskId] = newStatus;
             localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
+
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            action: "individualSync",
+                            studentName: activeStudent,
+                            taskId: `${task.subject} - ${task.title}`,
+                            status: newStatus ? "Completed" : "Pending"
+                        })
+                    });
+                } catch(err) {
+                    console.error("Error syncing individual completion:", err);
+                }
+            }
+
             renderTasks();
             if (AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified) renderMasterMatrix();
         }
@@ -1535,58 +1574,6 @@
         function openAnnouncementModal() { document.getElementById("announcementModal").classList.remove("hidden"); document.getElementById("announcementModal").classList.add("flex"); }
         function closeAnnouncementModal() { document.getElementById("announcementModal").classList.remove("flex"); document.getElementById("announcementModal").classList.add("hidden"); }
       
-      async function initApp() {
-            const selectEl = document.getElementById("studentProfileSelect");
-            const isMobile = window.innerWidth < 640;
-
-            if (selectEl) {
-                selectEl.innerHTML = '<option value="Guest" class="bg-[#314E52] text-[#FAD5A5]">Select Name</option>';
-                studentsFullRoster.forEach(s => {
-                    const fullName = `${s.lastName}, ${s.firstName} ${s.mi}`.trim();
-                    const displayName = isMobile ? s.lastName : fullName;
-                    const opt = document.createElement("option");
-                    opt.value = fullName; 
-                    opt.textContent = displayName;
-                    opt.className = "bg-[#314E52] text-white";
-                    if (fullName === activeStudent) opt.selected = true;
-                    selectEl.appendChild(opt);
-                });
-            }
-
-            updateRealtimeClock();
-            checkOfficerStatus();
-
-            // ALWAYS FETCH FRESH DATA FROM GOOGLE SHEETS ON LOAD & OVERWRITE LOCAL CACHE
-            if (GOOGLE_SCRIPT_URL) {
-                try {
-                    const res = await fetch(GOOGLE_SCRIPT_URL);
-                    const data = await res.json();
-                    
-                    if (data.tasks) {
-                        tasksData = data.tasks;
-                        localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
-                    }
-                    if (data.announcements) {
-                        blockAnnouncements = data.announcements;
-                        localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
-                    }
-                    if (data.completions) {
-                        userCompletions = data.completions;
-                        localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
-                    }
-                } catch (err) {
-                    console.error("Failed to sync live data from Google Sheets:", err);
-                }
-            }
-
-            renderTasks();
-            renderSchedule();
-            renderCalendar();
-            renderAnnouncements();
-
-            makeElementDraggable(document.getElementById("floatingChatBox"), document.getElementById("chatHeaderBar"));
-        }
-      
         async function handleSaveTask(event) {
             event.preventDefault();
             const type = document.getElementById("newTaskType").value;
@@ -1609,10 +1596,10 @@
                 subLink: document.getElementById("newTaskSubLink").value,
                 driveLink: document.getElementById("newTaskDriveLink").value,
                 instructions: document.getElementById("newTaskInstructions").value,
-                rubrics: document.getElementById("newTaskRubrics").value
+                rubrics: document.getElementById("newTaskRubrics").value,
+                groups: groupsData // Fixed: now correctly sends groups array to Apps Script
             };
 
-            // Send to Google Sheet
             if (GOOGLE_SCRIPT_URL) {
                 try {
                     await fetch(GOOGLE_SCRIPT_URL, {
@@ -1626,11 +1613,9 @@
                 }
             }
 
-            // Push locally and re-render
             tasksData.push({
                 id: tasksData.length + 1,
-                ...newTask,
-                groups: groupsData
+                ...newTask
             });
 
             localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
@@ -1638,6 +1623,7 @@
             renderTasks();
             alert("Requirement saved and synced to Google Sheets!");
         }
+
         if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", initApp); } else { initApp(); }
     </script>
 </body>
