@@ -623,6 +623,18 @@
                     <input type="text" id="newTaskTitle" required placeholder="e.g. Research Paper Chapter 1" class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-sm text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
                 </div>
 
+                <div class="rounded-xl border border-[#D99B26]/40 bg-[#161622] p-4 space-y-3">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input id="staggeredRequirementToggle" type="checkbox" onchange="toggleStaggeredRequirement(this.checked)" class="mt-1 accent-[#D99B26]">
+                        <span><span class="block text-xs font-bold text-[#FAD5A5] uppercase tracking-wider">Staggered Requirement</span><span class="block text-xs text-[#FAD5A5]/70 mt-1">Use one parent requirement with multiple milestones, each with its own deadline.</span></span>
+                    </label>
+                    <div id="staggeredRequirementFields" class="hidden space-y-3">
+                        <p class="text-xs text-[#FAD5A5]/80">The Requirement Title above becomes the parent title. Add each deliverable and its due date below. Each milestone will appear as its own trackable requirement in the existing dashboard.</p>
+                        <div id="staggeredMilestonesContainer" class="space-y-3"></div>
+                        <button type="button" onclick="addStaggeredMilestoneRow()" class="text-xs bg-[#902636] hover:bg-[#751e2b] text-white px-3 py-2 rounded-lg font-medium"><i class="fa-solid fa-plus mr-1"></i> Add Milestone</button>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Type *</label>
@@ -1269,6 +1281,7 @@
                             <span class="text-xs text-[#D99B26] font-medium bg-[#161622] border border-[#252538] px-2 py-0.5 rounded"><i class="fa-regular fa-clock mr-1"></i> ${cleanDueDate}</span>
                         </div>
                         <h4 class="font-bold text-white mt-2 flex items-center gap-2">${task.title} ${typeBadge}</h4>
+                        ${task.isStaggered || task.parentId ? `<div class="mt-1 text-[10px] text-[#D99B26]"><i class="fa-solid fa-diagram-project mr-1"></i>Part of: ${escapeHtml(task.parentTitle || task.title)} · Milestone ${task.milestoneOrder || ""}${task.milestoneCount ? ` of ${task.milestoneCount}` : ""}</div>` : ""}
                         ${groupDetailsHTML}
                         <div class="mt-3 flex items-center gap-2 flex-wrap">
                             ${moduleBtn}
@@ -1941,11 +1954,48 @@
         function openUploadModal() { document.getElementById("uploadModal").classList.remove("hidden"); document.getElementById("uploadModal").classList.add("flex"); }
         function closeUploadModal() { document.getElementById("uploadModal").classList.remove("flex"); document.getElementById("uploadModal").classList.add("hidden"); }
         
+        function toggleStaggeredRequirement(enabled) {
+            const fields = document.getElementById("staggeredRequirementFields");
+            fields.classList.toggle("hidden", !enabled);
+            document.getElementById("newTaskDate").required = !enabled;
+            if (enabled && !document.querySelector(".staggered-milestone-row")) {
+                addStaggeredMilestoneRow("Research Title Proposal", "", "Propose and submit the research title.");
+                addStaggeredMilestoneRow("Finalization of Concept Paper", "", "Submit the finalized concept paper.");
+                addStaggeredMilestoneRow("Recorded Audio-Visual Presentation of the Concept Paper", "", "Submit the recorded presentation of the concept paper.");
+            }
+        }
+
+        function addStaggeredMilestoneRow(title = "", dueDate = "", instructions = "") {
+            const container = document.getElementById("staggeredMilestonesContainer");
+            const row = document.createElement("div");
+            row.className = "staggered-milestone-row rounded-xl border border-[#902636]/40 p-3 space-y-2";
+            row.innerHTML = `
+                <div class="flex items-center justify-between"><span class="text-[10px] uppercase tracking-wider font-bold text-[#D99B26] milestone-number">Milestone</span><button type="button" onclick="this.closest('.staggered-milestone-row').remove(); renumberStaggeredMilestones();" class="text-xs text-red-300 hover:text-white" aria-label="Remove milestone"><i class="fa-solid fa-trash"></i> Remove</button></div>
+                <label class="block text-[11px] text-[#FAD5A5]">Milestone / Deliverable Title *</label>
+                <input type="text" data-milestone-title required value="${escapeHtml(title)}" placeholder="e.g. Finalization of Concept Paper" class="w-full bg-[#0f1018] border border-[#252538] rounded-lg px-3 py-2 text-xs text-white">
+                <label class="block text-[11px] text-[#FAD5A5]">Due Date *</label>
+                <input type="date" data-milestone-date required value="${escapeHtml(dueDate)}" class="w-full bg-[#0f1018] border border-[#252538] rounded-lg px-3 py-2 text-xs text-white">
+                <label class="block text-[11px] text-[#FAD5A5]">Milestone Instructions</label>
+                <textarea data-milestone-instructions rows="2" placeholder="Instructions specific to this milestone" class="w-full bg-[#0f1018] border border-[#252538] rounded-lg px-3 py-2 text-xs text-white">${escapeHtml(instructions)}</textarea>`;
+            container.appendChild(row);
+            renumberStaggeredMilestones();
+        }
+
+        function renumberStaggeredMilestones() {
+            document.querySelectorAll(".staggered-milestone-row").forEach((row, i) => {
+                row.querySelector(".milestone-number").textContent = `Milestone ${i + 1}`;
+            });
+        }
+
         function openTaskModal() { 
             document.getElementById("editTaskId").value = "";
             document.getElementById("taskModalTitle").textContent = "Add Class Requirement & Groups";
             document.getElementById("taskForm").reset();
             document.getElementById("groupRowsContainer").innerHTML = "";
+            document.getElementById("staggeredRequirementToggle").checked = false;
+            document.getElementById("staggeredRequirementToggle").disabled = false;
+            document.getElementById("staggeredMilestonesContainer").innerHTML = "";
+            toggleStaggeredRequirement(false);
             toggleGroupFields("Individual");
             document.getElementById("taskModal").classList.remove("hidden"); 
             document.getElementById("taskModal").classList.add("flex"); 
@@ -2075,6 +2125,9 @@
 
             document.getElementById("editTaskId").value = task.id;
             document.getElementById("taskModalTitle").textContent = "Edit Class Requirement & Groups";
+            document.getElementById("staggeredRequirementToggle").checked = false;
+            document.getElementById("staggeredRequirementToggle").disabled = true;
+            toggleStaggeredRequirement(false);
             document.getElementById("newTaskSubject").value = task.subject;
             document.getElementById("newTaskTitle").value = task.title;
             document.getElementById("newTaskType").value = task.type;
@@ -2127,6 +2180,39 @@
             const rubrics = document.getElementById("newTaskRubrics").value;
 
             let assignedTaskId = editTaskId ? parseInt(editTaskId) : tasksData.length + 1;
+            const isStaggered = !editTaskId && document.getElementById("staggeredRequirementToggle").checked;
+
+            if (isStaggered) {
+                const milestoneRows = Array.from(document.querySelectorAll(".staggered-milestone-row"));
+                const milestones = milestoneRows.map((row, index) => ({
+                    title: row.querySelector("[data-milestone-title]").value.trim(),
+                    dueDate: row.querySelector("[data-milestone-date]").value,
+                    instructions: row.querySelector("[data-milestone-instructions]").value.trim(),
+                    order: index + 1
+                }));
+                if (!title.trim() || milestones.length < 2 || milestones.some(m => !m.title || !m.dueDate)) {
+                    alert("Enter a parent requirement title and at least two milestones, each with a title and due date.");
+                    return;
+                }
+                const parentId = "REQ-" + Date.now();
+                const payload = { action: "addStaggeredTasks", parentId, parentTitle: title.trim(), subject, type, moduleLink, subLink, driveLink, rubrics, groups: groupsData, milestones };
+                if (GOOGLE_SCRIPT_URL) {
+                    try {
+                        await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+                    } catch(err) { console.error("Error saving staggered requirement:", err); }
+                }
+                milestones.forEach((m, index) => {
+                    const taskId = tasksData.length + 1;
+                    tasksData.push({ id: taskId, action: "addTask", subject, title: m.title, parentTitle: title.trim(), parentId, milestoneOrder: m.order, milestoneCount: milestones.length, isStaggered: true, type, dueDate: m.dueDate, moduleLink, subLink, submissionLink: subLink, driveLink, instructions: m.instructions || instructions, rubrics, groups: groupsData, status: "Pending" });
+                    if (initialStatus === "Completed" && type === "Individual") studentsData.forEach(student => { userCompletions[student + "_" + taskId] = true; });
+                });
+                localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
+                localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
+                closeTaskModal(); renderTasks(); renderCalendar();
+                if (AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified) renderMasterMatrix();
+                alert(`Staggered requirement saved: ${milestones.length} milestones created under “${title.trim()}”.`);
+                return;
+            }
 
             if (editTaskId) {
                 const existingIndex = tasksData.findIndex(t => t.id === parseInt(editTaskId));
