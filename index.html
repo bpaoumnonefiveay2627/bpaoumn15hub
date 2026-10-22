@@ -334,6 +334,12 @@
                         </button>
                     </div>
                 </div>
+                <!-- Calendar Legend for Cycles -->
+                <div class="flex items-center gap-4 text-xs text-[#FAD5A5]/80 py-1 px-2 bg-[#3b0609]/40 rounded-lg">
+                    <span class="font-semibold text-white">Legend:</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#902636]"></span> Cycle 1 Subjects</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-emerald-700"></span> Cycle 2 Subjects</span>
+                </div>
                 <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-[#FAD5A5]/70 py-2 bg-[#3b0609]/60 rounded-xl">
                     <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                 </div>
@@ -950,7 +956,8 @@
                 let eventsHtml = `<div class="font-bold text-xs text-[#FAD5A5] mb-1">${day}</div><div class="space-y-1">`;
                 
                 dayClasses.forEach(c => {
-                    eventsHtml += `<div class="text-[10px] bg-[#161622] text-[#FAD5A5] border border-[#252538] px-1.5 py-0.5 rounded truncate font-medium" title="${c.code}: ${c.title} (${c.time})">📚 ${c.code}</div>`;
+                    const cycleColor = c.cycle === 'Cycle 1' ? 'bg-[#902636]/80 border-[#902636]' : 'bg-emerald-800/80 border-emerald-600';
+                    eventsHtml += `<div class="text-[10px] ${cycleColor} text-white border px-1.5 py-0.5 rounded truncate font-medium" title="${c.code}: ${c.title} (${c.cycle}, ${c.time})">📚 ${c.code} (${c.cycle === 'Cycle 1' ? 'C1' : 'C2'})</div>`;
                 });
 
                 dayTasks.forEach(t => {
@@ -1662,7 +1669,9 @@
                 addGroupBuilderRow();
             }
 
-            openTaskModal();
+            // Open modal directly WITHOUT calling form.reset()
+            document.getElementById("taskModal").classList.remove("hidden");
+            document.getElementById("taskModal").classList.add("flex");
         }
 
         async function handleSaveTask(event) {
