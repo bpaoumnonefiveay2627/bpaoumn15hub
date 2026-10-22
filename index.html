@@ -84,26 +84,8 @@
             }
         }
     </script>
-    <!-- Google Fonts & Harabara CDN Font Stylesheet -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-    <link href="https://fonts.cdnfonts.com/css/harabara" rel="stylesheet">
-    
     <style>
-        body { 
-            font-family: 'Roboto', sans-serif; 
-            background-color: #540B0E; 
-        }
-        
-        /* Apply Harabara to all bold, headers, and strong elements */
-        h1, h2, h3, h4, h5, h6, 
-        b, strong, 
-        .font-bold, .font-semibold, .font-extrabold, th {
-            font-family: 'Harabara', 'Roboto', sans-serif !important;
-            letter-spacing: 0.5px;
-        }
-
+        body { font-family: 'Inter', sans-serif; background-color: #540B0E; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #314E52; }
         ::-webkit-scrollbar-thumb { background: #902636; border-radius: 4px; }
@@ -113,6 +95,10 @@
     </style>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="h-full flex flex-col antialiased selection:bg-[#902636] selection:text-white">
 
@@ -779,8 +765,7 @@
         let currentCalendarDate = new Date();
 
         let activeTaskSubjectFilter = "ALL";
-        let activeMatrixSubjectFilter = "";
-        let activeMatrixCategoryFilter = "";
+        let activeMatrixSubjectFilter = "ALL";
 
         function escapeHtml(text) {
             if (!text) return "";
@@ -1137,6 +1122,7 @@
             let completedCount = 0;
             const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified;
 
+            // Step A: Calculate Completion & Total Ratios per Subject for Active Student
             const subjectStats = {};
             tasksData.forEach(task => {
                 if (!subjectStats[task.subject]) {
@@ -1164,6 +1150,7 @@
                 }
             });
 
+            // Step B: Render Subject Summary / Filter Cards at Top of Tasks Grid
             const summaryContainer = document.createElement("div");
             summaryContainer.className = "col-span-full grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 mb-2";
 
@@ -1186,6 +1173,7 @@
             summaryContainer.innerHTML = summaryCardsHtml;
             grid.appendChild(summaryContainer);
 
+            // Step C: Filter Tasks according to Selected Subject Card
             const assignedTasks = tasksData.filter(task => {
                 if (activeTaskSubjectFilter !== "ALL" && task.subject !== activeTaskSubjectFilter) return false;
                 if (task.type === "Individual") return true;
@@ -1196,6 +1184,7 @@
                 return foundGroup !== undefined;
             });
 
+            // Step D: Render Requirement Cards & Checklist Rows
             assignedTasks.forEach(task => {
                 let isCompleted = false;
                 let permissionNotice = "";
@@ -1433,64 +1422,39 @@
             if (!table) return;
 
             const uniqueSubjects = [...new Set(tasksData.map(t => t.subject))];
-            if (!activeMatrixSubjectFilter && uniqueSubjects.length > 0) {
-                activeMatrixSubjectFilter = uniqueSubjects[0];
-            }
-
-            const categories = ["Assignment", "Quiz", "Module", "Activity", "Grouping", "Individual"];
 
             const filteredTasks = tasksData.filter(task => {
-                if (task.subject !== activeMatrixSubjectFilter) return false;
-                if (activeMatrixCategoryFilter) {
-                    const matchesType = task.type.toLowerCase() === activeMatrixCategoryFilter.toLowerCase();
-                    const matchesTitle = task.title.toLowerCase().includes(activeMatrixCategoryFilter.toLowerCase());
-                    if (!matchesType && !matchesTitle) return false;
-                }
-                return true;
+                if (activeMatrixSubjectFilter === "ALL") return true;
+                return task.subject === activeMatrixSubjectFilter;
             });
 
-            let subjectTabsHtml = `<div class="p-3 bg-[#161622] border-b border-[#252538] flex flex-col gap-2">
-                <div class="flex items-center gap-2 overflow-x-auto no-scrollbar whitespace-nowrap">
-                    <span class="text-xs text-[#FAD5A5] font-bold mr-1">Subject:</span>`;
-            
+            let subjectTabsHtml = `<div class="p-3 bg-[#161622] border-b border-[#252538] flex items-center gap-2 flex-wrap">
+                <span class="text-xs text-[#FAD5A5] font-bold mr-2">Filter Matrix by Subject:</span>
+                <button onclick="filterMatrixSubject('ALL')" class="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all ${activeMatrixSubjectFilter === 'ALL' ? 'bg-[#902636] text-white border border-[#D99B26]/40 shadow' : 'bg-[#3b0609] text-[#FAD5A5]/80 hover:text-white border border-[#902636]/30'}">All Subjects (${tasksData.length})</button>`;
+
             uniqueSubjects.forEach(subj => {
+                const count = tasksData.filter(t => t.subject === subj).length;
                 const isActive = activeMatrixSubjectFilter === subj;
-                subjectTabsHtml += `<button onclick="filterMatrixSubject('${subj}')" class="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all ${isActive ? 'bg-[#902636] text-white border border-[#D99B26]/40 shadow' : 'bg-[#3b0609] text-[#FAD5A5]/80 hover:text-white border border-[#902636]/30'}">${subj}</button>`;
+                subjectTabsHtml += `<button onclick="filterMatrixSubject('${subj}')" class="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all ${isActive ? 'bg-[#902636] text-white border border-[#D99B26]/40 shadow' : 'bg-[#3b0609] text-[#FAD5A5]/80 hover:text-white border border-[#902636]/30'}">${subj} (${count})</button>`;
             });
             subjectTabsHtml += `</div>`;
-
-            subjectTabsHtml += `<div class="flex items-center gap-2 overflow-x-auto no-scrollbar whitespace-nowrap pt-1 border-t border-[#252538]/50">
-                <span class="text-xs text-[#FAD5A5] font-bold mr-1">Type/Category:</span>
-                <button onclick="filterMatrixCategory('')" class="text-xs px-2.5 py-1 rounded-md font-semibold transition-all ${activeMatrixCategoryFilter === '' ? 'bg-[#D99B26] text-[#3b0609]' : 'bg-[#3b0609] text-[#FAD5A5]/70 hover:text-white'}">All Types</button>`;
-
-            categories.forEach(cat => {
-                const isActive = activeMatrixCategoryFilter === cat;
-                subjectTabsHtml += `<button onclick="filterMatrixCategory('${cat}')" class="text-xs px-2.5 py-1 rounded-md font-semibold transition-all ${isActive ? 'bg-[#D99B26] text-[#3b0609]' : 'bg-[#3b0609] text-[#FAD5A5]/70 hover:text-white'}">${cat}</button>`;
-            });
-            subjectTabsHtml += `</div></div>`;
 
             let html = subjectTabsHtml + `<thead><tr class="bg-[#3b0609] text-[#FAD5A5] uppercase text-[11px] border-b border-[#252538]">
                 <th class="p-3 sticky left-0 bg-[#3b0609] z-10 text-left border-r border-[#252538]">Student Name</th>`;
 
-            if (filteredTasks.length === 0) {
-                html += `<th class="p-4 text-center text-[#FAD5A5]/60 italic" colspan="1">No tasks found matching this filter.</th></tr></thead>`;
-            } else {
-                filteredTasks.forEach(task => {
-                    html += `<th class="p-3 text-center whitespace-nowrap min-w-[150px] border-r border-[#252538]">
-                        <div class="font-bold text-white">${escapeHtml(task.subject)}</div>
-                        <div class="text-[10px] text-[#FAD5A5]/80 font-normal truncate max-w-[140px] mx-auto">${escapeHtml(task.title)}</div>
-                        <span class="text-[9px] px-1.5 py-0.2 rounded bg-[#161622] text-[#D99B26] border border-[#252538]">${task.type}</span>
-                        <div class="mt-1">
-                            <button onclick="officerDeleteTaskFromMatrix(${task.id})" class="text-[10px] bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/30 px-2 py-0.5 rounded transition-all">
-                                <i class="fa-solid fa-trash mr-1"></i> Delete
-                            </button>
-                        </div>
-                    </th>`;
-                });
-                html += `</tr></thead>`;
-            }
-
-            html += `<tbody class="divide-y divide-[#252538]">`;
+            filteredTasks.forEach(task => {
+                html += `<th class="p-3 text-center whitespace-nowrap min-w-[150px] border-r border-[#252538]">
+                    <div class="font-bold text-white">${escapeHtml(task.subject)}</div>
+                    <div class="text-[10px] text-[#FAD5A5]/80 font-normal truncate max-w-[140px] mx-auto">${escapeHtml(task.title)}</div>
+                    <span class="text-[9px] px-1.5 py-0.2 rounded bg-[#161622] text-[#D99B26] border border-[#252538]">${task.type}</span>
+                    <div class="mt-1">
+                        <button onclick="officerDeleteTaskFromMatrix(${task.id})" class="text-[10px] bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/30 px-2 py-0.5 rounded transition-all">
+                            <i class="fa-solid fa-trash mr-1"></i> Delete
+                        </button>
+                    </div>
+                </th>`;
+            });
+            html += `</tr></thead><tbody class="divide-y divide-[#252538]">`;
 
             studentsData.forEach(student => {
                 html += `<tr class="hover:bg-[#3b0609]/40"><td class="p-3 font-semibold text-white sticky left-0 bg-[#161622] z-10 whitespace-nowrap border-r border-[#252538] text-xs">${student}</td>`;
@@ -1546,11 +1510,6 @@
 
         function filterMatrixSubject(subj) {
             activeMatrixSubjectFilter = subj;
-            renderMasterMatrix();
-        }
-
-        function filterMatrixCategory(cat) {
-            activeMatrixCategoryFilter = cat;
             renderMasterMatrix();
         }
 
@@ -1901,7 +1860,7 @@
         }
 
         function openUploadModal() { document.getElementById("uploadModal").classList.remove("hidden"); document.getElementById("uploadModal").classList.add("flex"); }
-        function closeUploadModal() { document.getElementById("uploadModal").classList.remove("hidden"); document.getElementById("uploadModal").classList.add("hidden"); }
+        function closeUploadModal() { document.getElementById("uploadModal").classList.remove("flex"); document.getElementById("uploadModal").classList.add("hidden"); }
         
         function openTaskModal() { 
             document.getElementById("editTaskId").value = "";
@@ -2173,7 +2132,7 @@
                 });
             }
 
-            // Apply Initial Completion Status if marked as Completed on creation/edit
+            // Apply Initial Completion Status if marked as Completed on creation
             if (initialStatus === "Completed") {
                 if (type === "Individual") {
                     studentsData.forEach(student => {
@@ -2185,13 +2144,6 @@
                         groupCompletions[assignedTaskId + "_" + g.leader] = true;
                     });
                     localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
-                }
-            } else if (initialStatus === "Pending") {
-                if (type === "Individual") {
-                    studentsData.forEach(student => {
-                        delete userCompletions[student + "_" + assignedTaskId];
-                    });
-                    localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
                 }
             }
 
