@@ -1649,6 +1649,10 @@
             document.getElementById("newTaskInstructions").value = task.instructions || "";
             document.getElementById("newTaskRubrics").value = task.rubrics || "";
 
+            // Keep reference to old subject/title for grouping updates on backend
+            window.oldTaskSubject = task.subject;
+            window.oldTaskTitle = task.title;
+
             toggleGroupFields(task.type);
             const container = document.getElementById("groupRowsContainer");
             container.innerHTML = "";
@@ -1685,9 +1689,41 @@
             const instructions = document.getElementById("newTaskInstructions").value;
             const rubrics = document.getElementById("newTaskRubrics").value;
 
+            // IF EDITING EXISTING TASK
             if (editTaskId) {
                 const existingIndex = tasksData.findIndex(t => t.id === parseInt(editTaskId));
                 if (existingIndex !== -1) {
+                    const updatedTask = {
+                        action: "editTask",
+                        taskId: editTaskId,
+                        oldSubject: window.oldTaskSubject || tasksData[existingIndex].subject,
+                        oldTitle: window.oldTaskTitle || tasksData[existingIndex].title,
+                        subject,
+                        title,
+                        type,
+                        dueDate,
+                        moduleLink,
+                        subLink,
+                        driveLink,
+                        instructions,
+                        rubrics,
+                        groups: groupsData,
+                        officerName: activeStudent
+                    };
+
+                    if (GOOGLE_SCRIPT_URL) {
+                        try {
+                            await fetch(GOOGLE_SCRIPT_URL, {
+                                method: "POST",
+                                mode: "no-cors",
+                                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                body: JSON.stringify(updatedTask)
+                            });
+                        } catch(err) {
+                            console.error("Error updating task in sheet:", err);
+                        }
+                    }
+
                     tasksData[existingIndex] = {
                         ...tasksData[existingIndex],
                         subject,
@@ -1704,6 +1740,7 @@
                     };
                 }
             } else {
+                // IF ADDING NEW TASK
                 const newTask = {
                     action: "addTask",
                     subject,
