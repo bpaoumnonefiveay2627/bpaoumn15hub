@@ -872,7 +872,9 @@
             const isMobile = window.innerWidth < 640;
 
             if (selectEl) {
+                // Clear existing options safely and insert default guest option
                 selectEl.innerHTML = '<option value="Guest" class="bg-[#314E52] text-[#FAD5A5]">Select Name</option>';
+                
                 studentsFullRoster.forEach(s => {
                     const fullName = `${s.lastName}, ${s.firstName} ${s.mi}`.trim();
                     const displayName = isMobile ? s.lastName : fullName;
@@ -880,9 +882,16 @@
                     opt.value = fullName; 
                     opt.textContent = displayName;
                     opt.className = "bg-[#314E52] text-white";
-                    if (fullName === activeStudent) opt.selected = true;
+                    
+                    // Explicitly flag selected if it matches the persisted active student
+                    if (fullName === activeStudent) {
+                        opt.selected = true;
+                    }
                     selectEl.appendChild(opt);
                 });
+
+                // Force dropdown value to match activeStudent state explicitly
+                selectEl.value = activeStudent;
             }
 
             updateRealtimeClock();
