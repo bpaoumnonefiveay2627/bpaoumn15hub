@@ -1213,10 +1213,10 @@
             studentsData.forEach(student => {
                 html += `<tr class="hover:bg-[#3b0609]/40"><td class="p-3 font-semibold text-white sticky left-0 bg-[#161622] z-10 whitespace-nowrap border-r border-[#252538] text-xs">${student}</td>`;
                 
-                tasksData.forEach((task, index) => {
+                tasksData.forEach((task) => {
                     let isDone = false; 
                     let isAssigned = true;
-                    let groupDisplay = "";
+                    let groupBadgeHtml = "";
 
                     if (task.type === "Individual") { 
                         isDone = userCompletions[student + "_" + task.id] || false; 
@@ -1225,8 +1225,11 @@
                         if (studentGroupIndex !== -1) {
                             const groupNum = studentGroupIndex + 1;
                             const studentGroup = task.groups[studentGroupIndex];
-                            isDone = groupCompletions[task.id + "_" + studentGroup.leader] || false;
-                            groupDisplay = `<div class="text-[10px] text-[#D99B26] font-semibold mb-1">Group ${groupNum} (TL: ${getFirstName(studentGroup.leader)})</div>`;
+                            const groupKey = task.id + "_" + studentGroup.leader;
+                            isDone = groupCompletions[groupKey] || false;
+
+                            // Clicking this group badge toggles completion for the ENTIRE group (TL + Members)
+                            groupBadgeHtml = `<button onclick="officerToggleGroupCompletion(${task.id}, '${escapeHtml(studentGroup.leader)}')" class="text-[10px] text-[#D99B26] font-semibold bg-[#161622] hover:bg-[#D99B26]/20 border border-[#D99B26]/30 px-2 py-0.5 rounded mb-1 transition-all" title="Click to toggle status for entire Group ${groupNum}">Group ${groupNum} (TL: ${getFirstName(studentGroup.leader)})</button>`;
                         } else { 
                             isAssigned = false; 
                         }
@@ -1239,11 +1242,15 @@
                             ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' 
                             : 'bg-[#3b0609] text-[#FAD5A5]/60 border-[#902636]/40 hover:text-white hover:bg-[#902636]/30';
                         
+                        const clickAction = task.type === "Individual" 
+                            ? `officerToggleStudentCompletion('${escapeHtml(student)}', ${task.id}, 'Individual')` 
+                            : `officerToggleGroupCompletion(${task.id}, '${escapeHtml(task.groups.find(g => g.leader === student || g.members.includes(student))?.leader || '')}')`;
+
                         html += `<td class="p-2 text-center border-r border-[#252538]">
-                            ${groupDisplay}
-                            <button onclick="officerToggleStudentCompletion('${escapeHtml(student)}', ${task.id}, '${task.type}')" 
+                            ${groupBadgeHtml}
+                            <button onclick="${clickAction}" 
                                 class="px-2.5 py-1 rounded border text-[11px] font-bold transition-all shadow-sm flex items-center justify-center gap-1 mx-auto ${badgeColor}" 
-                                title="Click to override status on behalf of ${student}">
+                                title="Click status to mark done">
                                 ${isDone ? '<i class="fa-solid fa-check text-emerald-400"></i> Done' : '<i class="fa-regular fa-circle"></i> Pending'}
                             </button>
                         </td>`;
@@ -1264,7 +1271,6 @@
                 return;
             }
 
-            // Sync deletion to Google Sheets
             if (GOOGLE_SCRIPT_URL) {
                 try {
                     fetch(GOOGLE_SCRIPT_URL, {
@@ -1282,7 +1288,6 @@
                 }
             }
 
-            // Update local state and re-render across UI
             tasksData = tasksData.filter(t => t.id !== taskId);
             localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
 
@@ -1292,63 +1297,67 @@
             alert("Requirement deleted successfully!");
         }
 
-        // Officer Action: Toggle student completion on their behalf
+        // Officer Action: Toggle entire group completion from Matrix
+        async function officerToggleGroupCompletion(taskId, leaderName) {
+            if (!leaderName) return;
+            const task = tasksData.find(t => t.id === taskId);
+            if (!task) return;
+
+            const groupKey = taskId + "_" + leaderName;
+            const currentStatus = !!groupCompletions[groupKey];
+            const newStatus = !currentStatus;
+            groupCompletions[groupKey] = newStatus;
+            localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
+
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            action: "officerSetCompletion",
+                            officerName: activeStudent,
+                            targetStudent: `Group Leader: ${leaderName}`,
+                            taskId: `${task.subject} - ${task.title}`,
+                            completed: newStatus
+                        })
+                    });
+                } catch(err) {
+                    console.error("Error syncing group override to Google Sheets:", err);
+                }
+            }
+
+            renderTasks();
+            renderMasterMatrix();
+        }
+
+        // Officer Action: Toggle individual student completion on their behalf
         async function officerToggleStudentCompletion(studentName, taskId, taskType) {
             const task = tasksData.find(t => t.id === taskId);
             if (!task) return;
 
-            if (taskType === "Individual") {
-                const currentStatus = !!userCompletions[studentName + "_" + taskId];
-                const newStatus = !currentStatus;
-                userCompletions[studentName + "_" + taskId] = newStatus;
-                localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
+            const currentStatus = !!userCompletions[studentName + "_" + taskId];
+            const newStatus = !currentStatus;
+            userCompletions[studentName + "_" + taskId] = newStatus;
+            localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
 
-                // Sync override to Google Sheets
-                if (GOOGLE_SCRIPT_URL) {
-                    try {
-                        fetch(GOOGLE_SCRIPT_URL, {
-                            method: "POST",
-                            mode: "no-cors",
-                            headers: { "Content-Type": "text/plain;charset=utf-8" },
-                            body: JSON.stringify({
-                                action: "officerSetCompletion",
-                                officerName: activeStudent,
-                                targetStudent: studentName,
-                                taskId: `${task.subject} - ${task.title}`,
-                                completed: newStatus
-                            })
-                        });
-                    } catch(err) {
-                        console.error("Error syncing officer override to Google Sheets:", err);
-                    }
-                }
-            } else if (taskType === "Grouping" && task.groups) {
-                const studentGroup = task.groups.find(g => g.leader === studentName || (g.members && g.members.includes(studentName)));
-                if (studentGroup) {
-                    const groupKey = taskId + "_" + studentGroup.leader;
-                    const currentStatus = !!groupCompletions[groupKey];
-                    const newStatus = !currentStatus;
-                    groupCompletions[groupKey] = newStatus;
-                    localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
-
-                    if (GOOGLE_SCRIPT_URL) {
-                        try {
-                            fetch(GOOGLE_SCRIPT_URL, {
-                                method: "POST",
-                                mode: "no-cors",
-                                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                                body: JSON.stringify({
-                                    action: "officerSetCompletion",
-                                    officerName: activeStudent,
-                                    targetStudent: `Group Leader: ${studentGroup.leader}`,
-                                    taskId: `${task.subject} - ${task.title}`,
-                                    completed: newStatus
-                                })
-                            });
-                        } catch(err) {
-                            console.error("Error syncing group override to Google Sheets:", err);
-                        }
-                    }
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            action: "officerSetCompletion",
+                            officerName: activeStudent,
+                            targetStudent: studentName,
+                            taskId: `${task.subject} - ${task.title}`,
+                            completed: newStatus
+                        })
+                    });
+                } catch(err) {
+                    console.error("Error syncing officer override to Google Sheets:", err);
                 }
             }
 
