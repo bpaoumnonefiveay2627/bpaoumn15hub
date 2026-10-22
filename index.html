@@ -872,7 +872,7 @@
                     const res = await fetch(GOOGLE_SCRIPT_URL);
                     const data = await res.json();
                     
-                    if (data.schedule && data.schedule.length > 0) {
+                    if (Array.isArray(data.schedule)) {
                         scheduleList = data.schedule;
                         localStorage.setItem("bpa_schedule_list", JSON.stringify(scheduleList));
                     }
@@ -880,7 +880,7 @@
                         tasksData = data.tasks;
                         localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
                     }
-                    if (data.announcements && data.announcements.length > 0) {
+                    if (Array.isArray(data.announcements)) {
                         blockAnnouncements = data.announcements;
                         localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
                     }
@@ -1397,8 +1397,11 @@
                         <span class="text-xs border px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${tagColor}">${ann.tag || 'General'}</span>
                         <span class="text-xs text-[#FAD5A5]/70">${ann.timestamp || ''}</span>
                     </div>
-                    <h3 class="font-bold text-white text-base">${ann.title}</h3>
-                    <p class="text-xs text-[#FAD5A5]/90 leading-relaxed">${ann.content}</p>
+                    <div class="flex items-start justify-between gap-3">
+                        <h3 class="font-bold text-white text-base">${ann.title}</h3>
+                        <button type="button" onclick="copyBulletin(${index})" class="shrink-0 text-[10px] bg-[#314E52] hover:bg-[#314E52]/80 text-[#FAD5A5] border border-[#D99B26]/30 px-2.5 py-1 rounded-lg"><i class="fa-regular fa-copy mr-1"></i> Copy</button>
+                    </div>
+                    <p class="text-xs text-[#FAD5A5]/90 leading-relaxed" style="white-space: pre-wrap; overflow-wrap: anywhere;">${escapeHtml(String(ann.content || "")).replace(/\r?\n/g, "<br>")}</p>
                     <p class="text-[11px] text-[#FAD5A5]/60 pt-1"><i class="fa-solid fa-user-pen mr-1"></i> ${getFirstName(ann.postedBy)}</p>
                     ${officerEditControls}
                 `;
@@ -1412,7 +1415,7 @@
                     <div class="bg-[#161622] border border-[#252538] p-4 rounded-xl space-y-2">
                         <div class="flex justify-between items-center"><span class="text-[10px] border px-2 py-0.5 rounded-full ${tagColor}">${latest.tag || 'General'}</span></div>
                         <h4 class="font-bold text-white text-sm">${latest.title}</h4>
-                        <p class="text-xs text-[#FAD5A5]/80 line-clamp-2">${latest.content}</p>
+                        <p class="text-xs text-[#FAD5A5]/80 line-clamp-2" style="white-space: pre-line;">${escapeHtml(String(latest.content || ""))}</p>
                     </div>
                 `;
             }
@@ -1823,6 +1826,26 @@
             closeAnnouncementModal();
             renderAnnouncements();
             alert("Bulletin posted!");
+        }
+
+        async function copyBulletin(index) {
+            const ann = blockAnnouncements[index];
+            if (!ann) return;
+            const text = `${ann.title || "📌 BLOCK BULLETIN | BPAOUMN 1-5"}\n\n${ann.content || ""}`;
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    const temp = document.createElement("textarea");
+                    temp.value = text;
+                    temp.style.position = "fixed"; temp.style.opacity = "0";
+                    document.body.appendChild(temp); temp.select();
+                    document.execCommand("copy"); temp.remove();
+                }
+                alert("Bulletin copied. You can now paste it wherever needed.");
+            } catch (err) {
+                alert("Could not copy automatically. Please select and copy the bulletin text manually.");
+            }
         }
 
         function deleteAnnouncement(index) {
