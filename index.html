@@ -753,8 +753,16 @@
             { lastName: "Ymana", firstName: "Honeylet", mi: "C.", suffix: "", code: "ymanabpa1539", role: "Student" }
         ];
 
-        const studentsData = studentsFullRoster.map(s => `${s.lastName}, ${s.firstName} ${s.mi}`.trim());
-        const AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => s.role === "Officer").map(s => `${s.lastName}, ${s.firstName} ${s.mi}`.trim());
+        function formatStudentName(s) {
+            const last = String(s.lastName || "").trim();
+            const first = String(s.firstName || "").trim();
+            const mi = String(s.mi || "").trim();
+            let suffix = String(s.suffix || "").trim();
+            if (/^(jr|sr)$/i.test(suffix)) suffix += ".";
+            return `${last}, ${[first, mi].filter(Boolean).join(" ")}${suffix ? ", " + suffix : ""}`;
+        }
+        const studentsData = studentsFullRoster.map(formatStudentName);
+        const AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => s.role === "Officer").map(formatStudentName);
 
         let scheduleList = JSON.parse(localStorage.getItem("bpa_schedule_list") || JSON.stringify([
             { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-10-24", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
@@ -1660,7 +1668,8 @@
                         <div class="font-bold text-white">${escapeHtml(task.subject)}</div>
                         <div class="text-[10px] text-[#FAD5A5]/80 font-normal truncate max-w-[140px] mx-auto" title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</div>
                         <span class="text-[9px] px-1.5 py-0.2 rounded bg-[#161622] text-[#D99B26] border border-[#252538]">${escapeHtml(task.type || '')}</span>
-                        <div class="mt-1">
+                        <div class="mt-1 flex flex-col items-center gap-1">
+                            <button onclick="officerBulkSetActivityStatus(${task.id})" class="text-[10px] bg-[#D99B26]/15 hover:bg-[#D99B26]/30 text-[#FAD5A5] border border-[#D99B26]/40 px-2 py-0.5 rounded transition-all" title="Set a status for all students assigned to this activity"><i class="fa-solid fa-users mr-1"></i> Set all statuses</button>
                             <button onclick="officerDeleteTaskFromMatrix(${task.id})" class="text-[10px] bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/30 px-2 py-0.5 rounded transition-all">
                                 <i class="fa-solid fa-trash mr-1"></i> Delete
                             </button>
@@ -1802,33 +1811,96 @@
             renderMasterMatrix();
         }
 
+        async function officerBulkSetActivityStatus(taskId) {
+            if (!(AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified)) { alert("Officer verification is required."); return; }
+            const task = tasksData.find(t => t.id === taskId);
+            if (!task) return;
+            const existing = document.getElementById("activityStatusDropdownModal"); if (existing) existing.remove();
+            const modal = document.createElement("div");
+            modal.id = "activityStatusDropdownModal";
+            modal.className = "fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4";
+            modal.innerHTML = `<div class="w-full max-w-md rounded-xl border border-[#902636]/50 bg-[#161622] p-5 shadow-2xl">
+                <h3 class="text-lg font-bold text-[#FAD5A5] mb-1">Set Activity Status in Bulk</h3>
+                <p class="text-sm text-slate-300 mb-4">${escapeHtml(task.title || "Activity")}<br><span class="text-xs text-slate-400">This applies to every student assigned to this activity. Existing individual statuses will be overwritten.</span></p>
+                <label for="bulkActivityStatusSelect" class="block text-xs font-semibold text-slate-300 mb-2">Status to apply</label>
+                <select id="bulkActivityStatusSelect" class="w-full rounded-lg border border-[#902636]/50 bg-[#0d0d16] p-3 text-sm text-white">
+                    <option value="Done">Done (on time)</option><option value="Late Submission">Late Submission</option><option value="Not Submitted">Not Submitted</option><option value="In Progress">In Progress</option>
+                </select>
+                <label for="bulkActivityStatusReason" class="block text-xs font-semibold text-slate-300 mt-4 mb-2">Audit note (optional)</label>
+                <input id="bulkActivityStatusReason" class="w-full rounded-lg border border-[#902636]/50 bg-[#0d0d16] p-3 text-sm text-white" placeholder="Reason or note">
+                <div class="flex justify-end gap-2 mt-5"><button id="bulkActivityCancel" class="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300">Cancel</button><button id="bulkActivitySave" class="rounded-lg bg-[#D99B26] px-4 py-2 text-sm font-bold text-black">Apply to assigned students</button></div>
+            </div>`;
+            document.body.appendChild(modal);
+            modal.querySelector("#bulkActivityCancel").onclick = () => modal.remove();
+            modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+            modal.querySelector("#bulkActivitySave").onclick = async () => {
+                const remark = modal.querySelector("#bulkActivityStatusSelect").value;
+                const reason = modal.querySelector("#bulkActivityStatusReason").value.trim() || "Bulk activity status updated in Master Matrix";
+                const status = (remark === "Done" || remark === "Late Submission") ? "Completed" : (remark === "In Progress" ? "In Progress" : "Pending");
+                let assigned = studentsData;
+                if (task.type !== "Individual" && task.groups && task.groups.length) {
+                    const names = new Set(); task.groups.forEach(g => { if (g.leader) names.add(g.leader); (g.members || []).forEach(n => names.add(n)); });
+                    assigned = studentsData.filter(n => names.has(n));
+                }
+                if (!confirm(`Apply “${remark === "Done" ? "Done (on time)" : remark}” to ${assigned.length} assigned student(s) for “${task.title}”? This overwrites individual statuses for this activity.`)) return;
+                assigned.forEach(name => { const key = name + "_" + taskId; userCompletions[key] = status === "Completed"; completionRemarks[key] = remark; });
+                localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
+                localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
+                modal.remove(); renderTasks(); renderMasterMatrix();
+                if (GOOGLE_SCRIPT_URL) {
+                    for (const name of assigned) {
+                        try { await fetch(GOOGLE_SCRIPT_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"officerSetStudentStatus", officerName:activeStudent, targetStudent:name, taskId:task.id, activityId:task.activityId || "", status:status, remark:remark, reason:reason})}); }
+                        catch(err) { console.error("Error saving bulk activity status for", name, err); }
+                    }
+                }
+            };
+        }
+
         async function officerEditStudentStatus(studentName, taskId) {
             if (!(AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified)) { alert("Officer verification is required."); return; }
             const task = tasksData.find(t => t.id === taskId);
             if (!task) return;
             const key = studentName + "_" + taskId;
             const currentRemark = completionRemarks[key] || (userCompletions[key] ? "Done" : "Not Submitted");
-            const choice = prompt("Set submission record for " + studentName + "\n\nEnter one of these exact values:\n1 = Done (on time)\n2 = Late Submission\n3 = Not Submitted\n4 = In Progress\n\nCurrent: " + currentRemark, currentRemark === "Done" ? "1" : currentRemark === "Late Submission" ? "2" : currentRemark === "In Progress" ? "4" : "3");
-            if (choice === null) return;
-            const map = {"1": {status:"Completed", remark:"Done"}, "2": {status:"Completed", remark:"Late Submission"}, "3": {status:"Pending", remark:"Not Submitted"}, "4": {status:"In Progress", remark:"In Progress"}};
-            const selected = map[String(choice).trim()];
-            if (!selected) { alert("Invalid selection. Please enter 1, 2, 3, or 4."); return; }
-            let reason = "Individual submission status updated in Master Matrix";
-            if (selected.remark !== "Done") {
-                const enteredReason = prompt("Optional reason / note for the audit log:", selected.remark);
-                if (enteredReason === null) return;
-                reason = enteredReason.trim() || selected.remark;
-            }
-            userCompletions[key] = selected.status === "Completed";
-            completionRemarks[key] = selected.remark;
-            localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
-            localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
-            if (GOOGLE_SCRIPT_URL) {
-                try {
-                    await fetch(GOOGLE_SCRIPT_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"officerSetStudentStatus", officerName:activeStudent, targetStudent:studentName, taskId:task.id, activityId:task.activityId || "", status:selected.status, remark:selected.remark, reason:reason})});
-                } catch(err) { console.error("Error saving matrix status:", err); }
-            }
-            renderTasks(); renderMasterMatrix();
+            const currentValue = currentRemark === "Done" ? "Done (on time)" : currentRemark;
+            const old = document.getElementById("activityStatusDropdownModal");
+            if (old) old.remove();
+            const modal = document.createElement("div");
+            modal.id = "activityStatusDropdownModal";
+            modal.className = "fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4";
+            modal.innerHTML = `<div class="w-full max-w-md rounded-xl border border-[#902636]/50 bg-[#161622] p-5 shadow-2xl">
+                <h3 class="text-lg font-bold text-[#FAD5A5] mb-1">Update Activity Status</h3>
+                <p class="text-sm text-slate-300 mb-4">${escapeHtml(studentName)}<br><span class="text-xs text-slate-400">${escapeHtml(task.title || "Activity")}</span></p>
+                <label for="activityStatusSelect" class="block text-xs font-semibold text-slate-300 mb-2">Submission status</label>
+                <select id="activityStatusSelect" class="w-full rounded-lg border border-[#902636]/50 bg-[#0d0d16] p-3 text-sm text-white outline-none focus:border-[#D99B26]">
+                    <option value="Done" ${currentValue === "Done (on time)" || currentValue === "Done" ? "selected" : ""}>Done (on time)</option>
+                    <option value="Late Submission" ${currentRemark === "Late Submission" ? "selected" : ""}>Late Submission</option>
+                    <option value="Not Submitted" ${currentRemark === "Not Submitted" ? "selected" : ""}>Not Submitted</option>
+                    <option value="In Progress" ${currentRemark === "In Progress" ? "selected" : ""}>In Progress</option>
+                </select>
+                <label for="activityStatusReason" class="block text-xs font-semibold text-slate-300 mt-4 mb-2">Audit note (optional)</label>
+                <input id="activityStatusReason" class="w-full rounded-lg border border-[#902636]/50 bg-[#0d0d16] p-3 text-sm text-white" placeholder="Reason or note" value="">
+                <div class="flex justify-end gap-2 mt-5"><button id="activityStatusCancel" class="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300">Cancel</button><button id="activityStatusSave" class="rounded-lg bg-[#D99B26] px-4 py-2 text-sm font-bold text-black">Save status</button></div>
+            </div>`;
+            document.body.appendChild(modal);
+            modal.querySelector("#activityStatusCancel").onclick = () => modal.remove();
+            modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+            modal.querySelector("#activityStatusSave").onclick = async () => {
+                const remark = modal.querySelector("#activityStatusSelect").value;
+                const reason = modal.querySelector("#activityStatusReason").value.trim() || "Individual submission status updated in Master Matrix";
+                const status = (remark === "Done" || remark === "Late Submission") ? "Completed" : (remark === "In Progress" ? "In Progress" : "Pending");
+                userCompletions[key] = status === "Completed";
+                completionRemarks[key] = remark;
+                localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
+                localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
+                modal.remove();
+                renderTasks(); renderMasterMatrix();
+                if (GOOGLE_SCRIPT_URL) {
+                    try {
+                        await fetch(GOOGLE_SCRIPT_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"officerSetStudentStatus", officerName:activeStudent, targetStudent:studentName, taskId:task.id, activityId:task.activityId || "", status:status, remark:remark, reason:reason})});
+                    } catch(err) { console.error("Error saving matrix status:", err); }
+                }
+            };
         }
 
         async function officerToggleStudentCompletion(studentName, taskId, taskType) {
