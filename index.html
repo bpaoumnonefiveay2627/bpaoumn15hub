@@ -703,50 +703,21 @@
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxaKmEFuCQwXQBahGzTsRicTyAUCp_KeIVq1GtIofcVYuOSWPsxVJOlo81YkWWZJtU/exec";
         const OFFICER_PIN = "152026";
 
-        const studentsFullRoster = [
-            { lastName: "Acuzar", firstName: "Gedalen", mi: "P.", suffix: "", code: "acuzarbpa1501", role: "Officer" },
-            { lastName: "Andres", firstName: "Yhe-Zscha Jhunes", mi: "J.", suffix: "", code: "andresbpa1502", role: "Student" },
-            { lastName: "Ausa", firstName: "Arc Jayben", mi: "C.", suffix: "", code: "ausabpa1503", role: "Student" },
-            { lastName: "Balbuena", firstName: "Michelle Jane", mi: "G.", suffix: "", code: "balbuenabpa1504", role: "Student" },
-            { lastName: "Barba", firstName: "Ge-Ann", mi: "G.", suffix: "", code: "barbabpa1505", role: "Officer" },
-            { lastName: "Bernardo", firstName: "Jirah", mi: "L.", suffix: "", code: "bernardo1506", role: "Student" },
-            { lastName: "Burkett", firstName: "Bernardo", mi: "S.", suffix: "Jr.", code: "burkettbpa1507", role: "Student" },
-            { lastName: "Calalo", firstName: "Don Elix", mi: "C.", suffix: "", code: "calalobpa1508", role: "Student" },
-            { lastName: "Casano", firstName: "Michael Cedrick", mi: "", suffix: "", code: "casanobpa1509", role: "Officer" },
-            { lastName: "Castillo", firstName: "Ma. Dawn Rozeal", mi: "A.", suffix: "", code: "castillobpa1510", role: "Student" },
-            { lastName: "Catalan", firstName: "Arnulfo", mi: "A.", suffix: "Jr.", code: "catalanbpa1511", role: "Student" },
-            { lastName: "Cruz", firstName: "Fritzie", mi: "C.", suffix: "", code: "cruzbpa1512", role: "Student" },
-            { lastName: "Deguiñon", firstName: "Junebe", mi: "B.", suffix: "", code: "deguiñonbpa1513", role: "Student" },
-            { lastName: "Escalada", firstName: "Josei", mi: "E.", suffix: "", code: "escaladabpa1514", role: "Student" },
-            { lastName: "Falculan", firstName: "Christopher", mi: "M.", suffix: "", code: "falculanbpa1515", role: "Student" },
-            { lastName: "Flores", firstName: "Ann Margery", mi: "C.", suffix: "", code: "floresbpa1516", role: "Student" },
-            { lastName: "Gaa-Felia", firstName: "Kareann", mi: "S.", suffix: "", code: "gaafeliabpa1517", role: "Student" },
-            { lastName: "Hamsain", firstName: "Santanina", mi: "M.", suffix: "", code: "hamsainbpa1518", role: "Student" },
-            { lastName: "Lagunsad", firstName: "Alliah Nicole", mi: "C.", suffix: "", code: "lagunsadbpa1519", role: "Student" },
-            { lastName: "Lopez", firstName: "Michelle Ann", mi: "N.", suffix: "", code: "lopezbpa1520", role: "Student" },
-            { lastName: "Mejico", firstName: "Lady Wish", mi: "C.", suffix: "", code: "mejicobpa1521", role: "Student" },
-            { lastName: "Meres", firstName: "Kent Alvin", mi: "C.", suffix: "", code: "meresbpa1522", role: "Student" },
-            { lastName: "Nuñez", firstName: "Lorna", mi: "E.", suffix: "", code: "nuñezbpa1523", role: "Student" },
-            { lastName: "Oliva", firstName: "Mark Leandro", mi: "C.", suffix: "", code: "olivabpa1524", role: "Student" },
-            { lastName: "Ortega", firstName: "Jeric", mi: "F.", suffix: "", code: "ortegabpa1525", role: "Officer" },
-            { lastName: "Palero", firstName: "Maricel", mi: "G.", suffix: "", code: "palerobpa1526", role: "Student" },
-            { lastName: "Pangilinan", firstName: "Kenneth", mi: "S.", suffix: "", code: "pangilinanbpa1527", role: "Student" },
-            { lastName: "Pascual", firstName: "Edzhel", mi: "B.", suffix: "", code: "pascualbpa1528", role: "Student" },
-            { lastName: "Pejo", firstName: "Jhanna Jade", mi: "N.", suffix: "", code: "pejobpa1529", role: "Officer" },
-            { lastName: "Pendon", firstName: "Jeric", mi: "", suffix: "", code: "pendonbpa1530", role: "Student" },
-            { lastName: "Quilala", firstName: "Julie Ann", mi: "J.", suffix: "", code: "quilalabpa1531", role: "Officer" },
-            { lastName: "Ramirez", firstName: "Alexander", mi: "S.", suffix: "", code: "ramirezbpa1532", role: "Student" },
-            { lastName: "Revis", firstName: "Melodie", mi: "A.", suffix: "", code: "revisbpa1533", role: "Student" },
-            { lastName: "Segura", firstName: "Roderick", mi: "M.", suffix: "", code: "segurabpa1534", role: "Student" },
-            { lastName: "Siy", firstName: "Hannah Gerreth", mi: "M.", suffix: "", code: "siybpa1535", role: "Student" },
-            { lastName: "Sorillano", firstName: "Marierose", mi: "G.", suffix: "", code: "sorillanobpa1536", role: "Student" },
-            { lastName: "Topacio", firstName: "Marivie", mi: "P.", suffix: "", code: "topaciobpa1537", role: "Student" },
-            { lastName: "Villafuerte", firstName: "April", mi: "A.", suffix: "", code: "villafuertebpa1538", role: "Student" },
-            { lastName: "Ymana", firstName: "Honeylet", mi: "C.", suffix: "", code: "ymanabpa1539", role: "Student" }
-        ];
+        // Student roster is loaded from the case-sensitive Students sheet by Apps Script.
+        // The cached roster is only an offline fallback; the spreadsheet is the source of truth.
+        let studentsFullRoster = JSON.parse(localStorage.getItem("bpa_students_roster") || "[]");
+        let studentsData = studentsFullRoster.map(s => formatStudentName(s));
+        let AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => String(s.role || "").toLowerCase() === "officer").map(s => formatStudentName(s));
 
-        const studentsData = studentsFullRoster.map(s => `${s.lastName}, ${s.firstName} ${s.mi}`.trim());
-        const AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => s.role === "Officer").map(s => `${s.lastName}, ${s.firstName} ${s.mi}`.trim());
+        function formatStudentName(s) {
+            if (!s) return "";
+            return `${String(s.lastName || "").trim()}, ${String(s.firstName || "").trim()} ${String(s.mi || "").trim()} ${String(s.suffix || "").trim()}`.replace(/\s+/g, " ").trim().replace(/,\s+$/, "");
+        }
+
+        function refreshRosterDerivedData() {
+            studentsData = studentsFullRoster.map(s => formatStudentName(s)).filter(Boolean);
+            AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => String(s.role || "").toLowerCase() === "officer").map(s => formatStudentName(s));
+        }
 
         let scheduleList = JSON.parse(localStorage.getItem("bpa_schedule_list") || JSON.stringify([
             { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-10-24", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
@@ -861,29 +832,21 @@
         async function initApp() {
             const selectEl = document.getElementById("studentProfileSelect");
             const isMobile = window.innerWidth < 640;
-
-            if (selectEl) {
-                selectEl.innerHTML = '<option value="Guest" class="bg-[#314E52] text-[#FAD5A5]">Select Name</option>';
-                studentsFullRoster.forEach(s => {
-                    const fullName = `${s.lastName}, ${s.firstName} ${s.mi}`.trim();
-                    const displayName = isMobile ? s.lastName : fullName;
-                    const opt = document.createElement("option");
-                    opt.value = fullName; 
-                    opt.textContent = displayName;
-                    opt.className = "bg-[#314E52] text-white";
-                    if (fullName === activeStudent) opt.selected = true;
-                    selectEl.appendChild(opt);
-                });
-            }
-
             updateRealtimeClock();
-            checkOfficerStatus();
 
             if (GOOGLE_SCRIPT_URL) {
                 try {
                     const res = await fetch(GOOGLE_SCRIPT_URL);
                     const data = await res.json();
-                    
+                    if (Array.isArray(data.students) && data.students.length) {
+                        studentsFullRoster = data.students;
+                        localStorage.setItem("bpa_students_roster", JSON.stringify(studentsFullRoster));
+                        refreshRosterDerivedData();
+                    }
+                    if (data.groupCompletions && typeof data.groupCompletions === "object") {
+                        groupCompletions = data.groupCompletions;
+                        localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
+                    }
                     if (Array.isArray(data.schedule)) {
                         scheduleList = data.schedule;
                         localStorage.setItem("bpa_schedule_list", JSON.stringify(scheduleList));
@@ -905,6 +868,26 @@
                 }
             }
 
+            if (selectEl) {
+                selectEl.innerHTML = '<option value="Guest" class="bg-[#314E52] text-[#FAD5A5]">Select Name</option>';
+                studentsFullRoster.forEach(s => {
+                    const fullName = formatStudentName(s);
+                    if (!fullName) return;
+                    const opt = document.createElement("option");
+                    opt.value = fullName;
+                    opt.textContent = isMobile ? String(s.lastName || fullName) : fullName;
+                    opt.className = "bg-[#314E52] text-white";
+                    if (fullName === activeStudent) opt.selected = true;
+                    selectEl.appendChild(opt);
+                });
+                if (activeStudent !== "Guest" && !studentsData.includes(activeStudent)) {
+                    activeStudent = "Guest";
+                    localStorage.setItem("bpa_active_student", "Guest");
+                    isOfficerVerified = false;
+                    localStorage.removeItem("bpa_officer_verified");
+                }
+            }
+            checkOfficerStatus();
             renderTasks();
             renderSchedule();
             renderCalendar();
@@ -925,7 +908,7 @@
                 return;
             }
 
-            const studentObj = studentsFullRoster.find(s => `${s.lastName}, ${s.firstName} ${s.mi}`.trim() === name);
+            const studentObj = studentsFullRoster.find(s => formatStudentName(s) === name);
             const expectedCode = studentObj ? studentObj.code : "";
             const isOfficer = studentObj && studentObj.role === "Officer";
 
@@ -1637,10 +1620,11 @@
                         mode: "no-cors",
                         headers: { "Content-Type": "text/plain;charset=utf-8" },
                         body: JSON.stringify({
-                            action: "officerSetCompletion",
+                            action: "officerSetGroupCompletion",
                             officerName: activeStudent,
-                            targetStudent: `Group Leader: ${leaderName}`,
-                            taskId: `${task.subject} - ${task.title}`,
+                            leader: leaderName,
+                            taskId: task.id,
+                            activityId: task.activityId || "",
                             completed: newStatus
                         })
                     });
@@ -1672,7 +1656,8 @@
                             action: "officerSetCompletion",
                             officerName: activeStudent,
                             targetStudent: studentName,
-                            taskId: `${task.subject} - ${task.title}`,
+                            taskId: task.id,
+                            activityId: task.activityId || "",
                             completed: newStatus
                         })
                     });
@@ -1889,6 +1874,7 @@
                             action: "individualSync",
                             studentName: activeStudent,
                             taskId: task.id,
+                            activityId: task.activityId || "",
                             status: newStatus ? "Completed" : "Pending"
                         })
                     });
@@ -1902,8 +1888,17 @@
         }
 
         async function toggleGroupCompletion(taskId, leaderName) {
-            groupCompletions[taskId + "_" + leaderName] = !groupCompletions[taskId + "_" + leaderName];
+            const task = tasksData.find(t => t.id === taskId);
+            const key = taskId + "_" + leaderName;
+            const newStatus = !groupCompletions[key];
+            groupCompletions[key] = newStatus;
             localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
+            if (GOOGLE_SCRIPT_URL && task) {
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({ action: "groupSync", studentName: activeStudent, leader: leaderName, taskId: task.id, activityId: task.activityId || "", status: newStatus ? "Completed" : "Pending" }) });
+                } catch (err) { console.error("Error syncing group completion:", err); }
+            }
             renderTasks();
             if (AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified) renderMasterMatrix();
         }
