@@ -711,7 +711,14 @@
 
         function formatStudentName(s) {
             if (!s) return "";
-            return `${String(s.lastName || "").trim()}, ${String(s.firstName || "").trim()} ${String(s.mi || "").trim()} ${String(s.suffix || "").trim()}`.replace(/\s+/g, " ").trim().replace(/,\s+$/, "");
+            const last = String(s.lastName || "").trim();
+            const first = String(s.firstName || "").trim();
+            const mi = String(s.mi || "").trim();
+            let suffix = String(s.suffix || "").trim();
+            // Preserve conventional punctuation: Last, First M.I., Jr. / Last, First M.I., III
+            if (/^(jr|sr)$/i.test(suffix)) suffix += ".";
+            const given = [first, mi].filter(Boolean).join(" ");
+            return [last, given].filter(Boolean).join(", ") + (suffix ? ", " + suffix : "");
         }
 
         function refreshRosterDerivedData() {
