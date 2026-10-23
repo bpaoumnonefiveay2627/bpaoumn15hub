@@ -1484,7 +1484,7 @@
                         <span class="text-xs text-[#FAD5A5]/70">${ann.timestamp || ''}</span>
                     </div>
                     <h3 class="font-bold text-white text-base">${ann.title}</h3>
-                    <p class="text-xs text-[#FAD5A5]/90 leading-relaxed">${ann.content}</p>
+                    <p class="text-xs text-[#FAD5A5]/90 leading-relaxed whitespace-pre-line">${ann.content}</p>
                     <p class="text-[11px] text-[#FAD5A5]/60 pt-1"><i class="fa-solid fa-user-pen mr-1"></i> ${getFirstName(ann.postedBy)}</p>
                     ${officerEditControls}
                 `;
@@ -1498,7 +1498,7 @@
                     <div class="bg-[#161622] border border-[#252538] p-4 rounded-xl space-y-2">
                         <div class="flex justify-between items-center"><span class="text-[10px] border px-2 py-0.5 rounded-full ${tagColor}">${latest.tag || 'General'}</span></div>
                         <h4 class="font-bold text-white text-sm">${latest.title}</h4>
-                        <p class="text-xs text-[#FAD5A5]/80 line-clamp-2">${latest.content}</p>
+                        <p class="text-xs text-[#FAD5A5]/80 leading-relaxed whitespace-pre-line line-clamp-6">${latest.content}</p>
                     </div>
                 `;
             }
@@ -1519,10 +1519,9 @@
         function generateClassBulletin() {
             const targetSaturday = getNextSaturday(new Date());
             const saturdayStr = `${targetSaturday.getFullYear()}-${String(targetSaturday.getMonth() + 1).padStart(2, "0")}-${String(targetSaturday.getDate()).padStart(2, "0")}`;
-            const saturdayClasses = scheduleList.filter(item => {
-                const classDate = formatDateOnly(item.date);
-                return classDate === saturdayStr || /sat/i.test(String(item.time || ""));
-            });
+            // Preview only classes scheduled for this exact upcoming Saturday.
+            // Do not include every recurring "Sat & Sun" entry from other dates.
+            const saturdayClasses = scheduleList.filter(item => formatDateOnly(item.date) === saturdayStr);
             const dueSoonTasks = tasksData.filter(task => {
                 const days = daysUntilDue(task.dueDate);
                 return days !== null && days >= 0 && days <= 3;
@@ -1563,24 +1562,30 @@
                 const { saturdayStr } = generateClassBulletin();
                 // Avoid generating repeatedly in the same browser; the page must be open or revisited.
                 const generatedKey = `bpa_class_bulletin_generated_${saturdayStr}`;
-                if (!localStorage.getItem(generatedKey)) {
+                const generatedV2Key = `bpa_class_bulletin_generated_v2_${saturdayStr}`;
+                if (!localStorage.getItem(generatedV2Key)) {
                     const { html } = generateClassBulletin();
-                    const classSummary = scheduleList.filter(item => formatDateOnly(item.date) === saturdayStr || /sat/i.test(String(item.time || "")))
-                        .map(item => `${item.code || "Class"}: ${item.title || "Untitled"} — ${item.time || "time TBA"}${item.link ? ` — Online link: ${item.link}` : " — online link not yet provided"}`)
-                        .join(" | ");
-                    const dueSummary = tasksData.filter(task => { const days = daysUntilDue(task.dueDate); return days !== null && days >= 0 && days <= 3; })
-                        .map(task => `${displaySubjectName(task.subject)}: ${task.title} (${dueCountdownLabel(task.dueDate)})`).join(" | ");
-                    const plainText = `Saturday classes: ${classSummary || "No Saturday classes listed"}. Requirements due within three days: ${dueSummary || "None currently listed"}.`;
-                    blockAnnouncements.unshift({
+                    const classItems = scheduleList.filter(item => formatDateOnly(item.date) === saturdayStr);
+                    const classSummary = classItems.length
+                        ? classItems.map(item => `• ${item.code || "Class"} — ${item.title || "Untitled"}\n  Time: ${item.time || "Time to be announced"}\n  Instructor: ${item.prof || "Not listed"}\n  Format: ${item.type || "Not listed"}${item.link ? `\n  Online link: ${item.link}` : "\n  Online link: Not yet provided"}`).join("\n\n")
+                        : "No classes are listed for this Saturday.";
+                    const dueItems = tasksData.filter(task => { const days = daysUntilDue(task.dueDate); return days !== null && days >= 0 && days <= 3; })
+                        .map(task => `• ${displaySubjectName(task.subject)} — ${task.title} (${dueCountdownLabel(task.dueDate)})`);
+                    const plainText = `SATURDAY CLASSES — ${formatLongDate(new Date(`${saturdayStr}T00:00:00`))}\n\n${classSummary}\n\nREQUIREMENTS DUE WITHIN THREE DAYS\n\n${dueItems.length ? dueItems.join("\n") : "• No requirements currently listed."}`;
+                    const existingBulletinIndex = blockAnnouncements.findIndex(a => a.autoGenerated && a.weekOf === saturdayStr);
+                    const bulletin = {
                         postedBy: "BPAOUMN 1-5 Hub",
                         title: `Class Bulletin — Saturday, ${saturdayStr}`,
-                        content: `Saturday class preview and upcoming requirements. ${plainText}`,
+                        content: plainText,
                         tag: "Important",
                         timestamp: now.toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" }),
                         autoGenerated: true,
                         weekOf: saturdayStr
-                    });
+                    };
+                    if (existingBulletinIndex >= 0) blockAnnouncements[existingBulletinIndex] = bulletin;
+                    else blockAnnouncements.unshift(bulletin);
                     localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
+                    localStorage.setItem(`bpa_class_bulletin_generated_v2_${saturdayStr}`, "true");
                     localStorage.setItem(generatedKey, "true");
                     renderAnnouncements();
                 }
