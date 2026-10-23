@@ -1778,37 +1778,28 @@
         }
 
         async function officerToggleGroupCompletion(taskId, leaderName) {
+            if (!(AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified)) { alert("Officer verification is required."); return; }
             if (!leaderName) return;
             const task = tasksData.find(t => t.id === taskId);
             if (!task) return;
-
+            const group = (task.groups || []).find(g => g.leader === leaderName);
+            if (!group) { alert("Could not find this group in the activity roster."); return; }
             const groupKey = taskId + "_" + leaderName;
-            const currentStatus = !!groupCompletions[groupKey];
-            const newStatus = !currentStatus;
+            const newStatus = !groupCompletions[groupKey];
+            const status = newStatus ? "Completed" : "Pending";
+            const remark = newStatus ? "Done" : "Not Submitted";
+            const names = [...new Set([group.leader, ...(group.members || [])])];
+            names.forEach(name => { userCompletions[name + "_" + taskId] = newStatus; completionRemarks[name + "_" + taskId] = remark; });
             groupCompletions[groupKey] = newStatus;
+            localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
             localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
-
+            localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
+            renderTasks(); renderMasterMatrix();
             if (GOOGLE_SCRIPT_URL) {
                 try {
-                    fetch(GOOGLE_SCRIPT_URL, {
-                        method: "POST",
-                        mode: "no-cors",
-                        headers: { "Content-Type": "text/plain;charset=utf-8" },
-                        body: JSON.stringify({
-                            action: "officerSetCompletion",
-                            officerName: activeStudent,
-                            targetStudent: `Group Leader: ${leaderName}`,
-                            taskId: `${task.subject} - ${task.title}`,
-                            completed: newStatus
-                        })
-                    });
-                } catch(err) {
-                    console.error("Error syncing group override to Google Sheets:", err);
-                }
+                    await fetch(GOOGLE_SCRIPT_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"officerSetGroupCompletion", officerName:activeStudent, leader:leaderName, taskId:task.id, activityId:task.activityId || "", status:status, remark:remark, reason:"Officer toggled group status from Master Matrix"})});
+                } catch(err) { console.error("Error syncing group status to Google Sheets:", err); alert("The status was updated locally, but saving to Google Sheets may have failed. Refresh to verify."); }
             }
-
-            renderTasks();
-            renderMasterMatrix();
         }
 
         async function officerBulkSetActivityStatus(taskId) {
@@ -1889,16 +1880,26 @@
                 const remark = modal.querySelector("#activityStatusSelect").value;
                 const reason = modal.querySelector("#activityStatusReason").value.trim() || "Individual submission status updated in Master Matrix";
                 const status = (remark === "Done" || remark === "Late Submission") ? "Completed" : (remark === "In Progress" ? "In Progress" : "Pending");
-                userCompletions[key] = status === "Completed";
-                completionRemarks[key] = remark;
+                let affectedNames = [studentName];
+                let groupLeader = "";
+                if (String(task.type).toLowerCase() === "grouping") {
+                    const matchedGroup = (task.groups || []).find(g => g.leader === studentName || (g.members || []).includes(studentName));
+                    if (matchedGroup) { groupLeader = matchedGroup.leader; affectedNames = [...new Set([matchedGroup.leader, ...(matchedGroup.members || [])])]; }
+                }
+                affectedNames.forEach(name => { const memberKey = name + "_" + taskId; userCompletions[memberKey] = status === "Completed"; completionRemarks[memberKey] = remark; });
+                if (groupLeader) groupCompletions[taskId + "_" + groupLeader] = status === "Completed";
                 localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
+                localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
                 localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
                 modal.remove();
                 renderTasks(); renderMasterMatrix();
                 if (GOOGLE_SCRIPT_URL) {
                     try {
-                        await fetch(GOOGLE_SCRIPT_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"officerSetStudentStatus", officerName:activeStudent, targetStudent:studentName, taskId:task.id, activityId:task.activityId || "", status:status, remark:remark, reason:reason})});
-                    } catch(err) { console.error("Error saving matrix status:", err); }
+                        const payload = groupLeader
+                          ? {action:"officerSetGroupCompletion", officerName:activeStudent, leader:groupLeader, taskId:task.id, activityId:task.activityId || "", status:status, remark:remark, reason:reason}
+                          : {action:"officerSetStudentStatus", officerName:activeStudent, targetStudent:studentName, taskId:task.id, activityId:task.activityId || "", status:status, remark:remark, reason:reason};
+                        await fetch(GOOGLE_SCRIPT_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload)});
+                    } catch(err) { console.error("Error saving matrix status:", err); alert("The status was updated locally, but saving to Google Sheets may have failed. Refresh to verify."); }
                 }
             };
         }
@@ -1906,33 +1907,23 @@
         async function officerToggleStudentCompletion(studentName, taskId, taskType) {
             const task = tasksData.find(t => t.id === taskId);
             if (!task) return;
-
-            const currentStatus = !!userCompletions[studentName + "_" + taskId];
-            const newStatus = !currentStatus;
-            userCompletions[studentName + "_" + taskId] = newStatus;
+            if (!(AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified)) { alert("Officer verification is required."); return; }
+            if (String(task.type).toLowerCase() === "grouping") {
+                const group = (task.groups || []).find(g => g.leader === studentName || (g.members || []).includes(studentName));
+                if (group) { await officerToggleGroupCompletion(taskId, group.leader); return; }
+            }
+            const key = studentName + "_" + taskId;
+            const newStatus = !userCompletions[key];
+            const status = newStatus ? "Completed" : "Pending", remark = newStatus ? "Done" : "Not Submitted";
+            userCompletions[key] = newStatus; completionRemarks[key] = remark;
             localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
-
+            localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
+            renderTasks(); renderMasterMatrix();
             if (GOOGLE_SCRIPT_URL) {
                 try {
-                    fetch(GOOGLE_SCRIPT_URL, {
-                        method: "POST",
-                        mode: "no-cors",
-                        headers: { "Content-Type": "text/plain;charset=utf-8" },
-                        body: JSON.stringify({
-                            action: "officerSetCompletion",
-                            officerName: activeStudent,
-                            targetStudent: studentName,
-                            taskId: `${task.subject} - ${task.title}`,
-                            completed: newStatus
-                        })
-                    });
-                } catch(err) {
-                    console.error("Error syncing officer override to Google Sheets:", err);
-                }
+                    await fetch(GOOGLE_SCRIPT_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"officerSetStudentStatus", officerName:activeStudent, targetStudent:studentName, taskId:task.id, activityId:task.activityId || "", status:status, remark:remark, reason:"Officer toggled status in hub"})});
+                } catch(err) { console.error("Error syncing officer override to Google Sheets:", err); }
             }
-
-            renderTasks();
-            renderMasterMatrix();
         }
 
         function openClassDetailModal(code) {
@@ -2118,8 +2109,10 @@
                         body: JSON.stringify({
                             action: "individualSync",
                             studentName: activeStudent,
-                            taskId: `${task.subject} - ${task.title}`,
-                            status: newStatus ? "Completed" : "Pending"
+                            taskId: task.id,
+                            activityId: task.activityId || "",
+                            status: newStatus ? "Completed" : "Pending",
+                            remark: newStatus ? "Done" : "Not Submitted"
                         })
                     });
                 } catch(err) {
@@ -2132,10 +2125,28 @@
         }
 
         async function toggleGroupCompletion(taskId, leaderName) {
-            groupCompletions[taskId + "_" + leaderName] = !groupCompletions[taskId + "_" + leaderName];
+            if (activeStudent === "Guest") { alert("Select your name first!"); return; }
+            const task = tasksData.find(t => t.id === taskId);
+            if (!task || !leaderName) return;
+            const group = (task.groups || []).find(g => g.leader === leaderName);
+            if (!group) return;
+            const groupKey = taskId + "_" + leaderName;
+            const newStatus = !groupCompletions[groupKey];
+            const status = newStatus ? "Completed" : "Pending";
+            const remark = newStatus ? "Done" : "Not Submitted";
+            const names = [...new Set([group.leader, ...(group.members || [])])];
+            names.forEach(name => { userCompletions[name + "_" + taskId] = newStatus; completionRemarks[name + "_" + taskId] = remark; });
+            groupCompletions[groupKey] = newStatus;
+            localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
             localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
+            localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
             renderTasks();
             if (AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified) renderMasterMatrix();
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"groupSync", officerName:activeStudent, studentName:activeStudent, leader:leaderName, taskId:task.id, activityId:task.activityId || "", status:status, remark:remark})});
+                } catch(err) { console.error("Error syncing group toggle to Google Sheets:", err); }
+            }
         }
 
         function toggleGroupFields(val) {
