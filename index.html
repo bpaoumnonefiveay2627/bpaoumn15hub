@@ -1888,7 +1888,7 @@
                         body: JSON.stringify({
                             action: "individualSync",
                             studentName: activeStudent,
-                            taskId: `${task.subject} - ${task.title}`,
+                            taskId: task.id,
                             status: newStatus ? "Completed" : "Pending"
                         })
                     });
@@ -2275,7 +2275,9 @@
                     driveLink,
                     instructions,
                     rubrics,
-                    groups: groupsData
+                    groups: groupsData,
+                    initialStatus,
+                    completionStudents: (initialStatus === "Completed" && type === "Individual") ? studentsData : []
                 };
 
                 if (GOOGLE_SCRIPT_URL) {
