@@ -192,9 +192,18 @@
                 </div>
             </div>
 
+            <!-- Automatically generated weekly class bulletin preview -->
+            <div class="bg-[#3b0609] border border-[#D99B26]/30 rounded-2xl p-5 shadow-xl space-y-3">
+                <div class="flex items-center justify-between gap-3 border-b border-[#902636]/30 pb-3">
+                    <h3 class="font-bold text-white flex items-center gap-2"><i class="fa-solid fa-calendar-week text-[#D99B26]"></i> Class Bulletin · Saturday Preview</h3>
+                    <span class="text-[10px] text-[#FAD5A5]/60">Auto-generated Fridays, 8:00 AM</span>
+                </div>
+                <div id="autoClassBulletin" class="space-y-2"><p class="text-xs text-[#FAD5A5]/60 italic">The next Saturday class bulletin will appear here on Friday at 8:00 AM.</p></div>
+            </div>
+
             <!-- Stats Grid Emulating Dark Palette -->
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div class="bg-[#3b0609] border border-[#902636]/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-md">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button type="button" onclick="filterDashboardTasks('ALL')" aria-label="Show all assigned tasks" class="text-left bg-[#3b0609] border border-[#902636]/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-md hover:border-[#D99B26] focus:outline-none focus:ring-2 focus:ring-[#D99B26] transition-all">
                     <div>
                         <p class="text-xs uppercase font-semibold text-[#FAD5A5]/70 tracking-wider">Assigned Requirements</p>
                         <p class="text-2xl sm:text-3xl font-bold text-white mt-1" id="statTotalTasks">0</p>
@@ -202,8 +211,8 @@
                     <div class="w-12 h-12 rounded-xl bg-[#161622] text-[#D99B26] border border-[#252538] flex items-center justify-center text-xl">
                         <i class="fa-solid fa-list"></i>
                     </div>
-                </div>
-                <div class="bg-[#3b0609] border border-[#902636]/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-md">
+                </button>
+                <button type="button" onclick="filterDashboardTasks('PENDING')" aria-label="Filter my pending tasks" class="text-left bg-[#3b0609] border border-[#902636]/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-md hover:border-[#D99B26] focus:outline-none focus:ring-2 focus:ring-[#D99B26] transition-all">
                     <div>
                         <p class="text-xs uppercase font-semibold text-[#FAD5A5]/70 tracking-wider">My Pending Items</p>
                         <p class="text-2xl sm:text-3xl font-bold text-[#D99B26] mt-1" id="statPendingTasks">0</p>
@@ -211,8 +220,8 @@
                     <div class="w-12 h-12 rounded-xl bg-[#161622] text-[#D99B26] border border-[#252538] flex items-center justify-center text-xl">
                         <i class="fa-solid fa-clock"></i>
                     </div>
-                </div>
-                <div class="bg-[#3b0609] border border-[#902636]/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-md col-span-2 md:col-span-1">
+                </button>
+                <button type="button" onclick="filterDashboardTasks('COMPLETED')" aria-label="Filter my completed tasks" class="text-left bg-[#3b0609] border border-[#902636]/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-md hover:border-[#D99B26] focus:outline-none focus:ring-2 focus:ring-[#D99B26] transition-all">
                     <div>
                         <p class="text-xs uppercase font-semibold text-[#FAD5A5]/70 tracking-wider">My Completed Tasks</p>
                         <p class="text-2xl sm:text-3xl font-bold text-emerald-400 mt-1" id="statCompletedTasks">0</p>
@@ -220,8 +229,19 @@
                     <div class="w-12 h-12 rounded-xl bg-[#161622] text-emerald-400 border border-[#252538] flex items-center justify-center text-xl">
                         <i class="fa-solid fa-circle-check"></i>
                     </div>
-                </div>
+                </button>
+                <button type="button" onclick="filterDashboardTasks('URGENT')" aria-label="Filter urgent tasks due within three days" class="text-left bg-[#3b0609] border border-red-500/40 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-md hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400 transition-all">
+                    <div>
+                        <p class="text-xs uppercase font-semibold text-red-300 tracking-wider">Urgent · Due Soon</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-red-300 mt-1" id="statUrgentTasks">0</p>
+                        <p class="text-[10px] text-[#FAD5A5]/60 mt-1">Due in 3 days or less</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-red-500/10 text-red-300 border border-red-500/30 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                </button>
             </div>
+            <p id="dashboardFilterNotice" class="hidden text-xs text-[#FAD5A5]/80" aria-live="polite"></p>
 
             <!-- Personal Checklist Table -->
             <div class="bg-[#3b0609] border border-[#902636]/40 rounded-2xl shadow-xl overflow-hidden">
@@ -623,18 +643,6 @@
                     <input type="text" id="newTaskTitle" required placeholder="e.g. Research Paper Chapter 1" class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-sm text-white placeholder:text-[#FAD5A5]/50 focus:outline-none focus:border-[#D99B26]">
                 </div>
 
-                <div class="rounded-xl border border-[#D99B26]/40 bg-[#161622] p-4 space-y-3">
-                    <label class="flex items-start gap-3 cursor-pointer">
-                        <input id="staggeredRequirementToggle" type="checkbox" onchange="toggleStaggeredRequirement(this.checked)" class="mt-1 accent-[#D99B26]">
-                        <span><span class="block text-xs font-bold text-[#FAD5A5] uppercase tracking-wider">Staggered Requirement</span><span class="block text-xs text-[#FAD5A5]/70 mt-1">Use one parent requirement with multiple milestones, each with its own deadline.</span></span>
-                    </label>
-                    <div id="staggeredRequirementFields" class="hidden space-y-3">
-                        <p class="text-xs text-[#FAD5A5]/80">The Requirement Title above becomes the parent title. Add each deliverable and its due date below. Each milestone will appear as its own trackable requirement in the existing dashboard.</p>
-                        <div id="staggeredMilestonesContainer" class="space-y-3"></div>
-                        <button type="button" onclick="addStaggeredMilestoneRow()" class="text-xs bg-[#902636] hover:bg-[#751e2b] text-white px-3 py-2 rounded-lg font-medium"><i class="fa-solid fa-plus mr-1"></i> Add Milestone</button>
-                    </div>
-                </div>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Type *</label>
@@ -703,28 +711,50 @@
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxaKmEFuCQwXQBahGzTsRicTyAUCp_KeIVq1GtIofcVYuOSWPsxVJOlo81YkWWZJtU/exec";
         const OFFICER_PIN = "152026";
 
-        // Student roster is loaded from the case-sensitive Students sheet by Apps Script.
-        // The cached roster is only an offline fallback; the spreadsheet is the source of truth.
-        let studentsFullRoster = JSON.parse(localStorage.getItem("bpa_students_roster") || "[]");
-        let studentsData = studentsFullRoster.map(s => formatStudentName(s));
-        let AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => String(s.role || "").toLowerCase() === "officer").map(s => formatStudentName(s));
+        const studentsFullRoster = [
+            { lastName: "Acuzar", firstName: "Gedalen", mi: "P.", suffix: "", code: "acuzarbpa1501", role: "Officer" },
+            { lastName: "Andres", firstName: "Yhe-Zscha Jhunes", mi: "J.", suffix: "", code: "andresbpa1502", role: "Student" },
+            { lastName: "Ausa", firstName: "Arc Jayben", mi: "C.", suffix: "", code: "ausabpa1503", role: "Student" },
+            { lastName: "Balbuena", firstName: "Michelle Jane", mi: "G.", suffix: "", code: "balbuenabpa1504", role: "Student" },
+            { lastName: "Barba", firstName: "Ge-Ann", mi: "G.", suffix: "", code: "barbabpa1505", role: "Officer" },
+            { lastName: "Bernardo", firstName: "Jirah", mi: "L.", suffix: "", code: "bernardo1506", role: "Student" },
+            { lastName: "Burkett", firstName: "Bernardo", mi: "S.", suffix: "Jr.", code: "burkettbpa1507", role: "Student" },
+            { lastName: "Calalo", firstName: "Don Elix", mi: "C.", suffix: "", code: "calalobpa1508", role: "Student" },
+            { lastName: "Casano", firstName: "Michael Cedrick", mi: "", suffix: "", code: "casanobpa1509", role: "Officer" },
+            { lastName: "Castillo", firstName: "Ma. Dawn Rozeal", mi: "A.", suffix: "", code: "castillobpa1510", role: "Student" },
+            { lastName: "Catalan", firstName: "Arnulfo", mi: "A.", suffix: "Jr.", code: "catalanbpa1511", role: "Student" },
+            { lastName: "Cruz", firstName: "Fritzie", mi: "C.", suffix: "", code: "cruzbpa1512", role: "Student" },
+            { lastName: "Deguiñon", firstName: "Junebe", mi: "B.", suffix: "", code: "deguiñonbpa1513", role: "Student" },
+            { lastName: "Escalada", firstName: "Josei", mi: "E.", suffix: "", code: "escaladabpa1514", role: "Student" },
+            { lastName: "Falculan", firstName: "Christopher", mi: "M.", suffix: "", code: "falculanbpa1515", role: "Student" },
+            { lastName: "Flores", firstName: "Ann Margery", mi: "C.", suffix: "", code: "floresbpa1516", role: "Student" },
+            { lastName: "Gaa-Felia", firstName: "Kareann", mi: "S.", suffix: "", code: "gaafeliabpa1517", role: "Student" },
+            { lastName: "Hamsain", firstName: "Santanina", mi: "M.", suffix: "", code: "hamsainbpa1518", role: "Student" },
+            { lastName: "Lagunsad", firstName: "Alliah Nicole", mi: "C.", suffix: "", code: "lagunsadbpa1519", role: "Student" },
+            { lastName: "Lopez", firstName: "Michelle Ann", mi: "N.", suffix: "", code: "lopezbpa1520", role: "Student" },
+            { lastName: "Mejico", firstName: "Lady Wish", mi: "C.", suffix: "", code: "mejicobpa1521", role: "Student" },
+            { lastName: "Meres", firstName: "Kent Alvin", mi: "C.", suffix: "", code: "meresbpa1522", role: "Student" },
+            { lastName: "Nuñez", firstName: "Lorna", mi: "E.", suffix: "", code: "nuñezbpa1523", role: "Student" },
+            { lastName: "Oliva", firstName: "Mark Leandro", mi: "C.", suffix: "", code: "olivabpa1524", role: "Student" },
+            { lastName: "Ortega", firstName: "Jeric", mi: "F.", suffix: "", code: "ortegabpa1525", role: "Officer" },
+            { lastName: "Palero", firstName: "Maricel", mi: "G.", suffix: "", code: "palerobpa1526", role: "Student" },
+            { lastName: "Pangilinan", firstName: "Kenneth", mi: "S.", suffix: "", code: "pangilinanbpa1527", role: "Student" },
+            { lastName: "Pascual", firstName: "Edzhel", mi: "B.", suffix: "", code: "pascualbpa1528", role: "Student" },
+            { lastName: "Pejo", firstName: "Jhanna Jade", mi: "N.", suffix: "", code: "pejobpa1529", role: "Officer" },
+            { lastName: "Pendon", firstName: "Jeric", mi: "", suffix: "", code: "pendonbpa1530", role: "Student" },
+            { lastName: "Quilala", firstName: "Julie Ann", mi: "J.", suffix: "", code: "quilalabpa1531", role: "Officer" },
+            { lastName: "Ramirez", firstName: "Alexander", mi: "S.", suffix: "", code: "ramirezbpa1532", role: "Student" },
+            { lastName: "Revis", firstName: "Melodie", mi: "A.", suffix: "", code: "revisbpa1533", role: "Student" },
+            { lastName: "Segura", firstName: "Roderick", mi: "M.", suffix: "", code: "segurabpa1534", role: "Student" },
+            { lastName: "Siy", firstName: "Hannah Gerreth", mi: "M.", suffix: "", code: "siybpa1535", role: "Student" },
+            { lastName: "Sorillano", firstName: "Marierose", mi: "G.", suffix: "", code: "sorillanobpa1536", role: "Student" },
+            { lastName: "Topacio", firstName: "Marivie", mi: "P.", suffix: "", code: "topaciobpa1537", role: "Student" },
+            { lastName: "Villafuerte", firstName: "April", mi: "A.", suffix: "", code: "villafuertebpa1538", role: "Student" },
+            { lastName: "Ymana", firstName: "Honeylet", mi: "C.", suffix: "", code: "ymanabpa1539", role: "Student" }
+        ];
 
-        function formatStudentName(s) {
-            if (!s) return "";
-            const last = String(s.lastName || "").trim();
-            const first = String(s.firstName || "").trim();
-            const mi = String(s.mi || "").trim();
-            let suffix = String(s.suffix || "").trim();
-            // Preserve conventional punctuation: Last, First M.I., Jr. / Last, First M.I., III
-            if (/^(jr|sr)$/i.test(suffix)) suffix += ".";
-            const given = [first, mi].filter(Boolean).join(" ");
-            return [last, given].filter(Boolean).join(", ") + (suffix ? ", " + suffix : "");
-        }
-
-        function refreshRosterDerivedData() {
-            studentsData = studentsFullRoster.map(s => formatStudentName(s)).filter(Boolean);
-            AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => String(s.role || "").toLowerCase() === "officer").map(s => formatStudentName(s));
-        }
+        const studentsData = studentsFullRoster.map(s => `${s.lastName}, ${s.firstName} ${s.mi}`.trim());
+        const AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => s.role === "Officer").map(s => `${s.lastName}, ${s.firstName} ${s.mi}`.trim());
 
         let scheduleList = JSON.parse(localStorage.getItem("bpa_schedule_list") || JSON.stringify([
             { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-10-24", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
@@ -753,9 +783,11 @@
         let isOfficerVerified = localStorage.getItem("bpa_officer_verified") === "true";
         let userCompletions = JSON.parse(localStorage.getItem("bpa_user_completions") || "{}");
         let groupCompletions = JSON.parse(localStorage.getItem("bpa_group_completions") || "{}");
+        let completionRemarks = JSON.parse(localStorage.getItem("bpa_completion_remarks") || "{}");
         let currentCalendarDate = new Date();
 
         let activeTaskSubjectFilter = "ALL";
+        let activeDashboardTaskFilter = "ALL";
         let activeMatrixSubjectFilter = "";
 
         function escapeHtml(text) {
@@ -766,6 +798,34 @@
         function formatDateOnly(dateStr) {
             if (!dateStr) return "";
             return String(dateStr).split("T")[0];
+        }
+
+        function displaySubjectName(subject) {
+            const raw = String(subject || "").trim();
+            const normalized = raw.toUpperCase().replace(/\s+/g, " ");
+            if (normalized === "ETHICS") return "Ethics";
+            if (normalized === "UTS" || normalized === "UTS (UNDERSTANDING THE SELF)") return "Understanding the Self";
+            return raw;
+        }
+
+        // Returns whole calendar days until a due date; negative means overdue.
+        function daysUntilDue(dateStr) {
+            const clean = formatDateOnly(dateStr);
+            if (!clean) return null;
+            const due = new Date(clean + "T00:00:00");
+            if (Number.isNaN(due.getTime())) return null;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return Math.round((due.getTime() - today.getTime()) / 86400000);
+        }
+
+        function dueCountdownLabel(dateStr) {
+            const days = daysUntilDue(dateStr);
+            if (days === null) return "No due date";
+            if (days < 0) return `Overdue by ${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"}`;
+            if (days === 0) return "Due today";
+            if (days === 1) return "Due tomorrow";
+            return `Due in ${days} days`;
         }
 
         function updateRealtimeClock() {
@@ -839,22 +899,30 @@
         async function initApp() {
             const selectEl = document.getElementById("studentProfileSelect");
             const isMobile = window.innerWidth < 640;
+
+            if (selectEl) {
+                selectEl.innerHTML = '<option value="Guest" class="bg-[#314E52] text-[#FAD5A5]">Select Name</option>';
+                studentsFullRoster.forEach(s => {
+                    const fullName = `${s.lastName}, ${s.firstName} ${s.mi}`.trim();
+                    const displayName = isMobile ? s.lastName : fullName;
+                    const opt = document.createElement("option");
+                    opt.value = fullName; 
+                    opt.textContent = displayName;
+                    opt.className = "bg-[#314E52] text-white";
+                    if (fullName === activeStudent) opt.selected = true;
+                    selectEl.appendChild(opt);
+                });
+            }
+
             updateRealtimeClock();
+            checkOfficerStatus();
 
             if (GOOGLE_SCRIPT_URL) {
                 try {
                     const res = await fetch(GOOGLE_SCRIPT_URL);
                     const data = await res.json();
-                    if (Array.isArray(data.students) && data.students.length) {
-                        studentsFullRoster = data.students;
-                        localStorage.setItem("bpa_students_roster", JSON.stringify(studentsFullRoster));
-                        refreshRosterDerivedData();
-                    }
-                    if (data.groupCompletions && typeof data.groupCompletions === "object") {
-                        groupCompletions = data.groupCompletions;
-                        localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
-                    }
-                    if (Array.isArray(data.schedule)) {
+                    
+                    if (data.schedule && data.schedule.length > 0) {
                         scheduleList = data.schedule;
                         localStorage.setItem("bpa_schedule_list", JSON.stringify(scheduleList));
                     }
@@ -862,7 +930,7 @@
                         tasksData = data.tasks;
                         localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
                     }
-                    if (Array.isArray(data.announcements)) {
+                    if (data.announcements && data.announcements.length > 0) {
                         blockAnnouncements = data.announcements;
                         localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
                     }
@@ -870,35 +938,20 @@
                         userCompletions = data.completions;
                         localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
                     }
+                    if (data.completionRemarks) {
+                        completionRemarks = data.completionRemarks;
+                        localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
+                    }
                 } catch (err) {
                     console.error("Failed to sync live data from Google Sheets, using local state:", err);
                 }
             }
 
-            if (selectEl) {
-                selectEl.innerHTML = '<option value="Guest" class="bg-[#314E52] text-[#FAD5A5]">Select Name</option>';
-                studentsFullRoster.forEach(s => {
-                    const fullName = formatStudentName(s);
-                    if (!fullName) return;
-                    const opt = document.createElement("option");
-                    opt.value = fullName;
-                    opt.textContent = isMobile ? String(s.lastName || fullName) : fullName;
-                    opt.className = "bg-[#314E52] text-white";
-                    if (fullName === activeStudent) opt.selected = true;
-                    selectEl.appendChild(opt);
-                });
-                if (activeStudent !== "Guest" && !studentsData.includes(activeStudent)) {
-                    activeStudent = "Guest";
-                    localStorage.setItem("bpa_active_student", "Guest");
-                    isOfficerVerified = false;
-                    localStorage.removeItem("bpa_officer_verified");
-                }
-            }
-            checkOfficerStatus();
             renderTasks();
             renderSchedule();
             renderCalendar();
             renderAnnouncements();
+            maybeGenerateFridayClassBulletin();
 
             makeElementDraggable(document.getElementById("floatingChatBox"), document.getElementById("chatHeaderBar"));
         }
@@ -915,7 +968,7 @@
                 return;
             }
 
-            const studentObj = studentsFullRoster.find(s => formatStudentName(s) === name);
+            const studentObj = studentsFullRoster.find(s => `${s.lastName}, ${s.firstName} ${s.mi}`.trim() === name);
             const expectedCode = studentObj ? studentObj.code : "";
             const isOfficer = studentObj && studentObj.role === "Officer";
 
@@ -1123,6 +1176,7 @@
 
             let pendingCount = 0; 
             let completedCount = 0;
+            let urgentCount = 0;
             const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified;
 
             // Step A: Calculate Completion & Total Ratios per Subject for Active Student
@@ -1146,7 +1200,7 @@
                     if (task.type === "Individual") {
                         isComp = userCompletions[activeStudent + "_" + task.id] || false;
                     } else if (myGroup) {
-                        isComp = groupCompletions[task.id + "_" + myGroup.leader] || false;
+                        isComp = userCompletions[activeStudent + "_" + task.id] || false;
                     }
 
                     if (isComp) subjectStats[task.subject].completed++;
@@ -1168,7 +1222,7 @@
                 const isActive = activeTaskSubjectFilter === subj;
                 summaryCardsHtml += `
                     <div onclick="filterTaskSubject('${subj}')" class="bg-[#161622] border ${isActive ? 'border-[#D99B26] bg-[#3b0609]/60' : 'border-[#252538]'} p-3.5 rounded-2xl cursor-pointer hover:border-[#D99B26] transition-all shadow-md">
-                        <div class="text-[10px] text-[#FAD5A5]/70 uppercase font-bold tracking-wider truncate">${subj}</div>
+                        <div class="text-[10px] text-[#FAD5A5]/70 uppercase font-bold tracking-wider truncate">${displaySubjectName(subj)}</div>
                         <div class="text-base font-bold text-[#D99B26] mt-1">${stat.completed} / ${stat.total} <span class="text-xs font-normal text-white">Done</span></div>
                     </div>`;
             });
@@ -1200,7 +1254,7 @@
                 } else {
                     let myGroup = task.groups ? task.groups.find(g => g.leader === activeStudent || (g.members && g.members.includes(activeStudent))) : null;
                     const isLeader = myGroup && (myGroup.leader === activeStudent);
-                    const groupDone = groupCompletions[task.id + "_" + (myGroup ? myGroup.leader : '')] || false;
+                    const groupDone = myGroup ? (userCompletions[activeStudent + "_" + task.id] || false) : false;
                     isCompleted = groupDone && myGroup;
 
                     if (myGroup && myGroup.dueDate) {
@@ -1239,13 +1293,19 @@
                     }
                 }
 
-                if (task.type === "Individual" && isCompleted) completedCount++; 
-                else if (task.type === "Grouping" && (isCompleted || isOfficer)) {
-                    if (isCompleted) completedCount++; 
-                } else {
-                    pendingCount++;
-                }
+                if (isCompleted) completedCount++;
+                else pendingCount++;
 
+                const dueDays = daysUntilDue(cleanDueDate);
+                const isUrgent = !isCompleted && dueDays !== null && dueDays <= 3;
+                if (isUrgent) urgentCount++;
+
+                // Summary counts always describe all assigned tasks; the selected card only filters the rows/cards.
+                if (activeDashboardTaskFilter === "PENDING" && isCompleted) return;
+                if (activeDashboardTaskFilter === "COMPLETED" && !isCompleted) return;
+                if (activeDashboardTaskFilter === "URGENT" && !isUrgent) return;
+
+                const dueAlert = isUrgent ? `<span class="inline-flex mt-1 text-[10px] px-2 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/30"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${dueCountdownLabel(cleanDueDate)}</span>` : `<span class="inline-flex mt-1 text-[10px] text-[#FAD5A5]/60">${dueCountdownLabel(cleanDueDate)}</span>`;
                 const moduleBtn = task.moduleLink ? `<a href="${task.moduleLink}" target="_blank" class="inline-flex items-center gap-1.5 text-xs bg-[#314E52] text-[#FAD5A5] border border-[#D99B26]/30 px-2.5 py-1 rounded-lg font-medium hover:bg-[#314E52]/80"><i class="fa-solid fa-book-open text-[#D99B26]"></i> Module</a>` : '';
                 const subLinkUrl = task.submissionLink || task.subLink;
                 const subBtn = subLinkUrl ? `<a href="${subLinkUrl}" target="_blank" class="inline-flex items-center gap-1.5 text-xs bg-[#902636]/20 text-[#FAD5A5] border border-[#902636]/40 px-2.5 py-1 rounded-lg font-medium hover:bg-[#902636]/40"><i class="fa-solid fa-paper-plane text-[#D99B26]"></i> Submit Portal</a>` : '';
@@ -1267,11 +1327,11 @@
                 card.innerHTML = `
                     <div>
                         <div class="flex justify-between items-start">
-                            <span class="bg-[#902636]/20 text-[#FAD5A5] border border-[#902636]/30 text-xs font-semibold px-2.5 py-1 rounded">${task.subject}</span>
+                            <span class="bg-[#902636]/20 text-[#FAD5A5] border border-[#902636]/30 text-xs font-semibold px-2.5 py-1 rounded">${displaySubjectName(task.subject)}</span>
                             <span class="text-xs text-[#D99B26] font-medium bg-[#161622] border border-[#252538] px-2 py-0.5 rounded"><i class="fa-regular fa-clock mr-1"></i> ${cleanDueDate}</span>
                         </div>
                         <h4 class="font-bold text-white mt-2 flex items-center gap-2">${task.title} ${typeBadge}</h4>
-                        ${task.isStaggered || task.parentId ? `<div class="mt-1 text-[10px] text-[#D99B26]"><i class="fa-solid fa-diagram-project mr-1"></i>Part of: ${escapeHtml(task.parentTitle || task.title)} · Milestone ${task.milestoneOrder || ""}${task.milestoneCount ? ` of ${task.milestoneCount}` : ""}</div>` : ""}
+                        ${dueAlert}
                         ${groupDetailsHTML}
                         <div class="mt-3 flex items-center gap-2 flex-wrap">
                             ${moduleBtn}
@@ -1292,12 +1352,12 @@
                 row.className = "border-b border-[#902636]/20 hover:bg-[#3b0609]/60 text-sm";
                 row.innerHTML = `
                     <td class="py-3 px-4"><span class="text-xs font-semibold px-2.5 py-1 rounded ${isCompleted ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-[#D99B26]/20 text-[#D99B26] border border-[#D99B26]/30'}">${isCompleted ? 'Done' : 'Pending'}</span></td>
-                    <td class="py-3 px-4 font-medium text-white">${task.subject}</td>
+                    <td class="py-3 px-4 font-medium text-white">${displaySubjectName(task.subject)}</td>
                     <td class="py-3 px-4">
                         <div class="font-semibold text-white flex items-center gap-2 mb-1">${task.title} ${typeBadge}</div>
                         <div class="flex items-center gap-1.5 flex-wrap">${moduleBtn} ${subBtn} ${driveUploadBtn} ${viewInstructionsBtn}</div>
                     </td>
-                    <td class="py-3 px-4 text-[#D99B26] font-medium">${cleanDueDate}</td>
+                    <td class="py-3 px-4 text-[#D99B26] font-medium"><div>${cleanDueDate || '—'}</div>${dueAlert}</td>
                     <td class="py-3 px-4 text-right">${permissionNotice}</td>
                 `;
                 personalTable.appendChild(row);
@@ -1306,6 +1366,21 @@
             document.getElementById("statTotalTasks").textContent = assignedTasks.length;
             document.getElementById("statPendingTasks").textContent = pendingCount;
             document.getElementById("statCompletedTasks").textContent = completedCount;
+            const urgentEl = document.getElementById("statUrgentTasks");
+            if (urgentEl) urgentEl.textContent = urgentCount;
+            const notice = document.getElementById("dashboardFilterNotice");
+            const labels = { ALL: "Showing all assigned tasks.", PENDING: "Filtered to pending tasks.", COMPLETED: "Filtered to completed tasks.", URGENT: "Filtered to incomplete tasks due within 3 days or already overdue." };
+            if (notice) {
+                notice.textContent = labels[activeDashboardTaskFilter] || labels.ALL;
+                notice.classList.toggle("hidden", activeDashboardTaskFilter === "ALL");
+            }
+        }
+
+        function filterDashboardTasks(filter) {
+            activeDashboardTaskFilter = filter || "ALL";
+            renderTasks();
+            const checklist = document.getElementById("personalTaskTableBody");
+            if (checklist) checklist.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
 
         function filterTaskSubject(subjectCode) {
@@ -1400,11 +1475,8 @@
                         <span class="text-xs border px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${tagColor}">${ann.tag || 'General'}</span>
                         <span class="text-xs text-[#FAD5A5]/70">${ann.timestamp || ''}</span>
                     </div>
-                    <div class="flex items-start justify-between gap-3">
-                        <h3 class="font-bold text-white text-base">${ann.title}</h3>
-                        <button type="button" onclick="copyBulletin(${index})" class="shrink-0 text-[10px] bg-[#314E52] hover:bg-[#314E52]/80 text-[#FAD5A5] border border-[#D99B26]/30 px-2.5 py-1 rounded-lg"><i class="fa-regular fa-copy mr-1"></i> Copy</button>
-                    </div>
-                    <p class="text-xs text-[#FAD5A5]/90 leading-relaxed" style="white-space: pre-wrap; overflow-wrap: anywhere;">${escapeHtml(String(ann.content || "")).replace(/\r?\n/g, "<br>")}</p>
+                    <h3 class="font-bold text-white text-base">${ann.title}</h3>
+                    <p class="text-xs text-[#FAD5A5]/90 leading-relaxed">${ann.content}</p>
                     <p class="text-[11px] text-[#FAD5A5]/60 pt-1"><i class="fa-solid fa-user-pen mr-1"></i> ${getFirstName(ann.postedBy)}</p>
                     ${officerEditControls}
                 `;
@@ -1418,11 +1490,99 @@
                     <div class="bg-[#161622] border border-[#252538] p-4 rounded-xl space-y-2">
                         <div class="flex justify-between items-center"><span class="text-[10px] border px-2 py-0.5 rounded-full ${tagColor}">${latest.tag || 'General'}</span></div>
                         <h4 class="font-bold text-white text-sm">${latest.title}</h4>
-                        <p class="text-xs text-[#FAD5A5]/80 line-clamp-2" style="white-space: pre-line;">${escapeHtml(String(latest.content || ""))}</p>
+                        <p class="text-xs text-[#FAD5A5]/80 line-clamp-2">${latest.content}</p>
                     </div>
                 `;
             }
         }
+
+        function getNextSaturday(fromDate = new Date()) {
+            const date = new Date(fromDate);
+            const daysUntilSaturday = (6 - date.getDay() + 7) % 7;
+            date.setDate(date.getDate() + (daysUntilSaturday === 0 ? 7 : daysUntilSaturday));
+            date.setHours(0, 0, 0, 0);
+            return date;
+        }
+
+        function formatLongDate(date) {
+            return date.toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+        }
+
+        function generateClassBulletin() {
+            const targetSaturday = getNextSaturday(new Date());
+            const saturdayStr = `${targetSaturday.getFullYear()}-${String(targetSaturday.getMonth() + 1).padStart(2, "0")}-${String(targetSaturday.getDate()).padStart(2, "0")}`;
+            const saturdayClasses = scheduleList.filter(item => {
+                const classDate = formatDateOnly(item.date);
+                return classDate === saturdayStr || /sat/i.test(String(item.time || ""));
+            });
+            const dueSoonTasks = tasksData.filter(task => {
+                const days = daysUntilDue(task.dueDate);
+                return days !== null && days >= 0 && days <= 3;
+            }).sort((a, b) => (daysUntilDue(a.dueDate) ?? 999) - (daysUntilDue(b.dueDate) ?? 999));
+
+            let html = `<p class="text-xs text-[#FAD5A5]/80">Saturday classes for <strong class="text-white">${formatLongDate(targetSaturday)}</strong></p>`;
+            if (!saturdayClasses.length) {
+                html += `<p class="text-xs text-[#FAD5A5]/60">No Saturday classes are listed for this date. Please check the class schedule for updates.</p>`;
+            } else {
+                html += `<div class="space-y-2">`;
+                saturdayClasses.forEach(item => {
+                    const link = item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="inline-flex mt-1 text-[11px] text-[#D99B26] underline"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>Open class link</a>` : `<span class="block mt-1 text-[10px] text-[#FAD5A5]/50">No online class link has been added.</span>`;
+                    html += `<div class="bg-[#161622] border border-[#252538] rounded-xl p-3"><div class="flex flex-wrap justify-between gap-2"><strong class="text-sm text-white">${escapeHtml(item.code || "Class")} · ${escapeHtml(item.title || "Untitled class")}</strong><span class="text-[10px] text-[#D99B26]">${escapeHtml(item.time || "Time not listed")}</span></div><p class="text-[11px] text-[#FAD5A5]/70 mt-1">${escapeHtml(item.prof || "Instructor not listed")} · ${escapeHtml(item.type || "Class format not listed")}</p>${link}</div>`;
+                });
+                html += `</div>`;
+            }
+
+            html += `<div class="border-t border-[#252538] pt-3"><h4 class="text-xs uppercase tracking-wide font-bold text-[#FAD5A5] mb-2"><i class="fa-solid fa-hourglass-half text-[#D99B26] mr-1"></i> Requirements due within 3 days</h4>`;
+            if (!dueSoonTasks.length) {
+                html += `<p class="text-xs text-[#FAD5A5]/60">No requirements with a due date in the next three days are currently listed.</p>`;
+            } else {
+                html += `<ul class="space-y-1.5">`;
+                dueSoonTasks.forEach(task => {
+                    html += `<li class="text-xs text-white"><span class="text-[#D99B26] font-semibold">${escapeHtml(displaySubjectName(task.subject))}</span> — ${escapeHtml(task.title)} <span class="text-red-300">(${dueCountdownLabel(task.dueDate)})</span></li>`;
+                });
+                html += `</ul>`;
+            }
+            html += `</div>`;
+            const box = document.getElementById("autoClassBulletin");
+            if (box) box.innerHTML = html;
+            return { saturdayStr, html };
+        }
+
+        function maybeGenerateFridayClassBulletin() {
+            const now = new Date();
+            const isFridayAfterEight = now.getDay() === 5 && (now.getHours() > 8 || (now.getHours() === 8 && now.getMinutes() >= 0));
+            if (isFridayAfterEight) {
+                const { saturdayStr } = generateClassBulletin();
+                // Avoid generating repeatedly in the same browser; the page must be open or revisited.
+                const generatedKey = `bpa_class_bulletin_generated_${saturdayStr}`;
+                if (!localStorage.getItem(generatedKey)) {
+                    const { html } = generateClassBulletin();
+                    const classSummary = scheduleList.filter(item => formatDateOnly(item.date) === saturdayStr || /sat/i.test(String(item.time || "")))
+                        .map(item => `${item.code || "Class"}: ${item.title || "Untitled"} — ${item.time || "time TBA"}${item.link ? ` — Online link: ${item.link}` : " — online link not yet provided"}`)
+                        .join(" | ");
+                    const dueSummary = tasksData.filter(task => { const days = daysUntilDue(task.dueDate); return days !== null && days >= 0 && days <= 3; })
+                        .map(task => `${displaySubjectName(task.subject)}: ${task.title} (${dueCountdownLabel(task.dueDate)})`).join(" | ");
+                    const plainText = `Saturday classes: ${classSummary || "No Saturday classes listed"}. Requirements due within three days: ${dueSummary || "None currently listed"}.`;
+                    blockAnnouncements.unshift({
+                        postedBy: "BPAOUMN 1-5 Hub",
+                        title: `Class Bulletin — Saturday, ${saturdayStr}`,
+                        content: `Saturday class preview and upcoming requirements. ${plainText}`,
+                        tag: "Important",
+                        timestamp: now.toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" }),
+                        autoGenerated: true,
+                        weekOf: saturdayStr
+                    });
+                    localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
+                    localStorage.setItem(generatedKey, "true");
+                    renderAnnouncements();
+                }
+            } else {
+                generateClassBulletin();
+            }
+        }
+
+        // Refresh countdowns and generate the Friday bulletin if the page remains open.
+        setInterval(maybeGenerateFridayClassBulletin, 60000);
 
         // Master Matrix filters are rendered outside the table card.
         let activeMatrixCategoryFilter = ""; // Retained for compatibility with older saved UI state.
@@ -1527,7 +1687,7 @@
                             const groupNum = studentGroupIndex + 1;
                             const studentGroup = task.groups[studentGroupIndex];
                             const groupKey = task.id + "_" + studentGroup.leader;
-                            isDone = groupCompletions[groupKey] || false;
+                            isDone = userCompletions[student + "_" + task.id] || false;
                             groupBadgeHtml = `<button onclick="officerToggleGroupCompletion(${task.id}, '${escapeHtml(studentGroup.leader)}')" class="text-[10px] text-[#D99B26] font-semibold bg-[#161622] hover:bg-[#D99B26]/20 border border-[#D99B26]/30 px-2 py-0.5 rounded mb-1 transition-all" title="Click to toggle status for entire Group ${groupNum}">Group ${groupNum} (TL: ${escapeHtml(getFirstName(studentGroup.leader))})</button>`;
                         } else {
                             isAssigned = false;
@@ -1541,14 +1701,13 @@
                             ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
                             : 'bg-[#3b0609] text-[#FAD5A5]/60 border-[#902636]/40 hover:text-white hover:bg-[#902636]/30';
                         const groupMatch = task.type === "Grouping" && task.groups ? task.groups.find(g => g.leader === student || (g.members && g.members.includes(student))) : null;
-                        const clickAction = task.type === "Individual"
-                            ? `officerToggleStudentCompletion('${escapeHtml(student)}', ${task.id}, 'Individual')`
-                            : `officerToggleGroupCompletion(${task.id}, '${escapeHtml(groupMatch ? groupMatch.leader : '')}')`;
-
+                        const clickAction = `officerEditStudentStatus('${escapeHtml(student)}', ${task.id})`;
+                        const remark = completionRemarks[student + "_" + task.id] || (isDone ? "Done" : "Not Submitted");
+                        const visibleStatus = remark === "Late Submission" ? "Late Submission" : (remark === "Not Submitted" ? "Not Submitted" : (isDone ? "Done" : "Pending"));
                         html += `<td class="p-2 text-center border-r border-[#252538]">
                             ${groupBadgeHtml}
-                            <button onclick="${clickAction}" class="px-2.5 py-1 rounded border text-[11px] font-bold transition-all shadow-sm flex items-center justify-center gap-1 mx-auto ${badgeColor}" title="Click status to mark done">
-                                ${isDone ? '<i class="fa-solid fa-check text-emerald-400"></i> Done' : '<i class="fa-regular fa-circle"></i> Pending'}
+                            <button onclick="${clickAction}" class="px-2.5 py-1 rounded border text-[11px] font-bold transition-all shadow-sm flex items-center justify-center gap-1 mx-auto ${badgeColor}" title="Click to edit individual submission status">
+                                ${isDone ? '<i class="fa-solid fa-check text-emerald-400"></i>' : '<i class="fa-regular fa-circle"></i>'} ${escapeHtml(visibleStatus)}
                             </button>
                         </td>`;
                     }
@@ -1579,7 +1738,7 @@
             const task = tasksData.find(t => t.id === taskId);
             if (!task) return;
 
-            if (!confirm(`Are you sure you want to delete "${task.subject}: ${task.title}" across all students? This cannot be undone.`)) {
+            if (!confirm(`Are you sure you want to delete "${displaySubjectName(task.subject)}: ${task.title}" across all students? This cannot be undone.`)) {
                 return;
             }
 
@@ -1627,11 +1786,10 @@
                         mode: "no-cors",
                         headers: { "Content-Type": "text/plain;charset=utf-8" },
                         body: JSON.stringify({
-                            action: "officerSetGroupCompletion",
+                            action: "officerSetCompletion",
                             officerName: activeStudent,
-                            leader: leaderName,
-                            taskId: task.id,
-                            activityId: task.activityId || "",
+                            targetStudent: `Group Leader: ${leaderName}`,
+                            taskId: `${task.subject} - ${task.title}`,
                             completed: newStatus
                         })
                     });
@@ -1642,6 +1800,35 @@
 
             renderTasks();
             renderMasterMatrix();
+        }
+
+        async function officerEditStudentStatus(studentName, taskId) {
+            if (!(AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified)) { alert("Officer verification is required."); return; }
+            const task = tasksData.find(t => t.id === taskId);
+            if (!task) return;
+            const key = studentName + "_" + taskId;
+            const currentRemark = completionRemarks[key] || (userCompletions[key] ? "Done" : "Not Submitted");
+            const choice = prompt("Set submission record for " + studentName + "\n\nEnter one of these exact values:\n1 = Done (on time)\n2 = Late Submission\n3 = Not Submitted\n4 = In Progress\n\nCurrent: " + currentRemark, currentRemark === "Done" ? "1" : currentRemark === "Late Submission" ? "2" : currentRemark === "In Progress" ? "4" : "3");
+            if (choice === null) return;
+            const map = {"1": {status:"Completed", remark:"Done"}, "2": {status:"Completed", remark:"Late Submission"}, "3": {status:"Pending", remark:"Not Submitted"}, "4": {status:"In Progress", remark:"In Progress"}};
+            const selected = map[String(choice).trim()];
+            if (!selected) { alert("Invalid selection. Please enter 1, 2, 3, or 4."); return; }
+            let reason = "Individual submission status updated in Master Matrix";
+            if (selected.remark !== "Done") {
+                const enteredReason = prompt("Optional reason / note for the audit log:", selected.remark);
+                if (enteredReason === null) return;
+                reason = enteredReason.trim() || selected.remark;
+            }
+            userCompletions[key] = selected.status === "Completed";
+            completionRemarks[key] = selected.remark;
+            localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
+            localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"officerSetStudentStatus", officerName:activeStudent, targetStudent:studentName, taskId:task.id, activityId:task.activityId || "", status:selected.status, remark:selected.remark, reason:reason})});
+                } catch(err) { console.error("Error saving matrix status:", err); }
+            }
+            renderTasks(); renderMasterMatrix();
         }
 
         async function officerToggleStudentCompletion(studentName, taskId, taskType) {
@@ -1663,8 +1850,7 @@
                             action: "officerSetCompletion",
                             officerName: activeStudent,
                             targetStudent: studentName,
-                            taskId: task.id,
-                            activityId: task.activityId || "",
+                            taskId: `${task.subject} - ${task.title}`,
                             completed: newStatus
                         })
                     });
@@ -1713,7 +1899,7 @@
 
             const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified;
 
-            document.getElementById("instructionsModalTitle").textContent = `📌 ${task.subject}: ${task.title}`;
+            document.getElementById("instructionsModalTitle").textContent = `📌 ${displaySubjectName(task.subject)}: ${task.title}`;
             document.getElementById("displayActivityInstructions").textContent = task.instructions || "No instructions provided.";
             document.getElementById("displayActivityRubrics").textContent = task.rubrics || "No rubric links or criteria specified.";
             
@@ -1833,26 +2019,6 @@
             alert("Bulletin posted!");
         }
 
-        async function copyBulletin(index) {
-            const ann = blockAnnouncements[index];
-            if (!ann) return;
-            const text = `${ann.title || "📌 BLOCK BULLETIN | BPAOUMN 1-5"}\n\n${ann.content || ""}`;
-            try {
-                if (navigator.clipboard && window.isSecureContext) {
-                    await navigator.clipboard.writeText(text);
-                } else {
-                    const temp = document.createElement("textarea");
-                    temp.value = text;
-                    temp.style.position = "fixed"; temp.style.opacity = "0";
-                    document.body.appendChild(temp); temp.select();
-                    document.execCommand("copy"); temp.remove();
-                }
-                alert("Bulletin copied. You can now paste it wherever needed.");
-            } catch (err) {
-                alert("Could not copy automatically. Please select and copy the bulletin text manually.");
-            }
-        }
-
         function deleteAnnouncement(index) {
             if (confirm("Delete this bulletin?")) {
                 blockAnnouncements.splice(index, 1);
@@ -1880,8 +2046,7 @@
                         body: JSON.stringify({
                             action: "individualSync",
                             studentName: activeStudent,
-                            taskId: task.id,
-                            activityId: task.activityId || "",
+                            taskId: `${task.subject} - ${task.title}`,
                             status: newStatus ? "Completed" : "Pending"
                         })
                     });
@@ -1895,17 +2060,8 @@
         }
 
         async function toggleGroupCompletion(taskId, leaderName) {
-            const task = tasksData.find(t => t.id === taskId);
-            const key = taskId + "_" + leaderName;
-            const newStatus = !groupCompletions[key];
-            groupCompletions[key] = newStatus;
+            groupCompletions[taskId + "_" + leaderName] = !groupCompletions[taskId + "_" + leaderName];
             localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
-            if (GOOGLE_SCRIPT_URL && task) {
-                try {
-                    await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                        body: JSON.stringify({ action: "groupSync", studentName: activeStudent, leader: leaderName, taskId: task.id, activityId: task.activityId || "", status: newStatus ? "Completed" : "Pending" }) });
-                } catch (err) { console.error("Error syncing group completion:", err); }
-            }
             renderTasks();
             if (AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified) renderMasterMatrix();
         }
@@ -1956,48 +2112,11 @@
         function openUploadModal() { document.getElementById("uploadModal").classList.remove("hidden"); document.getElementById("uploadModal").classList.add("flex"); }
         function closeUploadModal() { document.getElementById("uploadModal").classList.remove("flex"); document.getElementById("uploadModal").classList.add("hidden"); }
         
-        function toggleStaggeredRequirement(enabled) {
-            const fields = document.getElementById("staggeredRequirementFields");
-            fields.classList.toggle("hidden", !enabled);
-            document.getElementById("newTaskDate").required = !enabled;
-            if (enabled && !document.querySelector(".staggered-milestone-row")) {
-                addStaggeredMilestoneRow("Research Title Proposal", "", "Propose and submit the research title.");
-                addStaggeredMilestoneRow("Finalization of Concept Paper", "", "Submit the finalized concept paper.");
-                addStaggeredMilestoneRow("Recorded Audio-Visual Presentation of the Concept Paper", "", "Submit the recorded presentation of the concept paper.");
-            }
-        }
-
-        function addStaggeredMilestoneRow(title = "", dueDate = "", instructions = "") {
-            const container = document.getElementById("staggeredMilestonesContainer");
-            const row = document.createElement("div");
-            row.className = "staggered-milestone-row rounded-xl border border-[#902636]/40 p-3 space-y-2";
-            row.innerHTML = `
-                <div class="flex items-center justify-between"><span class="text-[10px] uppercase tracking-wider font-bold text-[#D99B26] milestone-number">Milestone</span><button type="button" onclick="this.closest('.staggered-milestone-row').remove(); renumberStaggeredMilestones();" class="text-xs text-red-300 hover:text-white" aria-label="Remove milestone"><i class="fa-solid fa-trash"></i> Remove</button></div>
-                <label class="block text-[11px] text-[#FAD5A5]">Milestone / Deliverable Title *</label>
-                <input type="text" data-milestone-title required value="${escapeHtml(title)}" placeholder="e.g. Finalization of Concept Paper" class="w-full bg-[#0f1018] border border-[#252538] rounded-lg px-3 py-2 text-xs text-white">
-                <label class="block text-[11px] text-[#FAD5A5]">Due Date *</label>
-                <input type="date" data-milestone-date required value="${escapeHtml(dueDate)}" class="w-full bg-[#0f1018] border border-[#252538] rounded-lg px-3 py-2 text-xs text-white">
-                <label class="block text-[11px] text-[#FAD5A5]">Milestone Instructions</label>
-                <textarea data-milestone-instructions rows="2" placeholder="Instructions specific to this milestone" class="w-full bg-[#0f1018] border border-[#252538] rounded-lg px-3 py-2 text-xs text-white">${escapeHtml(instructions)}</textarea>`;
-            container.appendChild(row);
-            renumberStaggeredMilestones();
-        }
-
-        function renumberStaggeredMilestones() {
-            document.querySelectorAll(".staggered-milestone-row").forEach((row, i) => {
-                row.querySelector(".milestone-number").textContent = `Milestone ${i + 1}`;
-            });
-        }
-
         function openTaskModal() { 
             document.getElementById("editTaskId").value = "";
             document.getElementById("taskModalTitle").textContent = "Add Class Requirement & Groups";
             document.getElementById("taskForm").reset();
             document.getElementById("groupRowsContainer").innerHTML = "";
-            document.getElementById("staggeredRequirementToggle").checked = false;
-            document.getElementById("staggeredRequirementToggle").disabled = false;
-            document.getElementById("staggeredMilestonesContainer").innerHTML = "";
-            toggleStaggeredRequirement(false);
             toggleGroupFields("Individual");
             document.getElementById("taskModal").classList.remove("hidden"); 
             document.getElementById("taskModal").classList.add("flex"); 
@@ -2127,9 +2246,6 @@
 
             document.getElementById("editTaskId").value = task.id;
             document.getElementById("taskModalTitle").textContent = "Edit Class Requirement & Groups";
-            document.getElementById("staggeredRequirementToggle").checked = false;
-            document.getElementById("staggeredRequirementToggle").disabled = true;
-            toggleStaggeredRequirement(false);
             document.getElementById("newTaskSubject").value = task.subject;
             document.getElementById("newTaskTitle").value = task.title;
             document.getElementById("newTaskType").value = task.type;
@@ -2182,39 +2298,6 @@
             const rubrics = document.getElementById("newTaskRubrics").value;
 
             let assignedTaskId = editTaskId ? parseInt(editTaskId) : tasksData.length + 1;
-            const isStaggered = !editTaskId && document.getElementById("staggeredRequirementToggle").checked;
-
-            if (isStaggered) {
-                const milestoneRows = Array.from(document.querySelectorAll(".staggered-milestone-row"));
-                const milestones = milestoneRows.map((row, index) => ({
-                    title: row.querySelector("[data-milestone-title]").value.trim(),
-                    dueDate: row.querySelector("[data-milestone-date]").value,
-                    instructions: row.querySelector("[data-milestone-instructions]").value.trim(),
-                    order: index + 1
-                }));
-                if (!title.trim() || milestones.length < 2 || milestones.some(m => !m.title || !m.dueDate)) {
-                    alert("Enter a parent requirement title and at least two milestones, each with a title and due date.");
-                    return;
-                }
-                const parentId = "REQ-" + Date.now();
-                const payload = { action: "addStaggeredTasks", parentId, parentTitle: title.trim(), subject, type, moduleLink, subLink, driveLink, rubrics, groups: groupsData, milestones };
-                if (GOOGLE_SCRIPT_URL) {
-                    try {
-                        await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
-                    } catch(err) { console.error("Error saving staggered requirement:", err); }
-                }
-                milestones.forEach((m, index) => {
-                    const taskId = tasksData.length + 1;
-                    tasksData.push({ id: taskId, action: "addTask", subject, title: m.title, parentTitle: title.trim(), parentId, milestoneOrder: m.order, milestoneCount: milestones.length, isStaggered: true, type, dueDate: m.dueDate, moduleLink, subLink, submissionLink: subLink, driveLink, instructions: m.instructions || instructions, rubrics, groups: groupsData, status: "Pending" });
-                    if (initialStatus === "Completed" && type === "Individual") studentsData.forEach(student => { userCompletions[student + "_" + taskId] = true; });
-                });
-                localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
-                localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
-                closeTaskModal(); renderTasks(); renderCalendar();
-                if (AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified) renderMasterMatrix();
-                alert(`Staggered requirement saved: ${milestones.length} milestones created under “${title.trim()}”.`);
-                return;
-            }
 
             if (editTaskId) {
                 const existingIndex = tasksData.findIndex(t => t.id === parseInt(editTaskId));
@@ -2277,9 +2360,7 @@
                     driveLink,
                     instructions,
                     rubrics,
-                    groups: groupsData,
-                    initialStatus,
-                    completionStudents: (initialStatus === "Completed" && type === "Individual") ? studentsData : []
+                    groups: groupsData
                 };
 
                 if (GOOGLE_SCRIPT_URL) {
