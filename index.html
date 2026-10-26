@@ -124,9 +124,12 @@
                 <div class="flex items-center gap-2 flex-shrink-0 max-w-[48%] sm:max-w-none">
                     <div class="bg-[#314E52] border border-[#902636]/50 rounded-xl px-2.5 py-1.5 sm:px-3.5 sm:py-2 flex items-center gap-1.5 shadow-inner w-full">
                         <i class="fa-solid fa-user-graduate text-[#D99B26] text-xs flex-shrink-0"></i>
+                        <img id="studentProfileAvatar" alt="Profile picture" class="hidden w-8 h-8 rounded-full object-cover border border-[#D99B26]" />
                         <select id="studentProfileSelect" onchange="handleProfileChange(this.value)" class="bg-[#314E52] text-white font-medium text-xs sm:text-sm focus:outline-none cursor-pointer w-28 sm:w-52 truncate">
                             <option value="Guest" class="bg-[#314E52] text-[#FAD5A5]">Select Name</option>
                         </select>
+                        <button type="button" onclick="openProfilePicturePicker()" title="Change profile picture" class="ml-1 rounded-lg border border-[#D99B26]/40 px-2 py-1.5 text-[#FAD5A5] hover:bg-[#902636] text-xs whitespace-nowrap"><i class="fa-solid fa-camera"></i><span class="hidden sm:inline ml-1">Photo</span></button>
+                        <button type="button" onclick="refreshHubStatus()" title="Refresh activity statuses from Google Sheets" class="rounded-lg border border-[#D99B26]/40 px-2 py-1.5 text-[#FAD5A5] hover:bg-[#902636] text-xs whitespace-nowrap"><i class="fa-solid fa-rotate"></i><span class="hidden sm:inline ml-1">Refresh</span></button>
                     </div>
                 </div>
             </div>
@@ -320,16 +323,9 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-2xl font-bold text-white">Modules & Activities Overview</h2>
-                    <p id="tasksTabDescription" class="text-[#FAD5A5]/80 text-sm mt-0.5">View your assigned activities and their current status.</p>
-                </div>
-                <div class="flex flex-wrap gap-2" role="group" aria-label="Filter activities by status">
-                    <button type="button" onclick="filterTasksTabStatus('ALL')" id="tasksFilterAll" class="tasks-status-filter px-3 py-2 rounded-lg text-xs font-semibold border border-[#D99B26] bg-[#902636]/50 text-white">All</button>
-                    <button type="button" onclick="filterTasksTabStatus('PENDING')" id="tasksFilterPending" class="tasks-status-filter px-3 py-2 rounded-lg text-xs font-semibold border border-[#252538] text-[#FAD5A5]/80">Pending</button>
-                    <button type="button" onclick="filterTasksTabStatus('IN_PROGRESS')" id="tasksFilterInProgress" class="tasks-status-filter px-3 py-2 rounded-lg text-xs font-semibold border border-[#252538] text-[#FAD5A5]/80">In Progress</button>
-                    <button type="button" onclick="filterTasksTabStatus('COMPLETED')" id="tasksFilterCompleted" class="tasks-status-filter px-3 py-2 rounded-lg text-xs font-semibold border border-[#252538] text-[#FAD5A5]/80">Completed</button>
+                    <p class="text-[#FAD5A5]/80 text-sm mt-0.5">Showing tasks assigned to you (Individual & your assigned group deliverables).</p>
                 </div>
             </div>
-            <div id="tasksProgressSummary" class="hidden"></div>
             <div id="tasksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
@@ -718,47 +714,10 @@
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxaKmEFuCQwXQBahGzTsRicTyAUCp_KeIVq1GtIofcVYuOSWPsxVJOlo81YkWWZJtU/exec";
         const OFFICER_PIN = "152026";
 
-        const studentsFullRoster = [
-            { lastName: "Acuzar", firstName: "Gedalen", mi: "P.", suffix: "", code: "acuzarbpa1501", role: "Officer" },
-            { lastName: "Andres", firstName: "Yhe-Zscha Jhunes", mi: "J.", suffix: "", code: "andresbpa1502", role: "Student" },
-            { lastName: "Ausa", firstName: "Arc Jayben", mi: "C.", suffix: "", code: "ausabpa1503", role: "Student" },
-            { lastName: "Balbuena", firstName: "Michelle Jane", mi: "G.", suffix: "", code: "balbuenabpa1504", role: "Student" },
-            { lastName: "Barba", firstName: "Ge-Ann", mi: "G.", suffix: "", code: "barbabpa1505", role: "Officer" },
-            { lastName: "Bernardo", firstName: "Jirah", mi: "L.", suffix: "", code: "bernardo1506", role: "Student" },
-            { lastName: "Burkett", firstName: "Bernardo", mi: "S.", suffix: "Jr.", code: "burkettbpa1507", role: "Student" },
-            { lastName: "Calalo", firstName: "Don Elix", mi: "C.", suffix: "", code: "calalobpa1508", role: "Student" },
-            { lastName: "Casano", firstName: "Michael Cedrick", mi: "", suffix: "", code: "casanobpa1509", role: "Officer" },
-            { lastName: "Castillo", firstName: "Ma. Dawn Rozeal", mi: "A.", suffix: "", code: "castillobpa1510", role: "Student" },
-            { lastName: "Catalan", firstName: "Arnulfo", mi: "A.", suffix: "Jr.", code: "catalanbpa1511", role: "Student" },
-            { lastName: "Cruz", firstName: "Fritzie", mi: "C.", suffix: "", code: "cruzbpa1512", role: "Student" },
-            { lastName: "Deguiñon", firstName: "Junebe", mi: "B.", suffix: "", code: "deguiñonbpa1513", role: "Student" },
-            { lastName: "Escalada", firstName: "Josei", mi: "E.", suffix: "", code: "escaladabpa1514", role: "Student" },
-            { lastName: "Falculan", firstName: "Christopher", mi: "M.", suffix: "", code: "falculanbpa1515", role: "Student" },
-            { lastName: "Flores", firstName: "Ann Margery", mi: "C.", suffix: "", code: "floresbpa1516", role: "Student" },
-            { lastName: "Gaa-Felia", firstName: "Kareann", mi: "S.", suffix: "", code: "gaafeliabpa1517", role: "Student" },
-            { lastName: "Hamsain", firstName: "Santanina", mi: "M.", suffix: "", code: "hamsainbpa1518", role: "Student" },
-            { lastName: "Lagunsad", firstName: "Alliah Nicole", mi: "C.", suffix: "", code: "lagunsadbpa1519", role: "Student" },
-            { lastName: "Lopez", firstName: "Michelle Ann", mi: "N.", suffix: "", code: "lopezbpa1520", role: "Student" },
-            { lastName: "Mejico", firstName: "Lady Wish", mi: "C.", suffix: "", code: "mejicobpa1521", role: "Student" },
-            { lastName: "Meres", firstName: "Kent Alvin", mi: "C.", suffix: "", code: "meresbpa1522", role: "Student" },
-            { lastName: "Nuñez", firstName: "Lorna", mi: "E.", suffix: "", code: "nuñezbpa1523", role: "Student" },
-            { lastName: "Oliva", firstName: "Mark Leandro", mi: "C.", suffix: "", code: "olivabpa1524", role: "Student" },
-            { lastName: "Ortega", firstName: "Jeric", mi: "F.", suffix: "", code: "ortegabpa1525", role: "Officer" },
-            { lastName: "Palero", firstName: "Maricel", mi: "G.", suffix: "", code: "palerobpa1526", role: "Student" },
-            { lastName: "Pangilinan", firstName: "Kenneth", mi: "S.", suffix: "", code: "pangilinanbpa1527", role: "Student" },
-            { lastName: "Pascual", firstName: "Edzhel", mi: "B.", suffix: "", code: "pascualbpa1528", role: "Student" },
-            { lastName: "Pejo", firstName: "Jhanna Jade", mi: "N.", suffix: "", code: "pejobpa1529", role: "Officer" },
-            { lastName: "Pendon", firstName: "Jeric", mi: "", suffix: "", code: "pendonbpa1530", role: "Student" },
-            { lastName: "Quilala", firstName: "Julie Ann", mi: "J.", suffix: "", code: "quilalabpa1531", role: "Officer" },
-            { lastName: "Ramirez", firstName: "Alexander", mi: "S.", suffix: "", code: "ramirezbpa1532", role: "Student" },
-            { lastName: "Revis", firstName: "Melodie", mi: "A.", suffix: "", code: "revisbpa1533", role: "Student" },
-            { lastName: "Segura", firstName: "Roderick", mi: "M.", suffix: "", code: "segurabpa1534", role: "Student" },
-            { lastName: "Siy", firstName: "Hannah Gerreth", mi: "M.", suffix: "", code: "siybpa1535", role: "Student" },
-            { lastName: "Sorillano", firstName: "Marierose", mi: "G.", suffix: "", code: "sorillanobpa1536", role: "Student" },
-            { lastName: "Topacio", firstName: "Marivie", mi: "P.", suffix: "", code: "topaciobpa1537", role: "Student" },
-            { lastName: "Villafuerte", firstName: "April", mi: "A.", suffix: "", code: "villafuertebpa1538", role: "Student" },
-            { lastName: "Ymana", firstName: "Honeylet", mi: "C.", suffix: "", code: "ymanabpa1539", role: "Student" }
-        ];
+        // Roster and officer roles are loaded from the Students sheet through Apps Script.
+        let studentsFullRoster = [];
+        let studentsData = [];
+        let AUTHORIZED_OFFICERS = [];
 
         function formatStudentName(s) {
             const last = String(s.lastName || "").trim();
@@ -768,8 +727,25 @@
             if (/^(jr|sr)$/i.test(suffix)) suffix += ".";
             return `${last}, ${[first, mi].filter(Boolean).join(" ")}${suffix ? ", " + suffix : ""}`;
         }
-        const studentsData = studentsFullRoster.map(formatStudentName);
-        const AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => s.role === "Officer").map(formatStudentName);
+        function setRosterFromSheet(rows) {
+            studentsFullRoster = (rows || []).filter(s => s && s.studentId).map(s => ({
+                studentId: String(s.studentId).trim(), lastName: s.lastName || "", firstName: s.firstName || "",
+                mi: s.mi || "", suffix: s.suffix || "", role: s.role || "Student", displayName: s.displayName || formatStudentName(s)
+            }));
+            studentsData = studentsFullRoster.map(formatStudentName);
+            AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => String(s.role).toLowerCase() === "officer").map(formatStudentName);
+            const selectEl = document.getElementById("studentProfileSelect");
+            if (selectEl) {
+                const isMobile = window.innerWidth < 640;
+                selectEl.innerHTML = '<option value="Guest" class="bg-[#314E52] text-[#FAD5A5]">Select Name</option>';
+                studentsFullRoster.forEach(s => {
+                    const fullName = formatStudentName(s), opt = document.createElement("option");
+                    opt.value = fullName; opt.textContent = isMobile ? s.lastName : fullName; opt.className = "bg-[#314E52] text-white";
+                    if (fullName === activeStudent) opt.selected = true;
+                    selectEl.appendChild(opt);
+                });
+            }
+        }
 
         let scheduleList = JSON.parse(localStorage.getItem("bpa_schedule_list") || JSON.stringify([
             { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-10-24", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
@@ -803,9 +779,6 @@
 
         let activeTaskSubjectFilter = "ALL";
         let activeDashboardTaskFilter = "ALL";
-        let activeTasksTabStatusFilter = "ALL";
-        let activityStatuses = JSON.parse(localStorage.getItem("bpa_activity_statuses") || "{}");
-        let groupStatuses = JSON.parse(localStorage.getItem("bpa_group_statuses") || "{}");
         let activeMatrixSubjectFilter = "";
 
         function escapeHtml(text) {
@@ -918,19 +891,6 @@
             const selectEl = document.getElementById("studentProfileSelect");
             const isMobile = window.innerWidth < 640;
 
-            if (selectEl) {
-                selectEl.innerHTML = '<option value="Guest" class="bg-[#314E52] text-[#FAD5A5]">Select Name</option>';
-                studentsFullRoster.forEach(s => {
-                    const fullName = `${s.lastName}, ${s.firstName} ${s.mi}`.trim();
-                    const displayName = isMobile ? s.lastName : fullName;
-                    const opt = document.createElement("option");
-                    opt.value = fullName; 
-                    opt.textContent = displayName;
-                    opt.className = "bg-[#314E52] text-white";
-                    if (fullName === activeStudent) opt.selected = true;
-                    selectEl.appendChild(opt);
-                });
-            }
 
             updateRealtimeClock();
             checkOfficerStatus();
@@ -939,6 +899,7 @@
                 try {
                     const res = await fetch(GOOGLE_SCRIPT_URL);
                     const data = await res.json();
+                    if (data.students) { liveStudents = data.students; setRosterFromSheet(data.students); }
                     
                     if (data.schedule && data.schedule.length > 0) {
                         scheduleList = data.schedule;
@@ -955,18 +916,6 @@
                     if (data.completions) {
                         userCompletions = data.completions;
                         localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
-                    }
-                    if (data.activityStatuses) {
-                        activityStatuses = data.activityStatuses;
-                        localStorage.setItem("bpa_activity_statuses", JSON.stringify(activityStatuses));
-                    }
-                    if (data.groupStatuses) {
-                        groupStatuses = data.groupStatuses;
-                        localStorage.setItem("bpa_group_statuses", JSON.stringify(groupStatuses));
-                    }
-                    if (data.groupCompletions) {
-                        groupCompletions = data.groupCompletions;
-                        localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
                     }
                     if (data.completionRemarks) {
                         completionRemarks = data.completionRemarks;
@@ -1196,31 +1145,6 @@
             });
         }
 
-        function getTaskStatusForStudent(task, studentName) {
-            const key = studentName + "_" + task.id;
-            return activityStatuses[key] || (userCompletions[key] ? "Completed" : "Pending");
-        }
-
-        function getGroupStatus(task, group) {
-            const key = task.id + "_" + group.leader;
-            return groupStatuses[key] || (groupCompletions[key] ? "Completed" : "Pending");
-        }
-
-        function filterTasksTabStatus(filter) {
-            activeTasksTabStatusFilter = filter || "ALL";
-            document.querySelectorAll(".tasks-status-filter").forEach(btn => {
-                btn.classList.remove("border-[#D99B26]", "bg-[#902636]/50", "text-white");
-                btn.classList.add("border-[#252538]", "text-[#FAD5A5]/80");
-            });
-            const ids = { ALL: "tasksFilterAll", PENDING: "tasksFilterPending", IN_PROGRESS: "tasksFilterInProgress", COMPLETED: "tasksFilterCompleted" };
-            const active = document.getElementById(ids[activeTasksTabStatusFilter] || ids.ALL);
-            if (active) {
-                active.classList.add("border-[#D99B26]", "bg-[#902636]/50", "text-white");
-                active.classList.remove("border-[#252538]", "text-[#FAD5A5]/80");
-            }
-            renderTasks();
-        }
-
         function renderTasks() {
             const grid = document.getElementById("tasksGrid");
             const personalTable = document.getElementById("personalTaskTableBody");
@@ -1251,13 +1175,14 @@
                 if (appliesToUser) {
                     subjectStats[task.subject].total++;
 
-                    let currentStatus = "Pending";
+                    let isComp = false;
                     if (task.type === "Individual") {
-                        currentStatus = activityStatuses[activeStudent + "_" + task.id] || (userCompletions[activeStudent + "_" + task.id] ? "Completed" : "Pending");
+                        isComp = userCompletions[activeStudent + "_" + task.id] || false;
                     } else if (myGroup) {
-                        currentStatus = groupStatuses[task.id + "_" + myGroup.leader] || (groupCompletions[task.id + "_" + myGroup.leader] ? "Completed" : "Pending");
+                        isComp = userCompletions[activeStudent + "_" + task.id] || false;
                     }
-                    if (currentStatus === "Completed") subjectStats[task.subject].completed++;
+
+                    if (isComp) subjectStats[task.subject].completed++;
                 }
             });
 
@@ -1295,26 +1220,6 @@
                 return foundGroup !== undefined;
             });
 
-            // Officer-only group progress summary. Each group is counted independently.
-            const progressSummary = document.getElementById("tasksProgressSummary");
-            if (progressSummary) {
-                if (isOfficer) {
-                    const groupActivityTasks = assignedTasks.filter(t => t.type === "Grouping");
-                    let totalGroups = 0, completedGroups = 0, inProgressGroups = 0;
-                    groupActivityTasks.forEach(t => (t.groups || []).forEach(g => {
-                        totalGroups++;
-                        const st = getGroupStatus(t, g);
-                        if (st === "Completed") completedGroups++;
-                        else if (st === "In Progress") inProgressGroups++;
-                    }));
-                    progressSummary.className = "bg-[#161622] border border-[#252538] rounded-xl p-4 text-sm text-[#FAD5A5] flex flex-wrap gap-4";
-                    progressSummary.innerHTML = `<span><strong class="text-white">${completedGroups}/${totalGroups}</strong> groups completed</span><span><strong class="text-blue-300">${inProgressGroups}</strong> in progress</span><span><strong class="text-[#D99B26]">${Math.max(0,totalGroups-completedGroups-inProgressGroups)}</strong> pending</span>`;
-                } else {
-                    progressSummary.className = "hidden";
-                    progressSummary.innerHTML = "";
-                }
-            }
-
             // Step D: Render Requirement Cards & Checklist Rows
             assignedTasks.forEach(task => {
                 let isCompleted = false;
@@ -1322,22 +1227,14 @@
                 let groupDetailsHTML = "";
                 let cleanDueDate = formatDateOnly(task.dueDate);
 
-                let taskStatus = "Pending";
                 if (task.type === "Individual") {
-                    taskStatus = getTaskStatusForStudent(task, activeStudent);
-                    isCompleted = taskStatus === "Completed";
+                    isCompleted = userCompletions[activeStudent + "_" + task.id] || false;
                     permissionNotice = `<button onclick="toggleTaskCompletion(${task.id})" class="text-xs px-3.5 py-1.5 rounded-xl font-medium ${isCompleted ? 'bg-[#314E52] text-[#FAD5A5]' : 'bg-[#902636] text-white hover:bg-[#751e2b]'}">${isCompleted ? 'Undo' : 'Mark Done'}</button>`;
                 } else {
                     let myGroup = task.groups ? task.groups.find(g => g.leader === activeStudent || (g.members && g.members.includes(activeStudent))) : null;
                     const isLeader = myGroup && (myGroup.leader === activeStudent);
-                    const groupDone = myGroup ? getGroupStatus(task, myGroup) === "Completed" : false;
-                    if (isOfficer && task.groups && task.groups.length) {
-                        const statuses = task.groups.map(g => getGroupStatus(task, g));
-                        taskStatus = statuses.every(st => st === "Completed") ? "Completed" : ((statuses.some(st => st === "Completed") || statuses.some(st => st === "In Progress")) ? "In Progress" : "Pending");
-                    } else if (myGroup) {
-                        taskStatus = getGroupStatus(task, myGroup);
-                    }
-                    isCompleted = taskStatus === "Completed";
+                    const groupDone = myGroup ? (userCompletions[activeStudent + "_" + task.id] || false) : false;
+                    isCompleted = groupDone && myGroup;
 
                     if (myGroup && myGroup.dueDate) {
                         cleanDueDate = formatDateOnly(myGroup.dueDate);
@@ -1348,14 +1245,12 @@
                             <div class="font-bold text-[#D99B26] border-b border-[#252538] pb-1">All Group Schedule & Rosters (${task.groups.length} Teams):</div>`;
                         
                         task.groups.forEach((g, idx) => {
-                            const groupStatus = getGroupStatus(task, g);
-                            const isGDone = groupStatus === "Completed";
+                            const isGDone = groupCompletions[task.id + "_" + g.leader] || false;
                             const gDateStr = g.dueDate ? ` | Date: <strong class="text-[#D99B26]">${formatDateOnly(g.dueDate)}</strong>` : '';
                             groupDetailsHTML += `<div class="pt-1 flex flex-col gap-0.5 border-b border-[#252538]/40 pb-1">
                                 <div class="flex justify-between items-center">
                                     <span class="text-white font-semibold">Group ${idx + 1} (TL: ${getFirstName(g.leader)})</span>
-                                    <span class="text-[10px] px-2 py-0.5 rounded font-medium ${groupStatus === 'Completed' ? 'bg-emerald-500/20 text-emerald-300' : groupStatus === 'In Progress' ? 'bg-blue-500/20 text-blue-300' : 'bg-red-500/20 text-red-300'}">${groupStatus}</span>
-                                    <button onclick="toggleGroupCompletion(${task.id}, '${escapeHtml(g.leader)}')" class="text-[10px] px-2 py-0.5 rounded font-medium ${isGDone ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}">${isGDone ? 'Undo' : 'Mark Done'}</button>
+                                    <button onclick="toggleGroupCompletion(${task.id}, '${escapeHtml(g.leader)}')" class="text-[10px] px-2 py-0.5 rounded font-medium ${isGDone ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}">${isGDone ? 'Done' : 'Toggle Done'}</button>
                                 </div>
                                 <div class="text-[#FAD5A5]/70 text-[10px]">Members: ${g.members ? g.members.map(getFirstName).join(", ") : 'None'}${gDateStr}</div>
                             </div>`;
@@ -1384,17 +1279,10 @@
                 const isUrgent = !isCompleted && dueDays !== null && dueDays <= 3;
                 if (isUrgent) urgentCount++;
 
-                // Dashboard filters and Tasks-tab filters are independent.
-                const dashboardStatusMatch =
-                    activeDashboardTaskFilter === "ALL" ||
-                    (activeDashboardTaskFilter === "PENDING" && taskStatus !== "Completed") ||
-                    (activeDashboardTaskFilter === "COMPLETED" && taskStatus === "Completed") ||
-                    (activeDashboardTaskFilter === "URGENT" && isUrgent);
-                const tasksTabStatusMatch =
-                    activeTasksTabStatusFilter === "ALL" ||
-                    (activeTasksTabStatusFilter === "PENDING" && taskStatus === "Pending") ||
-                    (activeTasksTabStatusFilter === "IN_PROGRESS" && taskStatus === "In Progress") ||
-                    (activeTasksTabStatusFilter === "COMPLETED" && taskStatus === "Completed");
+                // Summary counts always describe all assigned tasks; the selected card only filters the rows/cards.
+                if (activeDashboardTaskFilter === "PENDING" && isCompleted) return;
+                if (activeDashboardTaskFilter === "COMPLETED" && !isCompleted) return;
+                if (activeDashboardTaskFilter === "URGENT" && !isUrgent) return;
 
                 const dueAlert = isUrgent ? `<span class="inline-flex mt-1 text-[10px] px-2 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/30"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${dueCountdownLabel(cleanDueDate)}</span>` : `<span class="inline-flex mt-1 text-[10px] text-[#FAD5A5]/60">${dueCountdownLabel(cleanDueDate)}</span>`;
                 const moduleBtn = task.moduleLink ? `<a href="${task.moduleLink}" target="_blank" class="inline-flex items-center gap-1.5 text-xs bg-[#314E52] text-[#FAD5A5] border border-[#D99B26]/30 px-2.5 py-1 rounded-lg font-medium hover:bg-[#314E52]/80"><i class="fa-solid fa-book-open text-[#D99B26]"></i> Module</a>` : '';
@@ -1433,17 +1321,16 @@
                         ${officerEditControls}
                     </div>
                     <div class="flex justify-between items-center pt-3 border-t border-[#902636]/30">
-                        <span class="text-xs font-semibold px-2.5 py-1 rounded ${taskStatus === 'Completed' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : taskStatus === 'In Progress' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-[#D99B26]/20 text-[#D99B26] border border-[#D99B26]/30'}">${taskStatus}</span>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded ${isCompleted ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-[#D99B26]/20 text-[#D99B26] border border-[#D99B26]/30'}">${isCompleted ? 'Completed' : 'Pending'}</span>
                         <div>${permissionNotice}</div>
                     </div>
                 `;
-                if (tasksTabStatusMatch) grid.appendChild(card);
+                grid.appendChild(card);
 
-                if (!dashboardStatusMatch) return;
                 const row = document.createElement("tr");
                 row.className = "border-b border-[#902636]/20 hover:bg-[#3b0609]/60 text-sm";
                 row.innerHTML = `
-                    <td class="py-3 px-4"><span class="text-xs font-semibold px-2.5 py-1 rounded ${taskStatus === 'Completed' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : taskStatus === 'In Progress' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-[#D99B26]/20 text-[#D99B26] border border-[#D99B26]/30'}">${taskStatus === 'Completed' ? 'Done' : taskStatus}</span></td>
+                    <td class="py-3 px-4"><span class="text-xs font-semibold px-2.5 py-1 rounded ${isCompleted ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-[#D99B26]/20 text-[#D99B26] border border-[#D99B26]/30'}">${isCompleted ? 'Done' : 'Pending'}</span></td>
                     <td class="py-3 px-4 font-medium text-white">${displaySubjectName(task.subject)}</td>
                     <td class="py-3 px-4">
                         <div class="font-semibold text-white flex items-center gap-2 mb-1">${task.title} ${typeBadge}</div>
@@ -1880,10 +1767,6 @@
             const names = [...new Set([group.leader, ...(group.members || [])])];
             names.forEach(name => { userCompletions[name + "_" + taskId] = newStatus; completionRemarks[name + "_" + taskId] = remark; });
             groupCompletions[groupKey] = newStatus;
-            groupStatuses[groupKey] = status;
-            names.forEach(name => { activityStatuses[name + "_" + taskId] = status; });
-            localStorage.setItem("bpa_group_statuses", JSON.stringify(groupStatuses));
-            localStorage.setItem("bpa_activity_statuses", JSON.stringify(activityStatuses));
             localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
             localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
             localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
@@ -1927,11 +1810,7 @@
                     assigned = studentsData.filter(n => names.has(n));
                 }
                 if (!confirm(`Apply “${remark === "Done" ? "Done (on time)" : remark}” to ${assigned.length} assigned student(s) for “${task.title}”? This overwrites individual statuses for this activity.`)) return;
-                assigned.forEach(name => { const key = name + "_" + taskId; userCompletions[key] = status === "Completed"; activityStatuses[key] = status; completionRemarks[key] = remark; });
-                if (task.type !== "Individual") (task.groups || []).forEach(g => { groupStatuses[taskId + "_" + g.leader] = status; groupCompletions[taskId + "_" + g.leader] = status === "Completed"; });
-                localStorage.setItem("bpa_activity_statuses", JSON.stringify(activityStatuses));
-                localStorage.setItem("bpa_group_statuses", JSON.stringify(groupStatuses));
-                localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
+                assigned.forEach(name => { const key = name + "_" + taskId; userCompletions[key] = status === "Completed"; completionRemarks[key] = remark; });
                 localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
                 localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
                 modal.remove(); renderTasks(); renderMasterMatrix();
@@ -1983,10 +1862,8 @@
                     const matchedGroup = (task.groups || []).find(g => g.leader === studentName || (g.members || []).includes(studentName));
                     if (matchedGroup) { groupLeader = matchedGroup.leader; affectedNames = [...new Set([matchedGroup.leader, ...(matchedGroup.members || [])])]; }
                 }
-                affectedNames.forEach(name => { const memberKey = name + "_" + taskId; userCompletions[memberKey] = status === "Completed"; activityStatuses[memberKey] = status; completionRemarks[memberKey] = remark; });
-                if (groupLeader) { groupCompletions[taskId + "_" + groupLeader] = status === "Completed"; groupStatuses[taskId + "_" + groupLeader] = status; }
-                localStorage.setItem("bpa_activity_statuses", JSON.stringify(activityStatuses));
-                localStorage.setItem("bpa_group_statuses", JSON.stringify(groupStatuses));
+                affectedNames.forEach(name => { const memberKey = name + "_" + taskId; userCompletions[memberKey] = status === "Completed"; completionRemarks[memberKey] = remark; });
+                if (groupLeader) groupCompletions[taskId + "_" + groupLeader] = status === "Completed";
                 localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
                 localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions));
                 localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
@@ -2189,8 +2066,15 @@
             }
         }
 
+
+        function getActiveStudentId() {
+            const s = (liveStudents || []).find(x => x && x.displayName === activeStudent && x.studentId);
+            return s ? String(s.studentId).trim() : "";
+        }
         async function toggleTaskCompletion(taskId) {
             if (activeStudent === "Guest") { alert("Select your name first!"); return; }
+            const studentId = getActiveStudentId();
+            if (!studentId) { alert("Could not resolve your Student ID from the Students sheet. Refresh the Hub and try again."); return; }
             const task = tasksData.find(t => t.id === taskId);
             if (!task) return;
 
@@ -2207,6 +2091,7 @@
                         headers: { "Content-Type": "text/plain;charset=utf-8" },
                         body: JSON.stringify({
                             action: "individualSync",
+                            studentId: studentId,
                             studentName: activeStudent,
                             taskId: task.id,
                             activityId: task.activityId || "",
@@ -2595,6 +2480,69 @@
         }
 
         if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", initApp); } else { initApp(); }
-    </script>
+    
+        // Live roster records returned by Apps Script (includes stable Student IDs).
+        let liveStudents = [];
+
+        async function refreshHubStatus() {
+            if (!GOOGLE_SCRIPT_URL) { alert("The Hub Apps Script URL is not configured."); return; }
+            const btn = document.querySelector('button[onclick="refreshHubStatus()"]');
+            if (btn) btn.disabled = true;
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL + (GOOGLE_SCRIPT_URL.includes("?") ? "&" : "?") + "refresh=" + Date.now(), { cache: "no-store" });
+                if (!response.ok) throw new Error("HTTP " + response.status);
+                const data = await response.json();
+                if (data.completions) { userCompletions = data.completions; localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions)); }
+                if (data.completionRemarks) { completionRemarks = data.completionRemarks; localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks)); }
+                if (data.groupCompletions) { groupCompletions = data.groupCompletions; localStorage.setItem("bpa_group_completions", JSON.stringify(groupCompletions)); }
+                if (data.tasks && data.tasks.length) { tasksData = data.tasks; localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData)); }
+                if (data.students) liveStudents = data.students;
+                renderTasks();
+                if (typeof renderMasterMatrix === "function" && AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified) renderMasterMatrix();
+                alert("Activity statuses refreshed from Google Sheets.");
+            } catch (err) {
+                console.error("Status refresh failed:", err);
+                alert("Could not refresh statuses from Google Sheets. Check the Apps Script deployment URL and deployment version.");
+            } finally { if (btn) btn.disabled = false; }
+        }
+
+        function openProfilePicturePicker() {
+            if (activeStudent === "Guest") { alert("Select and verify your student profile first."); return; }
+            let picker = document.getElementById("bpaProfilePictureInput");
+            if (!picker) {
+                picker = document.createElement("input"); picker.type = "file"; picker.accept = "image/png,image/jpeg,image/webp"; picker.id = "bpaProfilePictureInput"; picker.hidden = true;
+                picker.addEventListener("change", uploadMyProfilePicture); document.body.appendChild(picker);
+            }
+            picker.value = ""; picker.click();
+        }
+
+        async function uploadMyProfilePicture(event) {
+            const file = event.target.files && event.target.files[0]; if (!file) return;
+            if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { alert("Choose a JPG, PNG, or WebP image."); return; }
+            if (file.size > 3 * 1024 * 1024) { alert("The image must be 3 MB or smaller."); return; }
+            const rosterEntry = studentsFullRoster.find(s => `${s.lastName}, ${s.firstName} ${s.mi}`.trim() === activeStudent || `${s.lastName}, ${s.firstName} ${s.mi}, ${s.suffix || ""}`.replace(/, $/, "").trim() === activeStudent);
+            const liveEntry = liveStudents.find(s => s.displayName === activeStudent || (rosterEntry && s.studentId && s.lastName === rosterEntry.lastName && s.firstName === rosterEntry.firstName));
+            const studentId = liveEntry && liveEntry.studentId;
+            if (!studentId) { alert("The Hub could not match your profile to a Student ID from the Students sheet. Refresh the Hub and try again."); return; }
+            const accessCode = prompt("For this upload, confirm your existing student access code:");
+            if (!accessCode) return;
+            const reader = new FileReader();
+            reader.onload = async () => {
+                try {
+                    // Apps Script web apps can return an opaque response under browser CORS restrictions.
+                    // Submit without reading the response; verify the file ID in Students before retrying.
+                    await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "uploadProfilePicture", studentId, accessCode, fileName: file.name, mimeType: file.type, fileData: reader.result }) });
+                    const avatar = document.getElementById("studentProfileAvatar");
+                    if (avatar) { avatar.src = reader.result; avatar.classList.remove("hidden"); }
+                    alert("Profile picture upload request sent. The picture is shown in this session; confirm that PROFILE PICTURE FILE ID was saved in the Students sheet. The folder remains private.");
+                } catch (err) {
+                    console.error("Profile picture upload failed:", err);
+                    alert("The upload could not be confirmed. If the file was created in Drive, check the Students sheet before retrying.");
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+</script>
 </body>
 </html>
