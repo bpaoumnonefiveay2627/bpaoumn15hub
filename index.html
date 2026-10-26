@@ -128,6 +128,7 @@
                     <div class="bg-[#314E52] border border-[#902636]/50 rounded-xl px-2.5 py-1.5 sm:px-3.5 sm:py-2 flex items-center gap-1.5 shadow-inner w-full">
                         <i class="fa-solid fa-user-graduate text-[#D99B26] text-xs flex-shrink-0"></i>
                         <img id="studentProfileAvatar" alt="Profile picture" class="hidden w-8 h-8 rounded-full object-cover border border-[#D99B26]" />
+                        <button type="button" onclick="openNotificationsPage()" title="Notifications" class="relative rounded-lg border border-[#D99B26]/40 px-2 py-1.5 text-[#FAD5A5] hover:bg-[#902636] text-xs"><i class="fa-regular fa-bell"></i><span id="notificationUnreadBadge" class="hidden absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-[10px] font-bold items-center justify-center">0</span></button>
                         <select id="studentProfileSelect" onchange="handleProfileChange(this.value)" class="bg-[#314E52] text-white font-medium text-xs sm:text-sm focus:outline-none cursor-pointer w-28 sm:w-52 truncate">
                             <option value="Guest" class="bg-[#314E52] text-[#FAD5A5]">Select Name</option>
                         </select>
@@ -152,6 +153,9 @@
                     <button onclick="switchTab('schedule')" id="nav-schedule" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-[#FAD5A5]/80 hover:text-white hover:bg-[#540B0E]/40">
                         <i class="fa-solid fa-calendar-days"></i> Calendar
                     </button>
+                    <button onclick="switchTab('profile')" id="nav-profile" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 text-[#FAD5A5]/80 hover:text-white hover:bg-[#540B0E]/40">
+                        <i class="fa-solid fa-id-card"></i> Student Profile
+                    </button>
                     <button onclick="switchTab('master')" id="nav-master" class="tab-btn hidden whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all items-center gap-2 text-[#D99B26] hover:text-amber-200 hover:bg-[#D99B26]/10 border border-[#D99B26]/40">
                         <i class="fa-solid fa-user-shield"></i> Matrix
                     </button>
@@ -162,6 +166,21 @@
     
     <!-- Main Content Body -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6 pb-24">
+
+        <!-- STUDENT PROFILE TAB -->
+        <section id="tab-profile" class="tab-content hidden space-y-6">
+            <div class="rounded-2xl border border-[#D99B26]/30 bg-[#3b0609] p-5 sm:p-7 shadow-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div><p class="text-xs uppercase tracking-widest text-[#D99B26] font-bold">BPAOUMN 1-5</p><h2 class="text-2xl font-bold text-white mt-1">Student Profile</h2><p class="text-sm text-[#FAD5A5]/75 mt-1">Class directory · profile pictures · most recent login</p></div>
+                    <button type="button" onclick="openMyProfile()" class="rounded-xl bg-[#902636] px-4 py-2 text-sm font-semibold text-white hover:bg-[#751e2b]"><i class="fa-solid fa-pen-to-square mr-2"></i>My profile</button>
+                </div>
+                <div class="mt-5 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between"><p id="profileDirectorySummary" class="text-sm text-[#FAD5A5]/75">Loading student directory from the Students sheet…</p><input id="profileDirectorySearch" type="search" placeholder="Search students by name" class="w-full sm:max-w-xs rounded-xl border border-[#D99B26]/30 bg-[#161622] px-3 py-2 text-sm text-white placeholder:text-[#FAD5A5]/40 focus:outline-none focus:ring-2 focus:ring-[#D99B26]" oninput="renderStudentDirectory()"></div>
+                <div id="studentProfileDirectory" class="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"><div class="col-span-full rounded-xl border border-[#D99B26]/20 bg-[#161622] p-6 text-sm text-[#FAD5A5]/70">Student cards will appear after the roster loads.</div></div>
+                <p class="mt-4 text-xs text-[#FAD5A5]/50">Select a card to open the student's full profile page. Recent login is shown only after a successful login has been recorded.</p>
+                <div id="studentProfilePage" class="hidden mt-5"></div>
+            </div>
+        </section>
+        <section id="tab-notifications" class="tab-content hidden space-y-6"><div class="rounded-2xl border border-[#D99B26]/30 bg-[#3b0609] p-5 sm:p-7 shadow-xl"><div class="flex items-center justify-between gap-3"><div><h2 class="text-2xl font-bold text-white">Notifications</h2><p class="text-sm text-[#FAD5A5]/70 mt-1">Updates addressed to your account.</p></div><button onclick="markAllNotificationsRead()" class="rounded-xl border border-[#D99B26]/40 px-3 py-2 text-sm text-[#FAD5A5]">Mark all read</button></div><div id="notificationsList" class="mt-5 space-y-3"><p class="text-sm text-[#FAD5A5]/60">Sign in with your student access code to view notifications.</p></div></div></section>
 
         <!-- DASHBOARD TAB -->
         <section id="tab-dashboard" class="tab-content space-y-6">
@@ -361,8 +380,8 @@
                 <!-- Calendar Legend for Cycles -->
                 <div class="flex items-center gap-4 text-xs text-[#FAD5A5]/80 py-1 px-2 bg-[#3b0609]/40 rounded-lg">
                     <span class="font-semibold text-white">Legend:</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#902636]"></span> Cycle 1 Subjects</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-emerald-700"></span> Cycle 2 Subjects</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#902636]"></span> Cycle 1</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-emerald-700"></span> Cycle 2</span>
                 </div>
                 <p class="text-[11px] text-[#FAD5A5]/60 sm:hidden"><i class="fa-solid fa-arrows-left-right mr-1"></i>Swipe sideways to view all seven days and event details.</p>
                 <div class="overflow-x-auto rounded-xl pb-2" id="semesterCalendarScroller" style="-webkit-overflow-scrolling:touch">
@@ -640,14 +659,7 @@
                 <div>
                     <label class="block text-xs font-semibold text-[#FAD5A5] uppercase tracking-wider mb-1">Subject *</label>
                     <select id="newTaskSubject" required class="w-full bg-[#161622] border border-[#252538] rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none">
-                        <option value="POLS 102" class="bg-[#161622]">POLS 102 (Philippine Constitution)</option>
-                        <option value="GEED 002" class="bg-[#161622]">GEED 002 (Reading in Philippine History)</option>
-                        <option value="GEED 008" class="bg-[#161622]">GEED 008 (Ethics)</option>
-                        <option value="GEED 001" class="bg-[#161622]">GEED 001 (Understanding the Self)</option>
-                        <option value="CWTS 001" class="bg-[#161622]">CWTS 001 (Civic Welfare Training Service 1)</option>
-                        <option value="GEED 019" class="bg-[#161622]">GEED 019 (The Entrepreneurial Mind)</option>
-                        <option value="PUAD 101" class="bg-[#161622]">PUAD 101 (Introduction to Public Administration)</option>
-                        <option value="PATHFIT 1" class="bg-[#161622]">PATHFIT 1 (Physical Activities Toward Health and Fitness 1)</option>
+                        <option value="">Loading subjects from the schedule…</option>
                     </select>
                 </div>
                 <div>
@@ -739,7 +751,7 @@
         function setRosterFromSheet(rows) {
             studentsFullRoster = (rows || []).filter(s => s && s.studentId).map(s => ({
                 studentId: String(s.studentId).trim(), lastName: s.lastName || "", firstName: s.firstName || "",
-                mi: s.mi || "", suffix: s.suffix || "", role: s.role || "Student", displayName: s.displayName || formatStudentName(s)
+                mi: s.mi || "", suffix: s.suffix || "", role: s.role || "Student", displayName: s.displayName || formatStudentName(s), lastLogin: s.lastLogin || "", profilePictureFileId: s.profilePictureFileId || ""
             }));
             studentsData = studentsFullRoster.map(formatStudentName);
             AUTHORIZED_OFFICERS = studentsFullRoster.filter(s => String(s.role).toLowerCase() === "officer").map(formatStudentName);
@@ -756,30 +768,139 @@
             }
         }
 
-        let scheduleList = JSON.parse(localStorage.getItem("bpa_schedule_list") || JSON.stringify([
-            { code: "POLS 102", title: "Philippine Constitution", prof: "Atty. Joanna Marie A. Liao", date: "2026-10-24", time: "Sat & Sun 3:00 PM - 4:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 002", title: "Readings in Philippine History", prof: "Assoc. Prof. Mc Donald Domingo M. Pascual", date: "2026-10-24", time: "Sat & Sun 4:30 PM - 6:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 008", title: "Ethics", prof: "Assoc. Prof. Elizabeth L. Pambuena", date: "2026-10-24", time: "Sat & Sun 6:00 PM - 7:30 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 001", title: "Understanding the Self", prof: "Assoc. Prof. Lorraine Charmayne S. Manansala", date: "2026-10-24", time: "Sat & Sun 7:30 PM - 9:00 PM", cycle: "Cycle 1", type: "Synchronous (Online Class)", link: "" },
-            { code: "CWTS 001", title: "Civic Welfare Training Service 1", prof: "Mr. Kristoffer Dennis C. Villegas", date: "2026-10-10", time: "Sat & Sun 7:30 AM - 9:00 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "GEED 019", title: "The Entrepreneurial Mind", prof: "Ms. Airice Marie M. Alfonso", date: "2026-10-10", time: "Sat & Sun 9:00 AM - 10:30 AM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "PUAD 101", title: "Introduction to Public Administration", prof: "Prof. Ana Marie G. Ngo", date: "2026-10-10", time: "Sat & Sun 10:30 AM - 12:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" },
-            { code: "PATHFIT 1", title: "Physical Activity Towards Health and Fitness 1", prof: "Assigned Faculty", date: "2026-10-10", time: "Sat 12:00 PM - 2:00 PM", cycle: "Cycle 2", type: "Synchronous (Online Class)", link: "" }
-        ]));
+        let openedProfileStudentId = '';
+        let cachedNotifications = [];
+        function activeStudentId() { const st=studentsFullRoster.find(s=>formatStudentName(s)===activeStudent); return st ? st.studentId : ''; }
+        async function callProfileApi(payload) {
+            if (!activeStudentId() || !lastSuccessfulAccessCode) throw new Error('Please sign in with your student access code first.');
+            const res=await fetch(GOOGLE_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,actorStudentId:activeStudentId(),accessCode:lastSuccessfulAccessCode})});
+            const data=await res.json(); if(!data || data.result!=='success') throw new Error(data && (data.message||data.error) || 'Request failed.'); return data;
+        }
+        async function openStudentProfile(studentId) {
+            const s=studentsFullRoster.find(x=>x.studentId===studentId); if(!s) return;
+            openedProfileStudentId=studentId;
+            document.getElementById('studentProfileDirectory').classList.add('hidden');
+            document.getElementById('profileDirectorySearch').classList.add('hidden');
+            const page=document.getElementById('studentProfilePage'); page.classList.remove('hidden');
+            const initials=(String(s.firstName||'').trim().charAt(0)+String(s.lastName||'').trim().charAt(0)).toUpperCase();
+            const last=s.lastLogin ? new Date(s.lastLogin).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}) : 'No login recorded';
+            page.innerHTML=`<button onclick="closeStudentProfile()" class="mb-4 rounded-lg border border-[#D99B26]/30 px-3 py-2 text-sm text-[#FAD5A5]"><i class="fa-solid fa-arrow-left mr-2"></i>Back to students</button><div class="rounded-2xl overflow-hidden border border-[#D99B26]/30 bg-[#161622]"><div class="h-28 sm:h-40 bg-gradient-to-r from-[#540B0E] via-[#902636] to-[#314E52]"></div><div class="px-5 pb-5"><div class="-mt-12 flex flex-col sm:flex-row sm:items-end gap-4"><div class="w-24 h-24 rounded-full border-4 border-[#161622] bg-[#314E52] flex items-center justify-center text-2xl font-bold text-[#FAD5A5] overflow-hidden"><img id="openedProfilePhoto" class="hidden w-full h-full object-cover" alt="Profile picture"><span id="openedProfileInitials">${escapeHtml(initials||'?')}</span></div><div class="flex-1 pt-2"><h2 class="text-2xl font-bold text-white">${escapeHtml(formatStudentName(s))}</h2><p class="text-sm text-[#FAD5A5]/70">${escapeHtml(s.role||'Student')} · Last login: ${escapeHtml(last)}</p></div><div class="flex gap-2"><button onclick="messageStudent('${escapeHtml(studentId)}')" class="rounded-xl bg-[#902636] px-4 py-2 text-sm font-semibold text-white"><i class="fa-regular fa-paper-plane mr-2"></i>Message</button>${studentId===activeStudentId()?'<button onclick="openProfilePicturePicker()" class="rounded-xl border border-[#D99B26]/40 px-3 py-2 text-sm text-[#FAD5A5] hover:bg-white/5"><i class="fa-solid fa-camera mr-2"></i>Edit photo</button>':''}</div></div></div></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4"><div class="lg:col-span-2 space-y-4"><div class="rounded-2xl border border-[#D99B26]/25 bg-[#161622] p-4"><h3 class="font-bold text-white mb-3">Posts</h3>${studentId===activeStudentId()?'<textarea id="profilePostText" rows="3" maxlength="3000" placeholder="Share an update with your block…" class="w-full rounded-xl bg-[#0f0f17] border border-[#D99B26]/25 p-3 text-sm text-white"></textarea><button onclick="submitProfilePost()" class="mt-2 rounded-lg bg-[#902636] px-4 py-2 text-sm text-white">Publish post</button>':''}<div id="profilePostsFeed" class="mt-4 space-y-3"><p class="text-sm text-[#FAD5A5]/60">Loading posts…</p></div></div></div><aside class="space-y-4"><div class="rounded-2xl border border-[#D99B26]/25 bg-[#161622] p-4"><h3 class="font-bold text-white">Activity status</h3><p class="text-sm text-[#FAD5A5]/70 mt-2">Recent login: ${escapeHtml(last)}</p><p class="text-xs text-[#FAD5A5]/50 mt-2">Login time is the last successful access-code login recorded in the Students sheet; it does not indicate real-time online presence.</p></div></aside></div>`;
+            const img=document.getElementById('openedProfilePhoto'); if(s.profilePictureFileId){fetch(`${GOOGLE_SCRIPT_URL}?action=getDirectoryPicture&studentId=${encodeURIComponent(studentId)}`).then(r=>r.json()).then(d=>{if(d.result==='success'&&d.dataUrl){img.src=d.dataUrl;img.classList.remove('hidden');document.getElementById('openedProfileInitials').classList.add('hidden')}}).catch(()=>{});}
+            try { const data=await callProfileApi({action:'profileSocial',operation:'listPosts',profileStudentId:studentId}); renderProfilePosts(data.posts||[]); } catch(e) { document.getElementById('profilePostsFeed').innerHTML=`<p class="text-sm text-amber-200">${escapeHtml(e.message)} Posts are unavailable until authenticated profile services are deployed.</p>`; }
+        }
+        function closeStudentProfile(){openedProfileStudentId='';document.getElementById('studentProfilePage').classList.add('hidden');document.getElementById('studentProfileDirectory').classList.remove('hidden');document.getElementById('profileDirectorySearch').classList.remove('hidden');}
+        function renderProfilePosts(posts){const host=document.getElementById('profilePostsFeed');if(!host)return;if(!posts.length){host.innerHTML='<p class="text-sm text-[#FAD5A5]/60">No posts yet.</p>';return;}host.innerHTML=posts.map(p=>`<article class="rounded-xl border border-[#D99B26]/15 bg-[#0f0f17] p-3"><p class="text-xs text-[#FAD5A5]/50">${escapeHtml(p.createdAt||'')}</p><p class="text-sm text-white whitespace-pre-wrap mt-2">${escapeHtml(p.content||'')}</p><div class="mt-3 flex items-center gap-3"><button onclick="reactToPost('${escapeHtml(p.postId)}')" class="text-xs text-[#FAD5A5]"><i class="fa-regular fa-heart mr-1"></i>${Number(p.reactions||0)} reactions</button><span class="text-xs text-[#FAD5A5]/60">${Number(p.comments||0)} comments</span></div></article>`).join('');}
+        async function submitProfilePost(){const content=String(document.getElementById('profilePostText')?.value||'').trim();if(!content)return alert('Write something before publishing.');try{await callProfileApi({action:'profileSocial',operation:'createPost',content});document.getElementById('profilePostText').value='';openStudentProfile(openedProfileStudentId);}catch(e){alert(e.message);}}
+        async function reactToPost(postId){try{await callProfileApi({action:'profileSocial',operation:'react',postId,reactionType:'Like'});openStudentProfile(openedProfileStudentId);}catch(e){alert(e.message);}}
+        function ensureProfileActionModal(){let modal=document.getElementById('profileActionModal');if(modal)return modal;modal=document.createElement('div');modal.id='profileActionModal';modal.className='fixed inset-0 z-[100] hidden items-center justify-center bg-black/75 p-3 sm:p-5 backdrop-blur-md';modal.innerHTML='<div class="w-full max-w-xl overflow-hidden rounded-3xl border border-[#D99B26]/40 bg-[#161622] shadow-2xl shadow-black/50"><div class="flex items-center justify-between border-b border-[#D99B26]/20 bg-[#3b0609] px-5 py-4"><div class="flex items-center gap-3"><div id="profileActionIcon" class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#902636] text-[#FAD5A5]"><i class="fa-regular fa-paper-plane"></i></div><div><h3 id="profileActionTitle" class="font-bold text-white">Message</h3><p id="profileActionSubtitle" class="text-xs text-[#FAD5A5]/65">Send a private note</p></div></div><button type="button" onclick="closeProfileActionModal()" class="rounded-lg px-3 py-2 text-[#FAD5A5] hover:bg-white/10" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div><div id="profileActionBody" class="p-5"></div></div>';modal.addEventListener('click',e=>{if(e.target===modal)closeProfileActionModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProfileActionModal()});document.body.appendChild(modal);return modal;}
+        function closeProfileActionModal(){const m=document.getElementById('profileActionModal');if(m){m.classList.add('hidden');m.classList.remove('flex');}}
+        function showProfileActionModal(title,subtitle,icon,body){const m=ensureProfileActionModal();document.getElementById('profileActionTitle').textContent=title;document.getElementById('profileActionSubtitle').textContent=subtitle||'';document.getElementById('profileActionIcon').innerHTML='<i class="'+icon+'"></i>';document.getElementById('profileActionBody').innerHTML=body;m.classList.remove('hidden');m.classList.add('flex');}
+        let pendingMessageStudentId='';
+        async function messageStudent(studentId) {
+            pendingMessageStudentId = String(studentId || '');
+            const student = studentsFullRoster.find(s => String(s.studentId) === pendingMessageStudentId);
+            if (!student) return;
+            if (pendingMessageStudentId === (getActiveStudentId() || activeStudentId())) {
+                showProfileActionModal('Your profile', 'Messaging yourself is not available', 'fa-solid fa-user',
+                    '<div class="rounded-2xl border border-[#D99B26]/20 bg-[#0f0f17] p-5 text-sm leading-6 text-[#FAD5A5]/80">Share an update on your profile instead of sending yourself a message.</div><div class="mt-5 flex justify-end"><button type="button" onclick="closeProfileActionModal()" class="rounded-xl bg-[#902636] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#a93243]">Got it</button></div>');
+                return;
+            }
+            const name = formatStudentName(student);
+            const initials = (String(student.firstName || '').trim().charAt(0) + String(student.lastName || '').trim().charAt(0)).toUpperCase();
+            const body = `
+                <div class="-m-1 space-y-5">
+                    <div class="relative overflow-hidden rounded-2xl border border-[#D99B26]/25 bg-[#101019]">
+                        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#902636] via-[#D99B26] to-[#314E52]"></div>
+                        <div class="flex items-center gap-4 px-4 py-5 sm:px-5">
+                            <div class="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#D99B26]/45 bg-[#314E52] text-lg font-bold text-[#FAD5A5] shadow-lg">
+                                <img data-message-recipient-photo="${escapeHtml(pendingMessageStudentId)}" alt="" class="hidden h-full w-full object-cover" onerror="this.classList.add('hidden')"><span>${escapeHtml(initials || '?')}</span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D99B26]">New message</p>
+                                <h4 class="mt-1 break-words text-lg font-bold leading-tight text-white">${escapeHtml(name)}</h4>
+                                <p class="mt-1 text-xs text-[#FAD5A5]/60">${escapeHtml(student.role || 'Student')} <span class="mx-1.5 text-[#D99B26]/70">•</span> Only this student receives it</p>
+                            </div>
+                            <div class="hidden sm:flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#902636]/40 bg-[#902636]/20 text-[#FAD5A5]"><i class="fa-regular fa-paper-plane text-lg"></i></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between gap-3"><label for="profileMessageText" class="text-sm font-bold text-white">Message</label><span class="text-[11px] text-[#FAD5A5]/45">Keep it clear and respectful</span></div>
+                        <div class="overflow-hidden rounded-2xl border border-white/10 bg-[#101019] transition focus-within:border-[#D99B26]/65 focus-within:ring-2 focus-within:ring-[#D99B26]/10">
+                            <textarea id="profileMessageText" maxlength="2000" rows="7" placeholder="Hi ${escapeHtml(String(student.firstName || 'there'))}, …" class="block w-full resize-y border-0 bg-transparent px-4 py-4 text-sm leading-6 text-white placeholder:text-[#FAD5A5]/30 focus:outline-none focus:ring-0"></textarea>
+                            <div class="flex items-center justify-between gap-3 border-t border-white/10 px-4 py-2.5"><p class="text-[11px] text-[#FAD5A5]/50"><i class="fa-regular fa-bell mr-1.5 text-[#D99B26]"></i>Delivered to their Notifications</p><span id="profileMessageCount" class="text-xs font-medium tabular-nums text-[#FAD5A5]/60">0 / 2,000</span></div>
+                        </div>
+                    </div>
+                    <div id="profileMessageError" role="alert" class="hidden rounded-xl border border-red-400/25 bg-red-950/30 px-4 py-3 text-sm text-red-200"></div>
+                    <div class="flex flex-col-reverse gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                        <p class="max-w-xs text-[11px] leading-5 text-[#FAD5A5]/40">This sends an in-app notification, not a chat thread.</p>
+                        <div class="flex justify-end gap-2"><button type="button" onclick="closeProfileActionModal()" class="rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-[#FAD5A5]/80 transition hover:border-white/25 hover:bg-white/5">Cancel</button><button id="profileMessageSend" type="button" onclick="submitProfileMessage()" disabled class="rounded-xl bg-gradient-to-r from-[#902636] to-[#751e2b] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#902636]/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"><i class="fa-regular fa-paper-plane mr-2"></i>Send message</button></div>
+                    </div>
+                </div>`;
+            showProfileActionModal('Message', 'Send a note to a blockmate', 'fa-regular fa-paper-plane', body);
+            const input = document.getElementById('profileMessageText');
+            input.addEventListener('input', () => {
+                document.getElementById('profileMessageCount').textContent = input.value.length.toLocaleString() + ' / 2,000';
+                document.getElementById('profileMessageSend').disabled = !input.value.trim();
+                document.getElementById('profileMessageError').classList.add('hidden');
+            });
+            input.focus();
+            const photo = document.querySelector('[data-message-recipient-photo="' + CSS.escape(pendingMessageStudentId) + '"]');
+            if (photo && student.profilePictureFileId) {
+                fetch(`${GOOGLE_SCRIPT_URL}?action=getDirectoryPicture&studentId=${encodeURIComponent(pendingMessageStudentId)}`)
+                    .then(r => r.json()).then(d => { if (d.result === 'success' && d.dataUrl) { photo.src = d.dataUrl; photo.classList.remove('hidden'); photo.nextElementSibling.classList.add('hidden'); } }).catch(() => {});
+            }
+        }
+        async function submitProfileMessage(){const studentId=pendingMessageStudentId;const input=document.getElementById('profileMessageText'),button=document.getElementById('profileMessageSend'),error=document.getElementById('profileMessageError'),message=String(input?.value||'').trim();if(!message){error.textContent='Please write a message first.';error.classList.remove('hidden');return;}button.disabled=true;button.innerHTML='<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Sending…';error.classList.add('hidden');try{await callProfileApi({action:'profileSocial',operation:'message',recipientStudentId:studentId,message});const name=formatStudentName(studentsFullRoster.find(s=>s.studentId===studentId)||{});showProfileActionModal('Message sent','Your message notification was delivered to '+name,'fa-solid fa-check','<div class="rounded-xl border border-emerald-500/25 bg-emerald-950/25 p-4"><div class="flex items-start gap-3"><i class="fa-solid fa-circle-check mt-0.5 text-emerald-300"></i><div><p class="font-semibold text-white">Your message has been sent</p><p class="mt-1 text-sm text-[#FAD5A5]/75">The recipient can read it in their Notifications. This is an in-app message notification, not a threaded chat conversation.</p></div></div></div><div class="mt-5 flex justify-end"><button onclick="closeProfileActionModal()" class="rounded-xl bg-[#902636] px-4 py-2 text-sm font-semibold text-white">Done</button></div>');}catch(e){button.disabled=false;button.innerHTML='<i class="fa-regular fa-paper-plane mr-2"></i>Send message';error.textContent=e.message||'Message could not be sent.';error.classList.remove('hidden');}}
+        async function openNotificationsPage(){switchTab('notifications');await loadNotifications();}
+        async function loadNotifications(){const host=document.getElementById('notificationsList');if(!host)return;try{const d=await callProfileApi({action:'profileSocial',operation:'listNotifications'});cachedNotifications=d.notifications||[];const unread=cachedNotifications.filter(n=>!n.readAt).length;const badge=document.getElementById('notificationUnreadBadge');badge.textContent=unread;badge.classList.toggle('hidden',!unread);badge.classList.toggle('flex',!!unread);host.innerHTML=cachedNotifications.length?cachedNotifications.map(n=>`<article role="button" tabindex="0" onclick="viewNotification('${escapeHtml(n.notificationId)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();viewNotification('${escapeHtml(n.notificationId)}')}" class="group cursor-pointer rounded-xl border ${n.readAt?'border-[#D99B26]/15':'border-[#D99B26]/50'} bg-[#161622] p-4 transition hover:border-[#D99B26] hover:bg-[#24191d] focus:outline-none focus:ring-2 focus:ring-[#D99B26]"><div class="flex items-start gap-3"><div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${n.readAt?'bg-[#314E52] text-[#FAD5A5]/70':'bg-[#902636] text-[#FAD5A5]'}"><i class="${notificationIcon(n.type)}"></i></div><div class="min-w-0 flex-1"><div class="flex flex-wrap items-center gap-2"><h3 class="font-semibold text-white">${escapeHtml(n.title||'Notification')}</h3>${!n.readAt?'<span class="h-2 w-2 rounded-full bg-[#D99B26]" title="Unread"></span>':''}</div><p class="text-sm text-[#FAD5A5]/75 mt-1">${escapeHtml(n.message||'')}</p><div class="mt-3 flex items-center justify-between gap-3"><p class="text-xs text-[#FAD5A5]/40"><i class="fa-regular fa-clock mr-1"></i>${escapeHtml(formatNotificationDate(n.createdAt))}</p><span class="text-xs font-semibold text-[#D99B26] opacity-80 group-hover:opacity-100">View details <i class="fa-solid fa-arrow-right ml-1"></i></span></div></div></div></article>`).join(''):'<div class="rounded-2xl border border-dashed border-[#D99B26]/25 bg-[#161622]/60 p-8 text-center"><div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#314E52] text-[#FAD5A5]"><i class="fa-regular fa-bell-slash text-xl"></i></div><h3 class="mt-3 font-semibold text-white">You’re all caught up</h3><p class="mt-1 text-sm text-[#FAD5A5]/60">New updates will appear here.</p></div>';}catch(e){host.innerHTML=`<p class="text-sm text-amber-200">${escapeHtml(e.message)}</p>`;}}
+        function notificationIcon(type){const t=String(type||'').toLowerCase();if(t.includes('message'))return 'fa-regular fa-paper-plane';if(t.includes('reaction'))return 'fa-regular fa-heart';if(t.includes('comment'))return 'fa-regular fa-comment-dots';if(t.includes('post'))return 'fa-regular fa-newspaper';if(t.includes('deadline')||t.includes('assignment')||t.includes('activity'))return 'fa-regular fa-calendar-check';if(t.includes('announcement'))return 'fa-solid fa-bullhorn';return 'fa-regular fa-bell';}
+        function formatNotificationDate(value){if(!value)return 'Time unavailable';const d=new Date(value);return isNaN(d.getTime())?String(value):d.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'});}
+        async function markNotificationReadAndClose(){const id=activeNotificationId;closeProfileActionModal();if(id)await markNotificationRead(id);}
+        let activeNotificationId='';
+        async function viewNotification(id){activeNotificationId=String(id||'');const n=cachedNotifications.find(x=>String(x.notificationId)===String(id));if(!n)return;showProfileActionModal(n.title||'Notification',formatNotificationDate(n.createdAt),notificationIcon(n.type),'<div class="rounded-xl border border-[#D99B26]/20 bg-[#0f0f17] p-4"><p class="whitespace-pre-wrap break-words text-sm leading-6 text-white">'+escapeHtml(n.message||'No additional details.')+'</p></div><div class="mt-5 flex flex-wrap justify-end gap-2"><button type="button" onclick="closeProfileActionModal()" class="rounded-xl border border-[#D99B26]/30 px-4 py-2 text-sm text-[#FAD5A5]">Close</button>'+(!n.readAt?'<button type="button" onclick="markNotificationReadAndClose()" class="rounded-xl bg-[#902636] px-4 py-2 text-sm font-semibold text-white"><i class="fa-solid fa-check mr-2"></i>Mark as read</button>':'<span class="self-center text-xs text-emerald-300"><i class="fa-solid fa-check mr-1"></i>Already read</span>')+'</div>');if(!n.readAt){try{await callProfileApi({action:'profileSocial',operation:'markRead',notificationId:id});n.readAt=new Date().toISOString();const unread=cachedNotifications.filter(x=>!x.readAt).length;const badge=document.getElementById('notificationUnreadBadge');if(badge){badge.textContent=unread;badge.classList.toggle('hidden',!unread);badge.classList.toggle('flex',!!unread);}loadNotifications();}catch(e){console.warn('Could not mark notification read',e);}}}
+        async function markNotificationRead(id){try{await callProfileApi({action:'profileSocial',operation:'markRead',notificationId:id});loadNotifications();}catch(e){alert(e.message);}}
+        async function markAllNotificationsRead(){try{await callProfileApi({action:'profileSocial',operation:'markAllRead'});loadNotifications();}catch(e){alert(e.message);}}
 
-        let tasksData = JSON.parse(localStorage.getItem("bpa_tasks_data") || JSON.stringify([
-            { id: 1, subject: "PUAD 101", title: "1. Research Title", type: "Grouping", groups: [ { leader: "Acuzar, Gedalen P.", members: ["Castillo, Ma. Dawn Rozeal A.", "Hamsain, Santanina M."], dueDate: "2026-09-20" } ], dueDate: "2026-09-20", moduleLink: "", submissionLink: "", driveLink: "", instructions: "Propose 3 titles aligned with Public Admin topics.", rubrics: "Criteria: Relevance (40%), Feasibility (30%), Originality (30%)." },
-            { id: 2, subject: "PUAD 101", title: "2. Concept Paper", type: "Grouping", groups: [ { leader: "Casano, Michael Cedrick", members: ["Pejo, Jhanna Jade N.", "Quilala, Julie Ann J."], dueDate: "2026-10-16" } ], dueDate: "2026-10-16", moduleLink: "", submissionLink: "", driveLink: "", instructions: "10-point research concept paper.", rubrics: "Standard PUP OUS Research Rubric." }
-        ]));
+        function renderStudentDirectory() {
+            const host = document.getElementById("studentProfileDirectory");
+            const summary = document.getElementById("profileDirectorySummary");
+            if (!host) return;
+            const query = String(document.getElementById("profileDirectorySearch")?.value || "").trim().toLowerCase();
+            const roster = (studentsFullRoster || []).filter(s => !query || formatStudentName(s).toLowerCase().includes(query));
+            if (summary) summary.textContent = `${roster.length} of ${studentsFullRoster.length} students · roster sourced from Students sheet`;
+            if (!roster.length) { host.innerHTML = '<div class="col-span-full rounded-xl border border-[#D99B26]/20 bg-[#161622] p-6 text-sm text-[#FAD5A5]/70">No matching students found.</div>'; return; }
+            host.innerHTML = roster.map(s => {
+                const name = formatStudentName(s);
+                const initials = `${String(s.firstName || '').trim().charAt(0)}${String(s.lastName || '').trim().charAt(0)}`.toUpperCase();
+                const pic = '';
+                const last = s.lastLogin ? new Date(s.lastLogin).toLocaleString(undefined, {dateStyle:'medium', timeStyle:'short'}) : 'No login recorded';
+                return `<article role="button" tabindex="0" onclick="openStudentProfile('${escapeHtml(s.studentId)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openStudentProfile('${escapeHtml(s.studentId)}')}" data-student-id="${escapeHtml(s.studentId)}" class="rounded-2xl border border-[#D99B26]/25 bg-[#161622] p-4 flex items-center gap-3 min-w-0 cursor-pointer hover:border-[#D99B26] hover:bg-[#24191d] transition-all focus:outline-none focus:ring-2 focus:ring-[#D99B26]"><div class="w-16 h-16 rounded-full overflow-hidden border-2 border-[#D99B26]/70 bg-[#314E52] flex items-center justify-center shrink-0"><img data-profile-image="${escapeHtml(s.studentId)}" alt="${escapeHtml(name)} profile picture" class="hidden w-full h-full object-cover" loading="lazy" onerror="this.classList.add('hidden');this.nextElementSibling.classList.remove('hidden')"><span class="text-lg font-bold text-[#FAD5A5]">${escapeHtml(initials || '?')}</span></div><div class="min-w-0"><h3 class="font-semibold text-white text-sm leading-snug break-words">${escapeHtml(name)}</h3><p class="text-xs text-[#FAD5A5]/60 mt-1">${escapeHtml(s.role || 'Student')}</p><p class="text-xs text-[#FAD5A5]/80 mt-2"><i class="fa-regular fa-clock mr-1 text-[#D99B26]"></i>${escapeHtml(last)}</p></div></article>`;
+            }).join('');
+            // Fetch each saved profile image through Apps Script; the Drive folder remains private.
+            roster.forEach(s => {
+                if (!s.profilePictureFileId || !s.studentId) return;
+                const img = host.querySelector(`img[data-profile-image="${CSS.escape(String(s.studentId))}"]`);
+                if (!img || img.dataset.loaded === 'true') return;
+                img.dataset.loaded = 'true';
+                fetch(`${GOOGLE_SCRIPT_URL}?action=getDirectoryPicture&studentId=${encodeURIComponent(s.studentId)}`)
+                    .then(r => r.json()).then(data => {
+                        if (data && data.result === 'success' && data.dataUrl && img.isConnected) {
+                            img.src = data.dataUrl; img.classList.remove('hidden');
+                            const fallback = img.nextElementSibling; if (fallback) fallback.classList.add('hidden');
+                        }
+                    }).catch(err => console.warn('Profile image could not be loaded for directory card', err));
+            });
+        }
 
-        let blockAnnouncements = JSON.parse(localStorage.getItem("bpa_announcements") || JSON.stringify([]));
-        let semesterEvents = JSON.parse(localStorage.getItem("bpa_semester_events") || JSON.stringify([
-            { title: "First Semester Classes Begin", date: "2026-09-05", tag: "Class" },
-            { title: "Midterm Examinations", date: "2026-10-24", tag: "Exam" },
-            { title: "Final Examinations", date: "2026-12-12", tag: "Exam" }
-        ]));
+        // Spreadsheet is authoritative. These collections start empty and are populated by Apps Script.
+        // localStorage is deliberately not used to seed schedules, activities, or semester events.
+        let scheduleList = [];
+        let tasksData = [];
+        let blockAnnouncements = [];
+        let semesterEvents = [];
 
         let activeStudent = localStorage.getItem("bpa_active_student") || "Guest";
+        let lastSuccessfulAccessCode = "";
         let isOfficerVerified = localStorage.getItem("bpa_officer_verified") === "true";
         let userCompletions = JSON.parse(localStorage.getItem("bpa_user_completions") || "{}");
         let groupCompletions = JSON.parse(localStorage.getItem("bpa_group_completions") || "{}");
@@ -802,10 +923,35 @@
 
         function displaySubjectName(subject) {
             const raw = String(subject || "").trim();
-            const normalized = raw.toUpperCase().replace(/\s+/g, " ");
-            if (normalized === "ETHICS") return "Ethics";
-            if (normalized === "UTS" || normalized === "UTS (UNDERSTANDING THE SELF)") return "Understanding the Self";
-            return raw;
+            const normalized = raw.toLowerCase().replace(/\s+/g, " ");
+            // Subject titles are resolved from the live schedule data sourced from Google Sheets.
+            const match = (scheduleList || []).find(item => {
+                const code = String(item.code || "").trim().toLowerCase();
+                const title = String(item.title || "").trim().toLowerCase();
+                return code === normalized || title === normalized;
+            });
+            return match && match.title ? String(match.title).trim() : raw;
+        }
+
+        function refreshTaskSubjectOptions() {
+            const select = document.getElementById("newTaskSubject");
+            if (!select) return;
+            const current = select.value;
+            const byCode = new Map();
+            (scheduleList || []).forEach(item => {
+                const code = String(item.code || "").trim();
+                if (!code) return;
+                const title = String(item.title || "").trim();
+                byCode.set(code, title ? `${title} (${code})` : code);
+            });
+            select.innerHTML = '<option value="">Select a subject from the schedule</option>';
+            [...byCode.entries()].sort((a,b) => a[1].localeCompare(b[1])).forEach(([code,label]) => {
+                const option = document.createElement("option");
+                option.value = code;
+                option.textContent = label;
+                select.appendChild(option);
+            });
+            if (current && byCode.has(current)) select.value = current;
         }
 
         // Returns whole calendar days until a due date; negative means overdue.
@@ -910,15 +1056,19 @@
                     const data = await res.json();
                     if (data.students) { liveStudents = data.students; setRosterFromSheet(data.students); }
                     
-                    if (data.schedule && data.schedule.length > 0) {
+                    if (Array.isArray(data.schedule)) {
                         scheduleList = data.schedule;
                         localStorage.setItem("bpa_schedule_list", JSON.stringify(scheduleList));
                     }
-                    if (data.tasks && data.tasks.length > 0) {
+                    if (Array.isArray(data.tasks)) {
                         tasksData = data.tasks;
                         localStorage.setItem("bpa_tasks_data", JSON.stringify(tasksData));
                     }
-                    if (data.announcements && data.announcements.length > 0) {
+                    if (Array.isArray(data.semesterEvents)) {
+                        semesterEvents = data.semesterEvents;
+                        localStorage.setItem("bpa_semester_events", JSON.stringify(semesterEvents));
+                    }
+                    if (Array.isArray(data.announcements)) {
                         blockAnnouncements = data.announcements;
                         localStorage.setItem("bpa_announcements", JSON.stringify(blockAnnouncements));
                     }
@@ -931,10 +1081,21 @@
                         localStorage.setItem("bpa_completion_remarks", JSON.stringify(completionRemarks));
                     }
                 } catch (err) {
-                    console.error("Failed to sync live data from Google Sheets, using local state:", err);
+                    // Do not silently fall back to stale browser-cached academic records.
+                    scheduleList = [];
+                    tasksData = [];
+                    semesterEvents = [];
+                    blockAnnouncements = [];
+                    console.error("Failed to load authoritative data from Google Sheets:", err);
                 }
+            } else {
+                scheduleList = [];
+                tasksData = [];
+                semesterEvents = [];
+                blockAnnouncements = [];
             }
 
+            refreshTaskSubjectOptions();
             renderTasks();
             renderSchedule();
             renderCalendar();
@@ -944,7 +1105,7 @@
             makeElementDraggable(document.getElementById("floatingChatBox"), document.getElementById("chatHeaderBar"));
         }
 
-        function handleProfileChange(name) {
+        async function handleProfileChange(name) {
             const headerAvatar = document.getElementById("studentProfileAvatar");
             if (headerAvatar) { headerAvatar.removeAttribute("src"); headerAvatar.classList.add("hidden"); }
             if (name === "Guest") {
@@ -959,40 +1120,29 @@
             }
 
             const studentObj = studentsFullRoster.find(s => `${s.lastName}, ${s.firstName} ${s.mi}`.trim() === name);
-            const expectedCode = studentObj ? studentObj.code : "";
             const isOfficer = studentObj && studentObj.role === "Officer";
 
-            if (isOfficer) {
-                const pin = prompt(`Hello ${getFirstName(name)}! Enter Officer PIN or your student access code:`);
-                if (pin === OFFICER_PIN) {
-                    activeStudent = name;
-                    localStorage.setItem("bpa_active_student", name);
-                    isOfficerVerified = true;
-                    localStorage.setItem("bpa_officer_verified", "true");
-                    alert("Officer authentication successful!");
-                } else if (pin === expectedCode) {
-                    activeStudent = name;
-                    localStorage.setItem("bpa_active_student", name);
-                    isOfficerVerified = false;
-                    localStorage.removeItem("bpa_officer_verified");
-                    alert("Logged in as student.");
-                } else {
-                    alert("Incorrect code or PIN.");
-                    document.getElementById("studentProfileSelect").value = activeStudent;
-                    return;
-                }
+            const enteredCode = prompt(isOfficer ? `Hello ${getFirstName(name)}! Enter Officer PIN or your student access code:` : `Please enter your access code for ${name}:`);
+            if (!enteredCode) { document.getElementById("studentProfileSelect").value = activeStudent; return; }
+            if (isOfficer && enteredCode === OFFICER_PIN) {
+                lastSuccessfulAccessCode = "";
+                activeStudent = name; localStorage.setItem("bpa_active_student", name);
+                isOfficerVerified = true; localStorage.setItem("bpa_officer_verified", "true");
+                alert("Officer authentication successful. Recent login is not updated when using the officer PIN; use your student access code to record it.");
             } else {
-                const enteredCode = prompt(`Please enter your access code for ${name}:`);
-                if (enteredCode === expectedCode) {
-                    activeStudent = name;
-                    localStorage.setItem("bpa_active_student", name);
-                    isOfficerVerified = false;
-                    localStorage.removeItem("bpa_officer_verified");
-                    alert(`Welcome, ${getFirstName(name)}!`);
-                } else {
-                    alert("Incorrect access code.");
-                    document.getElementById("studentProfileSelect").value = activeStudent;
-                    return;
+                try {
+                    const authResponse = await fetch(GOOGLE_SCRIPT_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"authenticateStudentLogin", studentId:studentObj && studentObj.studentId, accessCode:enteredCode})});
+                    const authResult = await authResponse.json();
+                    if (!authResult || authResult.result !== "success") throw new Error(authResult && authResult.error || "Incorrect access code.");
+                    lastSuccessfulAccessCode = enteredCode; activeStudent = name; localStorage.setItem("bpa_active_student", name);
+                    isOfficerVerified = false; localStorage.removeItem("bpa_officer_verified");
+                    if (studentObj) studentObj.lastLogin = authResult.lastLogin || new Date().toISOString();
+                    if (isOfficer) alert("Logged in as student."); else alert(`Welcome, ${getFirstName(name)}!`);
+                    renderStudentDirectory();
+                    loadNotifications().catch(()=>{});
+                } catch (authError) {
+                    alert(authError.message || "Could not verify the access code. Please try again.");
+                    document.getElementById("studentProfileSelect").value = activeStudent; return;
                 }
             }
 
@@ -1051,6 +1201,8 @@
                 activeBtn.classList.add("text-[#FAD5A5]", "bg-[#902636]/50", "border", "border-[#D99B26]/30", "shadow-sm"); 
             }
 
+            if (tabId === 'profile') { closeStudentProfile(); renderStudentDirectory(); }
+            if (tabId === 'notifications') loadNotifications();
             const floatingWidget = document.getElementById("floatingChatWidget");
             if (tabId === 'bulletins-chat') {
                 floatingWidget.classList.add("hidden");
@@ -1105,7 +1257,7 @@
                 
                 dayClasses.forEach(c => {
                     const cycleColor = c.cycle === 'Cycle 1' ? 'bg-[#902636]/80 border-[#902636]' : 'bg-emerald-800/80 border-emerald-600';
-                    eventsHtml += `<div onclick="openClassDetailModal('${c.code}')" class="text-[10px] ${cycleColor} text-white border px-1.5 py-0.5 rounded truncate font-medium cursor-pointer hover:brightness-125 transition-all" title="Click to view details: ${c.code}: ${c.title}">📚 ${c.code} (${c.cycle === 'Cycle 1' ? 'C1' : 'C2'})</div>`;
+                    eventsHtml += `<div onclick="openClassDetailModal('${c.code}')" class="text-[10px] ${cycleColor} text-white border px-1.5 py-0.5 rounded truncate font-medium cursor-pointer hover:brightness-125 transition-all" title="Click to view details: ${c.title}">📚 ${escapeHtml(c.title)}</div>`;
                 });
 
                 dayTasks.forEach(t => {
@@ -1414,9 +1566,7 @@
                 card.innerHTML = `
                     <div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <span class="font-bold text-[#D99B26]">${item.code}</span>
-                            <span class="text-slate-600">•</span>
-                            <span class="font-semibold text-white text-sm">${item.title}</span>
+                            <span class="font-semibold text-white text-sm">${escapeHtml(item.title || "Untitled class")}</span>
                             <span class="text-[10px] ${item.cycle === 'Cycle 1' ? 'bg-[#902636]/40 text-[#FAD5A5] border border-[#902636]' : 'bg-emerald-900/40 text-emerald-300 border border-emerald-500/40'} px-1.5 py-0.5 rounded font-bold">${item.cycle}</span>
                         </div>
                         <p class="text-xs text-[#FAD5A5]/70 mt-1">${item.prof} | Date: <strong class="text-white">${item.date || 'TBD'}</strong> | ${item.time}</p>
@@ -1444,7 +1594,7 @@
             displayWeekendClasses.forEach(item => {
                 const wCard = document.createElement("div");
                 wCard.className = "bg-[#161622] border border-[#252538] p-4 rounded-xl space-y-1 shadow-md";
-                wCard.innerHTML = `<div class="font-bold text-xs text-white">${item.code}</div><p class="text-xs font-semibold text-white">${item.title}</p>`;
+                wCard.innerHTML = `<p class="text-xs font-semibold text-white">${escapeHtml(item.title || "Untitled class")}</p>`;
                 weekendContainer.appendChild(wCard);
             });
         }
@@ -1530,7 +1680,7 @@
                 html += `<div class="space-y-2">`;
                 saturdayClasses.forEach(item => {
                     const link = item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="inline-flex mt-1 text-[11px] text-[#D99B26] underline"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>Open class link</a>` : `<span class="block mt-1 text-[10px] text-[#FAD5A5]/50">No online class link has been added.</span>`;
-                    html += `<div class="bg-[#161622] border border-[#252538] rounded-xl p-3"><div class="flex flex-wrap justify-between gap-2"><strong class="text-sm text-white">${escapeHtml(item.code || "Class")} · ${escapeHtml(item.title || "Untitled class")}</strong><span class="text-[10px] text-[#D99B26]">${escapeHtml(item.time || "Time not listed")}</span></div><p class="text-[11px] text-[#FAD5A5]/70 mt-1">${escapeHtml(item.prof || "Instructor not listed")} · ${escapeHtml(item.type || "Class format not listed")}</p>${link}</div>`;
+                    html += `<div class="bg-[#161622] border border-[#252538] rounded-xl p-3"><div class="flex flex-wrap justify-between gap-2"><strong class="text-sm text-white">${escapeHtml(item.title || "Untitled class")}</strong><span class="text-[10px] text-[#D99B26]">${escapeHtml(item.time || "Time not listed")}</span></div><p class="text-[11px] text-[#FAD5A5]/70 mt-1">${escapeHtml(item.prof || "Instructor not listed")} · ${escapeHtml(item.type || "Class format not listed")}</p>${link}</div>`;
                 });
                 html += `</div>`;
             }
@@ -1563,7 +1713,7 @@
                     const { html } = generateClassBulletin();
                     const classItems = scheduleList.filter(item => formatDateOnly(item.date) === saturdayStr);
                     const classSummary = classItems.length
-                        ? classItems.map(item => `• ${item.code || "Class"} — ${item.title || "Untitled"}\n  Time: ${item.time || "Time to be announced"}\n  Instructor: ${item.prof || "Not listed"}\n  Format: ${item.type || "Not listed"}${item.link ? `\n  Online link: ${item.link}` : "\n  Online link: Not yet provided"}`).join("\n\n")
+                        ? classItems.map(item => `• ${item.title || "Untitled"}\n  Time: ${item.time || "Time to be announced"}\n  Instructor: ${item.prof || "Not listed"}\n  Format: ${item.type || "Not listed"}${item.link ? `\n  Online link: ${item.link}` : "\n  Online link: Not yet provided"}`).join("\n\n")
                         : "No classes are listed for this Saturday.";
                     const dueItems = tasksData.filter(task => { const days = daysUntilDue(task.dueDate); return days !== null && days >= 0 && days <= 3; })
                         .map(task => `• ${displaySubjectName(task.subject)} — ${task.title} (${dueCountdownLabel(task.dueDate)})`);
@@ -1933,7 +2083,7 @@
 
             const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified;
 
-            document.getElementById("instructionsModalTitle").textContent = `📚 ${sched.code}: ${sched.title}`;
+            document.getElementById("instructionsModalTitle").textContent = `📚 ${sched.title || "Class details"}`;
             document.getElementById("displayActivityInstructions").innerHTML = `
                 <p><strong>Faculty / Instructor:</strong> ${sched.prof}</p>
                 <p class="mt-1"><strong>Meeting Schedule:</strong> ${sched.time}</p>
@@ -2580,30 +2730,32 @@
             img.style.objectFit = cfg.fit || "cover";
             img.style.objectPosition = `${cfg.x == null ? 50 : cfg.x}% ${cfg.y == null ? 50 : cfg.y}%`;
         }
-        function openMyProfile() {
-            if (activeStudent === "Guest") { alert("Select your student profile first."); return; }
-            let modal = document.getElementById("bpaMyProfileModal"); if (modal) modal.remove();
-            const student = (liveStudents || []).find(x => x && x.displayName === activeStudent) || {};
-            const studentId = getActiveStudentId();
-            modal = document.createElement("div"); modal.id = "bpaMyProfileModal";
-            modal.className = "fixed inset-0 z-[10040] flex items-center justify-center bg-black/75 p-3 sm:p-5";
-            modal.innerHTML = `<div class="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl border border-[#D99B26]/40 bg-[#161622] p-5 shadow-2xl">
-                <div class="flex items-center justify-between gap-3 border-b border-[#902636]/40 pb-3"><div><h2 class="text-lg font-bold text-white"><i class="fa-solid fa-id-card text-[#D99B26] mr-2"></i>My Profile</h2><p class="text-xs text-[#FAD5A5]/60 mt-1">Your student information and profile picture</p></div><button id="bpaProfileClose" class="rounded-lg px-3 py-2 text-[#FAD5A5] hover:bg-[#540B0E]" aria-label="Close profile"><i class="fa-solid fa-xmark"></i></button></div>
-                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 py-5"><div class="w-32 h-32 rounded-full overflow-hidden border-2 border-[#D99B26] bg-[#314E52] flex items-center justify-center flex-shrink-0"><img id="bpaProfileModalImage" alt="Your profile picture" class="hidden w-full h-full" /><i id="bpaProfilePlaceholder" class="fa-solid fa-user text-4xl text-[#FAD5A5]/50"></i></div><div class="min-w-0 text-center sm:text-left"><h3 class="font-bold text-white text-lg">${escapeHtml(activeStudent)}</h3><p class="text-sm text-[#FAD5A5]/75 mt-1">Student ID: ${escapeHtml(studentId || "Not matched")}</p><p class="text-sm text-[#FAD5A5]/75 mt-1">Role: ${escapeHtml(student.role || "Student")}</p><p class="text-sm text-[#FAD5A5]/75 mt-1 break-all">PUP Webmail: ${escapeHtml(student.webmail || "Not provided")}</p><button id="bpaProfileLoadImage" class="mt-3 rounded-lg bg-[#902636] hover:bg-[#751e2b] px-3 py-2 text-xs font-semibold text-white"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Load saved picture</button><button id="bpaProfileChangeImage" class="mt-3 sm:ml-2 rounded-lg border border-[#D99B26]/40 px-3 py-2 text-xs font-semibold text-[#FAD5A5] hover:bg-[#540B0E]"><i class="fa-solid fa-camera mr-1"></i>Change picture</button></div></div>
-                <div id="bpaProfileCropControls" class="hidden border-t border-[#902636]/40 pt-4 space-y-3"><p class="text-sm font-semibold text-white">Adjust picture fit</p><label class="block text-xs text-[#FAD5A5]/80">Horizontal position <input id="bpaCropX" type="range" min="0" max="100" value="50" class="w-full mt-1"></label><label class="block text-xs text-[#FAD5A5]/80">Vertical position <input id="bpaCropY" type="range" min="0" max="100" value="50" class="w-full mt-1"></label><label class="block text-xs text-[#FAD5A5]/80">Fit mode <select id="bpaCropFit" class="ml-2 rounded bg-[#314E52] text-white p-1"><option value="cover">Fill frame (crop)</option><option value="contain">Show full image</option></select></label><div class="flex justify-end gap-2"><button id="bpaCropReset" class="rounded-lg border border-[#902636]/50 px-3 py-2 text-xs text-[#FAD5A5]">Reset</button><button id="bpaCropSave" class="rounded-lg bg-[#D99B26] px-3 py-2 text-xs font-bold text-[#161622]">Save fit</button></div><p class="text-[11px] text-[#FAD5A5]/50">Fit settings are saved in this browser for this student.</p></div>
-                <p id="bpaProfileStatus" class="text-xs text-[#FAD5A5]/65" role="status"></p>
-            </div>`;
-            document.body.appendChild(modal);
-            const close=()=>modal.remove(); modal.querySelector("#bpaProfileClose").onclick=close; modal.addEventListener("click",e=>{if(e.target===modal)close();});
-            modal.querySelector("#bpaProfileChangeImage").onclick=()=>openProfilePicturePicker();
-            const img=modal.querySelector("#bpaProfileModalImage"), placeholder=modal.querySelector("#bpaProfilePlaceholder"), controls=modal.querySelector("#bpaProfileCropControls"), status=modal.querySelector("#bpaProfileStatus");
-            const showImage=(src)=>{img.src=src;img.classList.remove("hidden");placeholder.classList.add("hidden");controls.classList.remove("hidden");let cfg={};try{cfg=JSON.parse(localStorage.getItem(profileCropKey())||"{}");}catch(_){}modal.querySelector("#bpaCropX").value=cfg.x==null?50:cfg.x;modal.querySelector("#bpaCropY").value=cfg.y==null?50:cfg.y;modal.querySelector("#bpaCropFit").value=cfg.fit||"cover";applyProfileCrop(img);};
-            const avatar=document.getElementById("studentProfileAvatar"); if(avatar && avatar.src && !avatar.classList.contains("hidden")) showImage(avatar.src);
-            modal.querySelector("#bpaProfileLoadImage").onclick=async()=>{const code=prompt("Enter your student access code to load your saved private profile picture:");if(!code)return;showHubLoading("Loading your profile picture…");status.textContent="Loading saved picture…";try{const result=await loadPrivateProfilePicture(studentId,code);if(!result||!result.dataUrl)throw new Error(result&&result.error||"No saved profile picture was found.");showImage(result.dataUrl);if(avatar){avatar.src=result.dataUrl;avatar.classList.remove("hidden");applyProfileCrop(avatar);}status.textContent="Saved profile picture loaded.";}catch(err){status.textContent=err.message||"Could not load the saved picture.";}finally{hideHubLoading();}};
-            const cropUpdate=()=>{img.style.objectPosition=`${modal.querySelector("#bpaCropX").value}% ${modal.querySelector("#bpaCropY").value}%`;img.style.objectFit=modal.querySelector("#bpaCropFit").value;};
-            ["bpaCropX","bpaCropY","bpaCropFit"].forEach(id=>modal.querySelector("#"+id).addEventListener("input",cropUpdate));
-            modal.querySelector("#bpaCropReset").onclick=()=>{modal.querySelector("#bpaCropX").value=50;modal.querySelector("#bpaCropY").value=50;modal.querySelector("#bpaCropFit").value="cover";cropUpdate();};
-            modal.querySelector("#bpaCropSave").onclick=()=>{const cfg={x:Number(modal.querySelector("#bpaCropX").value),y:Number(modal.querySelector("#bpaCropY").value),fit:modal.querySelector("#bpaCropFit").value};localStorage.setItem(profileCropKey(),JSON.stringify(cfg));applyProfileCrop(img);if(avatar)applyProfileCrop(avatar);status.textContent="Picture fit saved on this device.";};
+        async function openMyProfile() {
+            // Resolve the signed-in student's internal roster ID before changing tabs.
+            let studentId = getActiveStudentId() || activeStudentId();
+            if (!studentId && activeStudent && activeStudent !== "Guest") {
+                const matched = studentsFullRoster.find(s => formatStudentName(s) === activeStudent || s.displayName === activeStudent);
+                if (matched) studentId = String(matched.studentId || "").trim();
+            }
+            if (activeStudent === "Guest" || !studentId) {
+                alert(activeStudent === "Guest" ? "Please sign in with your student access code before opening your profile." : "Your profile could not be matched to the roster. Please refresh the Hub and sign in again.");
+                return;
+            }
+            // Switch to the profile tab, then open the current student's page directly.
+            switchTab("profile");
+            const profileTab = document.getElementById("tab-profile");
+            if (profileTab) profileTab.scrollIntoView({ behavior: "smooth", block: "start" });
+            const rosterStudent = studentsFullRoster.find(s => String(s.studentId) === String(studentId));
+            if (!rosterStudent) {
+                const directory = document.getElementById("profileDirectorySummary");
+                if (directory) directory.textContent = "Loading your profile from the student roster…";
+                await new Promise(resolve => setTimeout(resolve, 250));
+            }
+            if (studentsFullRoster.some(s => String(s.studentId) === String(studentId))) {
+                await openStudentProfile(String(studentId));
+            } else {
+                alert("Your profile is not available in the current roster. Please refresh the Hub and try again.");
+            }
         }
         async function loadPrivateProfilePicture(studentId, accessCode) {
             if (!GOOGLE_SCRIPT_URL || !studentId) throw new Error("The Hub could not identify your Student ID.");
