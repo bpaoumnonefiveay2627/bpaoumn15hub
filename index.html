@@ -92,6 +92,9 @@
         ::-webkit-scrollbar-thumb:hover { background: #D99B26; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        #semesterCalendarScroller { max-width: 100%; overscroll-behavior-x: contain; }
+        #semesterCalendarGrid > div { min-width: 112px; }
+        #bpaProfileModalImage { transition: object-position .12s ease; }
     </style>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -128,6 +131,7 @@
                         <select id="studentProfileSelect" onchange="handleProfileChange(this.value)" class="bg-[#314E52] text-white font-medium text-xs sm:text-sm focus:outline-none cursor-pointer w-28 sm:w-52 truncate">
                             <option value="Guest" class="bg-[#314E52] text-[#FAD5A5]">Select Name</option>
                         </select>
+                        <button type="button" onclick="openMyProfile()" title="View my profile" class="rounded-lg border border-[#D99B26]/40 px-2 py-1.5 text-[#FAD5A5] hover:bg-[#902636] text-xs whitespace-nowrap"><i class="fa-solid fa-id-card"></i><span class="hidden sm:inline ml-1">My Profile</span></button>
                         <button type="button" onclick="openProfilePicturePicker()" title="Change profile picture" class="ml-1 rounded-lg border border-[#D99B26]/40 px-2 py-1.5 text-[#FAD5A5] hover:bg-[#902636] text-xs whitespace-nowrap"><i class="fa-solid fa-camera"></i><span class="hidden sm:inline ml-1">Photo</span></button>
                         <button type="button" onclick="refreshHubStatus()" title="Refresh activity statuses from Google Sheets" class="rounded-lg border border-[#D99B26]/40 px-2 py-1.5 text-[#FAD5A5] hover:bg-[#902636] text-xs whitespace-nowrap"><i class="fa-solid fa-rotate"></i><span class="hidden sm:inline ml-1">Refresh</span></button>
                     </div>
@@ -360,10 +364,15 @@
                     <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#902636]"></span> Cycle 1 Subjects</span>
                     <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-emerald-700"></span> Cycle 2 Subjects</span>
                 </div>
-                <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-[#FAD5A5]/70 py-2 bg-[#3b0609]/60 rounded-xl">
-                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                <p class="text-[11px] text-[#FAD5A5]/60 sm:hidden"><i class="fa-solid fa-arrows-left-right mr-1"></i>Swipe sideways to view all seven days and event details.</p>
+                <div class="overflow-x-auto rounded-xl pb-2" id="semesterCalendarScroller" style="-webkit-overflow-scrolling:touch">
+                    <div class="min-w-[840px]">
+                        <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-[#FAD5A5]/70 py-2 bg-[#3b0609]/60 rounded-xl">
+                            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                        </div>
+                        <div id="semesterCalendarGrid" class="grid grid-cols-7 gap-1.5 mt-1.5" style="grid-template-columns:repeat(7,minmax(112px,1fr))"></div>
+                    </div>
                 </div>
-                <div id="semesterCalendarGrid" class="grid grid-cols-7 gap-1.5"></div>
             </div>
 
             <div class="bg-[#3b0609] border border-[#902636]/40 rounded-2xl p-6 shadow-xl space-y-4">
@@ -936,6 +945,8 @@
         }
 
         function handleProfileChange(name) {
+            const headerAvatar = document.getElementById("studentProfileAvatar");
+            if (headerAvatar) { headerAvatar.removeAttribute("src"); headerAvatar.classList.add("hidden"); }
             if (name === "Guest") {
                 activeStudent = "Guest";
                 localStorage.setItem("bpa_active_student", "Guest");
@@ -1088,7 +1099,7 @@
                 const dayClasses = scheduleList.filter(s => s.date === dateStr);
 
                 const cell = document.createElement("div");
-                cell.className = "bg-[#3b0609] border border-[#540b0e] min-h-[90px] rounded-xl p-2 flex flex-col justify-between overflow-y-auto";
+                cell.className = "bg-[#3b0609] border border-[#540b0e] min-h-[112px] rounded-xl p-2 flex flex-col justify-start overflow-y-auto";
                 
                 let eventsHtml = `<div class="font-bold text-xs text-[#FAD5A5] mb-1">${day}</div><div class="space-y-1">`;
                 
@@ -1105,13 +1116,27 @@
                     const tagBg = e.tag === 'Exam' ? 'bg-[#902636] text-white border-[#902636]' : 'bg-[#D99B26]/30 text-[#FAD5A5] border-[#D99B26]/40';
                     const isOfficer = AUTHORIZED_OFFICERS.includes(activeStudent) && isOfficerVerified;
                     const deleteBtn = isOfficer ? `<span onclick="deleteCalendarEvent('${e.date}', '${e.title}')" class="cursor-pointer text-red-400 hover:text-red-200 ml-1">×</span>` : '';
-                    eventsHtml += `<div class="text-[10px] ${tagBg} border px-1.5 py-0.5 rounded truncate font-medium flex justify-between items-center" title="${e.title}"><span>⭐ ${e.title}</span>${deleteBtn}</div>`;
+                    const eventIndex = semesterEvents.indexOf(e);
+                    eventsHtml += `<div data-calendar-event-index="${eventIndex}" class="calendar-extra-event text-[10px] ${tagBg} border px-1.5 py-1 rounded font-medium flex justify-between items-center gap-1 cursor-pointer hover:brightness-125" title="Click to view event details"><span class="truncate">⭐ ${escapeHtml(e.title)}</span>${deleteBtn}</div>`;
                 });
 
                 eventsHtml += `</div>`;
                 cell.innerHTML = eventsHtml;
+                cell.querySelectorAll(".calendar-extra-event").forEach(card => card.addEventListener("click", function(ev) {
+                    if (ev.target && ev.target.closest("span[onclick]")) return;
+                    const eventItem = semesterEvents[Number(card.dataset.calendarEventIndex)];
+                    if (eventItem) openCalendarEventDetail(eventItem);
+                }));
                 grid.appendChild(cell);
             }
+        }
+
+        function openCalendarEventDetail(eventItem) {
+            let modal = document.getElementById("bpaCalendarEventDetailModal"); if (modal) modal.remove();
+            modal = document.createElement("div"); modal.id = "bpaCalendarEventDetailModal";
+            modal.className = "fixed inset-0 z-[10020] flex items-center justify-center bg-black/70 p-4";
+            modal.innerHTML = `<div class="w-full max-w-md rounded-2xl border border-[#D99B26]/40 bg-[#161622] p-5 shadow-2xl"><div class="flex items-start justify-between gap-3"><div><p class="text-xs uppercase tracking-wider text-[#D99B26]">Calendar event</p><h3 class="mt-1 text-lg font-bold text-white">${escapeHtml(eventItem.title || "Untitled event")}</h3></div><button id="bpaCalendarEventClose" class="rounded-lg px-3 py-2 text-[#FAD5A5] hover:bg-[#540B0E]" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div><div class="mt-4 space-y-2 text-sm text-[#FAD5A5]/85"><p><strong>Date:</strong> ${escapeHtml(eventItem.date || "Not specified")}</p><p><strong>Category:</strong> ${escapeHtml(eventItem.tag || "Event")}</p><p><strong>Details:</strong> ${escapeHtml(eventItem.description || eventItem.details || "No additional description has been recorded for this event.")}</p></div><div class="mt-5 flex justify-end"><button id="bpaCalendarEventDone" class="rounded-lg bg-[#902636] px-4 py-2 text-sm font-semibold text-white">Close</button></div></div>`;
+            document.body.appendChild(modal); const close=()=>modal.remove(); modal.querySelector("#bpaCalendarEventClose").onclick=close; modal.querySelector("#bpaCalendarEventDone").onclick=close; modal.addEventListener("click",e=>{if(e.target===modal)close();});
         }
 
         function handleSendFloatingChatMessage(event) {
@@ -1996,6 +2021,7 @@
           const reader = new FileReader();
           reader.onload = async function(e) {
             if (GOOGLE_SCRIPT_URL) {
+              showHubLoading("Uploading file to Google Drive…");
               try {
                 await fetch(GOOGLE_SCRIPT_URL, {
                   method: "POST",
@@ -2020,6 +2046,7 @@
                 } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `<i class="fa-solid fa-upload"></i> Upload Directly`;
+                hideHubLoading();
               }
             }
           };
@@ -2035,15 +2062,17 @@
             const reader = new FileReader();
             reader.onload = async function(e) {
                 if (GOOGLE_SCRIPT_URL) {
+                    showHubLoading("Uploading your file…");
                     try {
                         await fetch(GOOGLE_SCRIPT_URL, {
                             method: "POST", mode: "no-cors",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ action: "uploadImage", studentName: activeStudent, fileName: file.name, mimeType: file.type, fileData: e.target.result, description: document.getElementById("reportDesc").value })
                         });
-                        alert("Uploaded successfully!");
+                        alert("Upload request sent successfully.");
                         closeUploadModal();
                     } catch(err) { alert("Upload error."); }
+                    finally { hideHubLoading(); }
                 }
             };
             reader.readAsDataURL(file);
@@ -2084,6 +2113,7 @@
             localStorage.setItem("bpa_user_completions", JSON.stringify(userCompletions));
 
             if (GOOGLE_SCRIPT_URL) {
+                showHubLoading(newStatus ? "Marking activity as done…" : "Updating activity status…");
                 try {
                     await fetch(GOOGLE_SCRIPT_URL, {
                         method: "POST",
@@ -2101,7 +2131,7 @@
                     });
                 } catch(err) {
                     console.error("Error syncing individual completion:", err);
-                }
+                } finally { hideHubLoading(); }
             }
 
             renderTasks();
@@ -2506,6 +2536,80 @@
             } finally { if (btn) btn.disabled = false; }
         }
 
+        let hubLoadingCount = 0;
+        function showHubLoading(message) {
+            hubLoadingCount++;
+            let overlay = document.getElementById("hubLoadingOverlay");
+            if (!overlay) {
+                overlay = document.createElement("div"); overlay.id = "hubLoadingOverlay";
+                overlay.className = "fixed inset-0 z-[10050] flex items-center justify-center bg-black/60 p-4";
+                overlay.innerHTML = `<div class="w-full max-w-xs rounded-2xl border border-[#D99B26]/40 bg-[#161622] p-5 text-center shadow-2xl"><i class="fa-solid fa-circle-notch fa-spin text-3xl text-[#D99B26]"></i><p id="hubLoadingMessage" class="mt-3 text-sm font-semibold text-white">Updating…</p><p class="mt-1 text-xs text-[#FAD5A5]/60">Please keep this page open.</p></div>`;
+                document.body.appendChild(overlay);
+            }
+            const label = document.getElementById("hubLoadingMessage"); if (label) label.textContent = message || "Updating…";
+            overlay.classList.remove("hidden");
+        }
+        function hideHubLoading() {
+            hubLoadingCount = Math.max(0, hubLoadingCount - 1);
+            if (!hubLoadingCount) { const overlay = document.getElementById("hubLoadingOverlay"); if (overlay) overlay.classList.add("hidden"); }
+        }
+        // Cover all Apps Script POST mutations, including officer overrides and future update actions.
+        // Existing functions may already own an overlay; this wrapper avoids double-counting those calls.
+        if (!window.__bpaFetchLoadingWrapped) {
+            const nativeFetch = window.fetch.bind(window);
+            window.fetch = async function(input, init) {
+                const method = String((init && init.method) || (input && input.method) || "GET").toUpperCase();
+                const url = String(typeof input === "string" ? input : (input && input.url) || "");
+                const isHubMutation = method === "POST" && GOOGLE_SCRIPT_URL && url.indexOf(GOOGLE_SCRIPT_URL) === 0;
+                let ownsOverlay = false;
+                if (isHubMutation && hubLoadingCount === 0) {
+                    let action = "";
+                    try { const body = init && init.body; action = JSON.parse(typeof body === "string" ? body : "{}").action || ""; } catch (_) {}
+                    const labels = { individualSync: "Updating activity status…", groupSync: "Updating group status…", uploadProfilePicture: "Uploading your profile picture…", uploadToDriveFolder: "Uploading file to Google Drive…", uploadImage: "Uploading your file…", officerSetStudentStatus: "Saving student status…", officerSetGroupCompletion: "Saving group status…", addClassSchedule: "Saving class schedule…", updateClassSchedule: "Updating class schedule…", deleteTask: "Deleting activity…" };
+                    showHubLoading(labels[action] || "Saving your update…"); ownsOverlay = true;
+                }
+                try { return await nativeFetch(input, init); }
+                finally { if (ownsOverlay) hideHubLoading(); }
+            };
+            window.__bpaFetchLoadingWrapped = true;
+        }
+        function profileCropKey() { return "bpa_profile_crop_" + (getActiveStudentId() || activeStudent || "guest"); }
+        function applyProfileCrop(img) {
+            if (!img) return;
+            let cfg = {}; try { cfg = JSON.parse(localStorage.getItem(profileCropKey()) || "{}"); } catch (_) {}
+            img.style.objectFit = cfg.fit || "cover";
+            img.style.objectPosition = `${cfg.x == null ? 50 : cfg.x}% ${cfg.y == null ? 50 : cfg.y}%`;
+        }
+        function openMyProfile() {
+            if (activeStudent === "Guest") { alert("Select your student profile first."); return; }
+            let modal = document.getElementById("bpaMyProfileModal"); if (modal) modal.remove();
+            const student = (liveStudents || []).find(x => x && x.displayName === activeStudent) || {};
+            const studentId = getActiveStudentId();
+            modal = document.createElement("div"); modal.id = "bpaMyProfileModal";
+            modal.className = "fixed inset-0 z-[10040] flex items-center justify-center bg-black/75 p-3 sm:p-5";
+            modal.innerHTML = `<div class="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl border border-[#D99B26]/40 bg-[#161622] p-5 shadow-2xl">
+                <div class="flex items-center justify-between gap-3 border-b border-[#902636]/40 pb-3"><div><h2 class="text-lg font-bold text-white"><i class="fa-solid fa-id-card text-[#D99B26] mr-2"></i>My Profile</h2><p class="text-xs text-[#FAD5A5]/60 mt-1">Your student information and profile picture</p></div><button id="bpaProfileClose" class="rounded-lg px-3 py-2 text-[#FAD5A5] hover:bg-[#540B0E]" aria-label="Close profile"><i class="fa-solid fa-xmark"></i></button></div>
+                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 py-5"><div class="w-32 h-32 rounded-full overflow-hidden border-2 border-[#D99B26] bg-[#314E52] flex items-center justify-center flex-shrink-0"><img id="bpaProfileModalImage" alt="Your profile picture" class="hidden w-full h-full" /><i id="bpaProfilePlaceholder" class="fa-solid fa-user text-4xl text-[#FAD5A5]/50"></i></div><div class="min-w-0 text-center sm:text-left"><h3 class="font-bold text-white text-lg">${escapeHtml(activeStudent)}</h3><p class="text-sm text-[#FAD5A5]/75 mt-1">Student ID: ${escapeHtml(studentId || "Not matched")}</p><p class="text-sm text-[#FAD5A5]/75 mt-1">Role: ${escapeHtml(student.role || "Student")}</p><p class="text-sm text-[#FAD5A5]/75 mt-1 break-all">PUP Webmail: ${escapeHtml(student.webmail || "Not provided")}</p><button id="bpaProfileLoadImage" class="mt-3 rounded-lg bg-[#902636] hover:bg-[#751e2b] px-3 py-2 text-xs font-semibold text-white"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Load saved picture</button><button id="bpaProfileChangeImage" class="mt-3 sm:ml-2 rounded-lg border border-[#D99B26]/40 px-3 py-2 text-xs font-semibold text-[#FAD5A5] hover:bg-[#540B0E]"><i class="fa-solid fa-camera mr-1"></i>Change picture</button></div></div>
+                <div id="bpaProfileCropControls" class="hidden border-t border-[#902636]/40 pt-4 space-y-3"><p class="text-sm font-semibold text-white">Adjust picture fit</p><label class="block text-xs text-[#FAD5A5]/80">Horizontal position <input id="bpaCropX" type="range" min="0" max="100" value="50" class="w-full mt-1"></label><label class="block text-xs text-[#FAD5A5]/80">Vertical position <input id="bpaCropY" type="range" min="0" max="100" value="50" class="w-full mt-1"></label><label class="block text-xs text-[#FAD5A5]/80">Fit mode <select id="bpaCropFit" class="ml-2 rounded bg-[#314E52] text-white p-1"><option value="cover">Fill frame (crop)</option><option value="contain">Show full image</option></select></label><div class="flex justify-end gap-2"><button id="bpaCropReset" class="rounded-lg border border-[#902636]/50 px-3 py-2 text-xs text-[#FAD5A5]">Reset</button><button id="bpaCropSave" class="rounded-lg bg-[#D99B26] px-3 py-2 text-xs font-bold text-[#161622]">Save fit</button></div><p class="text-[11px] text-[#FAD5A5]/50">Fit settings are saved in this browser for this student.</p></div>
+                <p id="bpaProfileStatus" class="text-xs text-[#FAD5A5]/65" role="status"></p>
+            </div>`;
+            document.body.appendChild(modal);
+            const close=()=>modal.remove(); modal.querySelector("#bpaProfileClose").onclick=close; modal.addEventListener("click",e=>{if(e.target===modal)close();});
+            modal.querySelector("#bpaProfileChangeImage").onclick=()=>openProfilePicturePicker();
+            const img=modal.querySelector("#bpaProfileModalImage"), placeholder=modal.querySelector("#bpaProfilePlaceholder"), controls=modal.querySelector("#bpaProfileCropControls"), status=modal.querySelector("#bpaProfileStatus");
+            const showImage=(src)=>{img.src=src;img.classList.remove("hidden");placeholder.classList.add("hidden");controls.classList.remove("hidden");let cfg={};try{cfg=JSON.parse(localStorage.getItem(profileCropKey())||"{}");}catch(_){}modal.querySelector("#bpaCropX").value=cfg.x==null?50:cfg.x;modal.querySelector("#bpaCropY").value=cfg.y==null?50:cfg.y;modal.querySelector("#bpaCropFit").value=cfg.fit||"cover";applyProfileCrop(img);};
+            const avatar=document.getElementById("studentProfileAvatar"); if(avatar && avatar.src && !avatar.classList.contains("hidden")) showImage(avatar.src);
+            modal.querySelector("#bpaProfileLoadImage").onclick=async()=>{const code=prompt("Enter your student access code to load your saved private profile picture:");if(!code)return;showHubLoading("Loading your profile picture…");status.textContent="Loading saved picture…";try{const result=await loadPrivateProfilePicture(studentId,code);if(!result||!result.dataUrl)throw new Error(result&&result.error||"No saved profile picture was found.");showImage(result.dataUrl);if(avatar){avatar.src=result.dataUrl;avatar.classList.remove("hidden");applyProfileCrop(avatar);}status.textContent="Saved profile picture loaded.";}catch(err){status.textContent=err.message||"Could not load the saved picture.";}finally{hideHubLoading();}};
+            const cropUpdate=()=>{img.style.objectPosition=`${modal.querySelector("#bpaCropX").value}% ${modal.querySelector("#bpaCropY").value}%`;img.style.objectFit=modal.querySelector("#bpaCropFit").value;};
+            ["bpaCropX","bpaCropY","bpaCropFit"].forEach(id=>modal.querySelector("#"+id).addEventListener("input",cropUpdate));
+            modal.querySelector("#bpaCropReset").onclick=()=>{modal.querySelector("#bpaCropX").value=50;modal.querySelector("#bpaCropY").value=50;modal.querySelector("#bpaCropFit").value="cover";cropUpdate();};
+            modal.querySelector("#bpaCropSave").onclick=()=>{const cfg={x:Number(modal.querySelector("#bpaCropX").value),y:Number(modal.querySelector("#bpaCropY").value),fit:modal.querySelector("#bpaCropFit").value};localStorage.setItem(profileCropKey(),JSON.stringify(cfg));applyProfileCrop(img);if(avatar)applyProfileCrop(avatar);status.textContent="Picture fit saved on this device.";};
+        }
+        async function loadPrivateProfilePicture(studentId, accessCode) {
+            if (!GOOGLE_SCRIPT_URL || !studentId) throw new Error("The Hub could not identify your Student ID.");
+            const url=GOOGLE_SCRIPT_URL+(GOOGLE_SCRIPT_URL.includes("?")?"&":"?")+"action=getProfilePicture&studentId="+encodeURIComponent(studentId)+"&accessCode="+encodeURIComponent(accessCode)+"&_="+Date.now();
+            const response=await fetch(url,{cache:"no-store"}); const data=await response.json(); if(!response.ok||data.result!=="success")throw new Error(data.error||"Unable to load the saved profile picture.");return data;
+        }
         function openProfilePicturePicker() {
             if (activeStudent === "Guest") { alert("Select and verify your student profile first."); return; }
             let picker = document.getElementById("bpaProfilePictureInput");
@@ -2528,17 +2632,26 @@
             if (!accessCode) return;
             const reader = new FileReader();
             reader.onload = async () => {
+                showHubLoading("Uploading your profile picture…");
                 try {
-                    // Apps Script web apps can return an opaque response under browser CORS restrictions.
-                    // Submit without reading the response; verify the file ID in Students before retrying.
                     await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "uploadProfilePicture", studentId, accessCode, fileName: file.name, mimeType: file.type, fileData: reader.result }) });
                     const avatar = document.getElementById("studentProfileAvatar");
-                    if (avatar) { avatar.src = reader.result; avatar.classList.remove("hidden"); }
-                    alert("Profile picture upload request sent. The picture is shown in this session; confirm that PROFILE PICTURE FILE ID was saved in the Students sheet. The folder remains private.");
+                    if (avatar) { avatar.src = reader.result; avatar.classList.remove("hidden"); applyProfileCrop(avatar); }
+                    const modalImg = document.getElementById("bpaProfileModalImage"); if (modalImg) { modalImg.src = reader.result; modalImg.classList.remove("hidden"); applyProfileCrop(modalImg); }
+                    const status = document.getElementById("bpaProfileStatus");
+                    if(status) status.textContent = "Upload request sent. Checking the saved private image…";
+                    try {
+                        const saved = await loadPrivateProfilePicture(studentId, accessCode);
+                        if (avatar) { avatar.src = saved.dataUrl; avatar.classList.remove("hidden"); applyProfileCrop(avatar); }
+                        if (modalImg) { modalImg.src = saved.dataUrl; modalImg.classList.remove("hidden"); applyProfileCrop(modalImg); }
+                        if(status) status.textContent = "Profile picture saved and verified. Use the fit controls to adjust how it appears.";
+                    } catch (verifyErr) {
+                        if(status) status.textContent = "The upload was sent, but saved storage could not be verified automatically. Use Load saved picture to check again.";
+                    }
                 } catch (err) {
                     console.error("Profile picture upload failed:", err);
-                    alert("The upload could not be confirmed. If the file was created in Drive, check the Students sheet before retrying.");
-                }
+                    alert("The upload request could not be sent. Check your connection and try again.");
+                } finally { hideHubLoading(); }
             };
             reader.readAsDataURL(file);
         }
